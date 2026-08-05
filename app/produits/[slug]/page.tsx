@@ -11,7 +11,13 @@ export const revalidate = 60;
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const rawProduct = await getProduct(slug);
+  
+  let rawProduct: any = null;
+  try {
+    rawProduct = await getProduct(slug);
+  } catch (err) {
+    console.warn('[Product] Sanity fetch failed:', err);
+  }
 
   if (!rawProduct) {
     return (
@@ -24,8 +30,13 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   }
 
   const product = mapSanityProduct(rawProduct);
-  const rawRelated = await getRelatedProducts(rawProduct.category._id, rawProduct._id);
-  const related = rawRelated.map(mapSanityProduct);
+  let related: any[] = [];
+  try {
+    const rawRelated = await getRelatedProducts(rawProduct.category._id, rawProduct._id);
+    related = rawRelated.map(mapSanityProduct);
+  } catch (err) {
+    console.warn('[Product] Failed to fetch related products:', err);
+  }
 
   return (
     <main className="min-h-screen bg-white text-neutral-900">

@@ -3,7 +3,8 @@
  * Sanity Project: 4ryu7eeg | Dataset: product
  */
 import { createClient } from '@sanity/client';
-import imageUrlBuilder from '@sanity/image-url';
+import { createImageUrlBuilder } from '@sanity/image-url';
+type SanityImageSource = Parameters<ReturnType<typeof createImageUrlBuilder>['image']>[0];
 
 export const sanityClient = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!,
@@ -14,7 +15,7 @@ export const sanityClient = createClient({
 });
 
 // Image URL Builder
-const builder = imageUrlBuilder(sanityClient);
+const builder = createImageUrlBuilder(sanityClient);
 
 export function urlFor(source: any) {
   return builder.image(source);

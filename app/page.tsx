@@ -10,14 +10,22 @@ import { getImageUrl } from '@/lib/sanity/client';
 export const revalidate = 60; // Revalidate every 60 seconds
 
 export default async function Home() {
-  const [rawNewArrivals, rawProductsData, rawCategories] = await Promise.all([
-    getNewArrivals(),
-    getProducts({ page: 1, perPage: 12 }),
-    getCategories(),
-  ]);
+  let rawNewArrivals: any[] = [];
+  let rawProductsData: any = { products: [] };
+  let rawCategories: any[] = [];
 
-  const newArrivals = rawNewArrivals.map(mapSanityProduct);
-  const products = rawProductsData.products.map(mapSanityProduct);
+  try {
+    [rawNewArrivals, rawProductsData, rawCategories] = await Promise.all([
+      getNewArrivals(),
+      getProducts({ page: 1, perPage: 12 }),
+      getCategories(),
+    ]);
+  } catch (err) {
+    console.warn('[Homepage] Sanity fetch failed, showing empty sections:', err);
+  }
+
+  const newArrivals = (rawNewArrivals || []).map(mapSanityProduct);
+  const products = (rawProductsData?.products || []).map(mapSanityProduct);
   
   // Categorize for homepage sections
   const offers = products.slice(0, 3);

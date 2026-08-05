@@ -12,13 +12,20 @@ export const revalidate = 60;
 export default async function CategoryPage({ params }: { params: Promise<{ category: string }> }) {
   const { category } = await params;
   
-  const [rawProductsData, rawCategories] = await Promise.all([
-    getProducts({ page: 1, perPage: 100, categorySlug: category }),
-    getCategories(),
-  ]);
+  let rawProductsData: any = { products: [] };
+  let rawCategories: any[] = [];
+
+  try {
+    [rawProductsData, rawCategories] = await Promise.all([
+      getProducts({ page: 1, perPage: 100, categorySlug: category }),
+      getCategories(),
+    ]);
+  } catch (err) {
+    console.warn('[Category] Sanity fetch failed:', err);
+  }
 
   const catInfo = rawCategories.find((c: any) => c.slug === category);
-  const products = rawProductsData.products.map(mapSanityProduct);
+  const products = (rawProductsData?.products || []).map(mapSanityProduct);
 
   return (
     <main className="min-h-screen bg-white text-neutral-900">

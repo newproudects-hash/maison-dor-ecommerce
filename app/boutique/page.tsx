@@ -10,12 +10,19 @@ export const revalidate = 60;
 export default async function BoutiquePage({ searchParams }: { searchParams: Promise<{ c?: string }> }) {
   const { c: activeCategory = 'all' } = await searchParams;
   
-  const [rawProductsData, rawCategories] = await Promise.all([
-    getProducts({ page: 1, perPage: 100, categorySlug: activeCategory === 'all' ? undefined : activeCategory }),
-    getCategories(),
-  ]);
+  let rawProductsData: any = { products: [] };
+  let rawCategories: any[] = [];
 
-  const filtered = rawProductsData.products.map(mapSanityProduct);
+  try {
+    [rawProductsData, rawCategories] = await Promise.all([
+      getProducts({ page: 1, perPage: 100, categorySlug: activeCategory === 'all' ? undefined : activeCategory }),
+      getCategories(),
+    ]);
+  } catch (err) {
+    console.warn('[Boutique] Sanity fetch failed:', err);
+  }
+
+  const filtered = (rawProductsData?.products || []).map(mapSanityProduct);
 
   return (
     <main className="min-h-screen bg-white text-neutral-900">
