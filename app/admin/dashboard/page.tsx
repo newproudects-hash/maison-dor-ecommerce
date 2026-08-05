@@ -112,12 +112,13 @@ export default function AdminDashboard() {
         {/* Nav */}
         <nav className="flex-1 px-3 py-6 space-y-1">
           {[
-            { icon: LayoutDashboard, label: 'لوحة التحكم', active: true },
-            { icon: ShoppingBag,     label: 'الطلبات',     active: false },
-            { icon: Settings,        label: 'الإعدادات',   active: false },
-          ].map(({ icon: Icon, label, active }) => (
+            { icon: LayoutDashboard, label: 'الطلبات', href: '/admin/dashboard', active: true },
+            { icon: ShoppingBag,     label: 'أسعار التوصيل', href: '/admin/dashboard/shipping', active: false },
+            { icon: Settings,        label: 'إدارة المحتوى (Sanity)', href: '/studio', active: false },
+          ].map(({ icon: Icon, label, href, active }) => (
             <button
               key={label}
+              onClick={() => router.push(href)}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all text-right"
               style={{
                 background: active ? 'rgba(201,168,76,0.12)' : 'transparent',
