@@ -1,0 +1,39 @@
+'use client';
+
+import React from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { addToCart } from '@/lib/store/cartStore';
+
+export default function ProductCard({ product }: { product: { id: string | number; name: string; price: number; image: string; category: string; slug: string } }) {
+  const handleAdd = (e: React.MouseEvent) => {
+    e.preventDefault();
+    addToCart({ id: String(product.id), name: product.name, price: product.price, image: product.image, category: product.category });
+  };
+
+  return (
+    <Link href={`/produits/${product.slug}`} className="group cursor-pointer relative aspect-[3/4] w-full rounded-lg md:rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-2xl transition-shadow duration-500 border border-neutral-100 block">
+      <Image
+        src={product.image}
+        alt={product.name}
+        fill
+        className="object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
+        referrerPolicy="no-referrer"
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent opacity-90 group-hover:opacity-100 transition-opacity" />
+      <div className="absolute bottom-0 left-0 w-full p-3 md:p-5 flex items-end justify-between">
+        <div className="flex flex-col gap-1">
+          <h3 className="text-[10px] md:text-base font-bold text-white tracking-tight leading-none drop-shadow-sm">{product.name}</h3>
+          <p className="text-[10px] md:text-sm font-extrabold text-amber-300 leading-none drop-shadow-sm">${product.price}</p>
+        </div>
+        <button
+          onClick={handleAdd}
+          className="opacity-70 hover:opacity-100 hover:scale-110 transition-all ml-1 text-white bg-white/20 backdrop-blur-sm rounded-full p-1.5"
+          aria-label="Ajouter au panier"
+        >
+          <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1.5"/><circle cx="20" cy="21" r="1.5"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 1.96-1.61L23 6H6"/></svg>
+        </button>
+      </div>
+    </Link>
+  );
+}
