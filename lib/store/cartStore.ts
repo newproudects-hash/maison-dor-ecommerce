@@ -5,6 +5,8 @@ export interface CartItem {
   image: string;
   quantity: number;
   category: string;
+  size?: string;
+  color?: string;
 }
 
 const CART_KEY = 'maison_dor_cart';
