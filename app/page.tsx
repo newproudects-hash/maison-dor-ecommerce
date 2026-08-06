@@ -36,15 +36,14 @@ export default async function Home() {
       <Navbar />
 
       {/* 1. Hero Section */}
-      <section className="relative w-full bg-neutral-100 flex items-center justify-center overflow-hidden">
+      <section className="relative w-full bg-neutral-900 flex items-center justify-center overflow-hidden">
         <Image
-          src="https://res.cloudinary.com/doxg77zqk/image/upload/v1785660883/Girl_writing_style_on_bag_202608020949.jpg"
-          alt="Hero Fashion"
+          src="/hero.jpg"
+          alt="Maison D'Or - Luxury is in the details"
           width={1920}
           height={1080}
           className="w-full h-auto object-contain"
           priority
-          referrerPolicy="no-referrer"
         />
       </section>
 

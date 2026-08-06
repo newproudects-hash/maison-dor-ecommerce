@@ -64,12 +64,13 @@ export async function POST(req: Request) {
             'العميل': `${firstName} ${lastName}`,
             'الهاتف': phone,
             'الولاية': wilayaName,
-            'التوصيل': deliveryType === 'home' ? 'منزل' : 'مكتب',
+            'التوصيل': deliveryType === 'domicile' ? 'منزل' : 'مكتب',
             'العنوان': address || '-',
             'اسم المنتج': item.productName,
             'الكمية': item.quantity,
             'المقاس': item.size || '-',
             'اللون': item.color || '-',
+            'رابط الصورة': item.imageUrl || '-',
             'إجمالي الطلب': total,
             'الحالة': 'قيد الانتظار'
           });

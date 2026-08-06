@@ -55,8 +55,9 @@ export default function CommanderPage() {
             productName: c.name,
             quantity: c.quantity,
             price: c.price,
-            size: '', // If we add size back
-            color: ''
+            size: c.size || '',
+            color: c.color || '',
+            imageUrl: c.image || ''
           })),
           subtotal,
           total
@@ -149,16 +150,13 @@ export default function CommanderPage() {
 
                 <div>
                   <label className="text-xs font-bold text-neutral-500 uppercase tracking-wide block mb-1.5">Numéro de téléphone</label>
-                  <div className="flex">
-                    <span className="border-2 border-r-0 border-neutral-200 rounded-l-xl px-3 py-3 text-sm font-medium text-neutral-500 bg-neutral-50">🇩🇿 +213</span>
-                    <input
-                      type="tel"
-                      value={form.phone}
-                      onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                      placeholder="07XXXXXXXX"
-                      className="flex-1 border-2 border-neutral-200 rounded-r-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#082215] transition-colors"
-                    />
-                  </div>
+                  <input
+                    type="tel"
+                    value={form.phone}
+                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                    placeholder="0561631029"
+                    className="w-full border-2 border-neutral-200 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#082215] transition-colors"
+                  />
                 </div>
 
                 <div>
@@ -251,7 +249,7 @@ export default function CommanderPage() {
                 <div className="bg-neutral-50 rounded-xl p-4 space-y-1">
                   <p className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-2">Client</p>
                   <p className="text-sm font-semibold text-neutral-800">{form.prenom} {form.nom}</p>
-                  <p className="text-sm text-neutral-500">+213 {form.phone}</p>
+                  <p className="text-sm text-neutral-500">{form.phone}</p>
                   <p className="text-sm text-neutral-500">{form.wilaya}</p>
                   {form.adresse && <p className="text-sm text-neutral-500">{form.adresse}</p>}
                   <p className="text-sm text-neutral-500 mt-1">
