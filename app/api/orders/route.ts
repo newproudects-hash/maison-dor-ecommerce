@@ -8,10 +8,6 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
 
-// Telegram config
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
-
 // Google Sheets config (Official API)
 const GOOGLE_CLIENT_EMAIL = process.env.GOOGLE_CLIENT_EMAIL;
 const GOOGLE_PRIVATE_KEY = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n');
@@ -47,37 +43,7 @@ export async function POST(req: Request) {
       }]);
     }
 
-    // 2. Send to Telegram
-    if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
-      const message = `
-🛍️ *NOUVELLE COMMANDE: ${orderNumber}* 🛍️
-
-👤 *Client:* ${firstName} ${lastName}
-📞 *Téléphone:* ${phone}
-📍 *Wilaya:* ${wilayaCode} - ${wilayaName}
-🚚 *Livraison:* ${deliveryType === 'home' ? 'À domicile' : 'Bureau'}
-🏠 *Adresse:* ${address || 'N/A'}
-
-📦 *Articles:*
-${itemsSummary}
-
-💰 *Sous-total:* ${subtotal} DA
-🚚 *Livraison:* ${deliveryPrice} DA
-💳 *TOTAL:* ${total} DA
-      `;
-
-      await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: TELEGRAM_CHAT_ID,
-          text: message,
-          parse_mode: 'Markdown'
-        })
-      }).catch(e => console.error("Telegram error:", e));
-    }
-
-    // 3. Send to Google Sheets (Official API)
+    // 2. Send to Google Sheets (Official API)
     if (GOOGLE_CLIENT_EMAIL && GOOGLE_PRIVATE_KEY && GOOGLE_SHEET_ID) {
       try {
         const jwt = new JWT({
