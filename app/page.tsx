@@ -3,7 +3,7 @@ import Link from 'next/link';
 import Navbar from '@/components/layout/Navbar';
 import Marquee from '@/components/sections/Marquee';
 import ProductCard from '@/components/ui/ProductCard';
-import { getNewArrivals, getProducts, getCategories } from '@/lib/sanity/queries';
+import { getProductsByPlacement, getProducts, getCategories } from '@/lib/sanity/queries';
 import { mapSanityProduct } from '@/lib/sanity/mapper';
 import { getImageUrl } from '@/lib/sanity/client';
 
@@ -11,13 +11,13 @@ export const revalidate = 60; // Revalidate every 60 seconds
 
 export default async function Home() {
   let rawNewArrivals: any[] = [];
-  let rawProductsData: any = { products: [] };
+  let rawBestSellers: any[] = [];
   let rawCategories: any[] = [];
 
   try {
-    [rawNewArrivals, rawProductsData, rawCategories] = await Promise.all([
-      getNewArrivals(),
-      getProducts({ page: 1, perPage: 12 }),
+    [rawNewArrivals, rawBestSellers, rawCategories] = await Promise.all([
+      getProductsByPlacement('new_arrivals', 6),
+      getProductsByPlacement('best_sellers', 6),
       getCategories(),
     ]);
   } catch (err) {
@@ -25,18 +25,14 @@ export default async function Home() {
   }
 
   const newArrivals = (rawNewArrivals || []).map(mapSanityProduct);
-  const products = (rawProductsData?.products || []).map(mapSanityProduct);
-  
-  // Categorize for homepage sections
-  const offers = products.slice(0, 3);
-  const trending = products.slice(3, 9);
+  const bestSellers = (rawBestSellers || []).map(mapSanityProduct);
 
   return (
     <main className="min-h-screen bg-white text-neutral-900 overflow-x-hidden font-sans relative">
       <Navbar />
 
-      {/* 1. Hero Section */}
-      <section className="relative w-full bg-neutral-900 flex items-center justify-center overflow-hidden">
+      {/* 1. Hero Section — below navbar */}
+      <section className="relative w-full bg-neutral-900 flex items-center justify-center overflow-hidden pt-[56px] md:pt-[60px]">
         <Image
           src="/hero.jpg"
           alt="Maison D'Or - Luxury is in the details"
@@ -51,24 +47,26 @@ export default async function Home() {
       <Marquee />
 
       {/* 3. New Arrivals */}
-      <section id="store" className="pt-12 pb-8 md:pt-20 md:pb-12 px-4 md:px-8 bg-white">
-        <div className="text-center mb-8 md:mb-10">
-          <h2 className="text-xl md:text-3xl font-serif font-black text-neutral-900 tracking-wide uppercase">Nouveautés</h2>
-          <p className="text-neutral-500 text-[11px] md:text-xs mt-3 max-w-md mx-auto leading-relaxed">
-            Notre nouvelle collection est conçue pour résister à vos activités tout en vous gardant élégante.
-          </p>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-6 max-w-7xl mx-auto">
-          {newArrivals.map((product: any) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
-        <div className="text-center mt-8">
-          <Link href="/boutique" className="inline-flex items-center gap-2 border-2 border-neutral-900 text-neutral-900 px-8 py-3 text-sm font-bold tracking-widest uppercase hover:bg-neutral-900 hover:text-white transition-all duration-300">
-            Voir tout
-          </Link>
-        </div>
-      </section>
+      {newArrivals.length > 0 && (
+        <section id="store" className="pt-12 pb-8 md:pt-20 md:pb-12 px-4 md:px-8 bg-white">
+          <div className="text-center mb-8 md:mb-10">
+            <h2 className="text-xl md:text-3xl font-serif font-black text-neutral-900 tracking-wide uppercase">Nouveautés</h2>
+            <p className="text-neutral-500 text-[11px] md:text-xs mt-3 max-w-md mx-auto leading-relaxed">
+              Notre nouvelle collection est conçue pour résister à vos activités tout en vous gardant élégante.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-6 max-w-7xl mx-auto">
+            {newArrivals.map((product: any) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+          <div className="text-center mt-8">
+            <Link href="/boutique" className="inline-flex items-center gap-2 border-2 border-neutral-900 text-neutral-900 px-8 py-3 text-sm font-bold tracking-widest uppercase hover:bg-neutral-900 hover:text-white transition-all duration-300">
+              Voir tout
+            </Link>
+          </div>
+        </section>
+      )}
 
       {/* 4. Categories */}
       <section id="categories" className="w-full py-8 md:py-16 bg-neutral-50">
@@ -83,7 +81,6 @@ export default async function Home() {
                 alt={typeof cat.title === 'string' ? cat.title : (cat.title?.ar || cat.title?.fr || cat.title?.en || 'قسم')}
                 fill
                 className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                referrerPolicy="no-referrer"
               />
               <div className="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition-colors" />
               <div className="absolute bottom-0 left-0 right-0 p-2 text-center">
@@ -96,29 +93,18 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* 5. Special Offers */}
-      {offers.length > 0 && (
+      {/* 5. Best Sellers */}
+      {bestSellers.length > 0 && (
         <section className="py-12 md:py-16 px-4 md:px-8 bg-white">
           <div className="text-center mb-8 md:mb-10">
-            <h2 className="text-xl md:text-3xl font-serif font-black text-neutral-900 tracking-wide uppercase">Offres Spéciales</h2>
+            <h2 className="text-xl md:text-3xl font-serif font-black text-neutral-900 tracking-wide uppercase">Meilleures Ventes</h2>
+            <p className="text-neutral-500 text-[11px] md:text-xs mt-3 max-w-md mx-auto leading-relaxed">
+              Les produits les plus appréciés par nos clientes.
+            </p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-6 max-w-7xl mx-auto">
-            {offers.map((product: any) => (
-              <ProductCard key={product.id + 'offer'} product={product} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* 6. Trending */}
-      {trending.length > 0 && (
-        <section className="py-12 md:py-16 px-4 md:px-8 bg-neutral-50">
-          <div className="text-center mb-8 md:mb-10">
-            <h2 className="text-xl md:text-3xl font-serif font-black text-neutral-900 tracking-wide uppercase">Tendances</h2>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-6 max-w-7xl mx-auto">
-            {trending.map((product: any) => (
-              <ProductCard key={product.id + 'trending'} product={product} />
+            {bestSellers.map((product: any) => (
+              <ProductCard key={product.id + 'bs'} product={product} />
             ))}
           </div>
         </section>

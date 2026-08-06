@@ -149,10 +149,10 @@ export const product = defineType({
           { title: 'XXL', value: 'XXL' },
           { title: '3XL', value: '3XL' },
           { title: 'قياس موحد (Unique)', value: 'Unique' },
-          // مقاسات الأحذية من 1 إلى 60
-          ...Array.from({ length: 60 }, (_, i) => ({ title: String(i + 1), value: String(i + 1) }))
+          // مقاسات الأحذية من 1 إلى 50
+          ...Array.from({ length: 50 }, (_, i) => ({ title: String(i + 1), value: String(i + 1) }))
         ],
-        layout: 'tags',
+        layout: 'grid',
       },
     }),
 

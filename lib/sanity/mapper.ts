@@ -10,8 +10,7 @@ export type SanityProduct = {
   colors: string[];
   sizes: string[];
   inStock: boolean;
-  isNewArrival: boolean;
-  isFeatured: boolean;
+  placement: string[];
   category: { _id: string; title: string; slug: string };
 };
 
@@ -30,5 +29,6 @@ export function mapSanityProduct(p: SanityProduct) {
     description: getDesc(p.description),
     colors: p.colors || [],
     sizes: p.sizes || [],
+    placement: p.placement || [],
   };
 }

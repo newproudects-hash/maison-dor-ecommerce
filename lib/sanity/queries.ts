@@ -11,8 +11,7 @@ const PRODUCT_FIELDS = `
   colors,
   sizes,
   inStock,
-  isNewArrival,
-  isFeatured,
+  placement,
   "category": category->{ _id, title, "slug": slug.current }
 `;
 
@@ -45,12 +44,12 @@ export async function getProducts({
   return { products, total, pages: Math.ceil(total / perPage) };
 }
 
-// ── New Arrivals (6 products) ──
-export async function getNewArrivals() {
+// ── Placement Based Queries ──
+export async function getProductsByPlacement(placementVal: string, limit = 6) {
   return sanityClient.fetch(
-    `*[_type == "product" && isNewArrival == true && inStock == true]
-     | order(_createdAt desc) [0...6] { ${PRODUCT_FIELDS} }`,
-    {}
+    `*[_type == "product" && $placementVal in placement && inStock == true]
+     | order(_createdAt desc) [0...$limit] { ${PRODUCT_FIELDS} }`,
+    { placementVal, limit }
   );
 }
 
