@@ -2,84 +2,140 @@ import { defineField, defineType } from 'sanity';
 
 export const product = defineType({
   name: 'product',
-  title: 'Produit',
+  title: 'المنتجات',
   type: 'document',
   fields: [
     defineField({
       name: 'title',
-      title: 'Nom du produit',
+      title: 'اسم المنتج',
       type: 'object',
       fields: [
-        { name: 'fr', title: 'Français 🇫🇷', type: 'string', validation: r => r.required() },
-        { name: 'ar', title: 'العربية 🇩🇿', type: 'string' },
+        { name: 'ar', title: 'العربية 🇩🇿', type: 'string', validation: r => r.required() },
+        { name: 'fr', title: 'Français 🇫🇷', type: 'string' },
         { name: 'en', title: 'English 🇺🇸', type: 'string' },
       ],
     }),
 
     defineField({
       name: 'slug',
-      title: 'Slug URL',
+      title: 'الرابط (Slug)',
       type: 'slug',
-      options: { source: 'title.fr', maxLength: 96 },
+      options: { source: 'title.en', maxLength: 96 },
       validation: r => r.required(),
+      description: 'الرابط الذي يظهر في المتصفح (يفضل أن يكون بالإنجليزية)',
     }),
 
     defineField({
       name: 'description',
-      title: 'Description',
+      title: 'وصف المنتج',
       type: 'object',
       fields: [
-        { name: 'fr', title: 'Français 🇫🇷', type: 'text', rows: 4 },
         { name: 'ar', title: 'العربية 🇩🇿', type: 'text', rows: 4 },
+        { name: 'fr', title: 'Français 🇫🇷', type: 'text', rows: 4 },
         { name: 'en', title: 'English 🇺🇸', type: 'text', rows: 4 },
       ],
     }),
 
     defineField({
+      name: 'originalPrice',
+      title: 'السعر الأصلي (DA)',
+      type: 'number',
+      description: 'السعر قبل التخفيض (اختياري - سيظهر مشطوباً إذا كان موجوداً)',
+      validation: r => r.min(0),
+    }),
+
+    defineField({
       name: 'price',
-      title: 'Prix (DA)',
+      title: 'السعر الحالي / بعد التخفيض (DA)',
       type: 'number',
       validation: r => r.required().min(0),
     }),
 
     defineField({
       name: 'images',
-      title: 'Images du produit',
+      title: 'صور المنتج',
       type: 'array',
       of: [{
         type: 'image',
         options: { hotspot: true },
         fields: [
-          { name: 'alt', type: 'string', title: 'Description (ALT)' },
+          { name: 'alt', type: 'string', title: 'وصف الصورة (ALT) للـ SEO' },
         ],
       }],
-      validation: r => r.required().min(1).error('Au moins une image requise'),
+      validation: r => r.required().min(1).error('يجب إضافة صورة واحدة على الأقل'),
     }),
 
     defineField({
       name: 'category',
-      title: 'Catégorie',
+      title: 'القسم',
       type: 'reference',
       to: [{ type: 'category' }],
       validation: r => r.required(),
     }),
 
     defineField({
-      name: 'colors',
-      title: 'Couleurs disponibles',
+      name: 'placement',
+      title: 'مكان الظهور في الموقع',
       type: 'array',
-      of: [{
-        type: 'object',
-        fields: [
-          { name: 'name', type: 'string', title: 'Nom de la couleur (ex: Noir)' },
-          { name: 'hex', type: 'string', title: 'Couleur HEX (ex: #000000)' },
+      of: [{ type: 'string' }],
+      options: {
+        list: [
+          { title: 'الرئيسية (Home)', value: 'home' },
+          { title: 'وصلنا حديثاً (New Arrivals)', value: 'new_arrivals' },
+          { title: 'الأكثر مبيعاً (Best Sellers)', value: 'best_sellers' },
+          { title: 'منتجات مميزة (Featured)', value: 'featured' },
         ],
-      }],
+      },
+      description: 'اختر أين تريد أن يظهر هذا المنتج في الموقع',
+    }),
+
+    defineField({
+      name: 'colors',
+      title: 'الألوان المتاحة',
+      type: 'array',
+      of: [{ type: 'string' }],
+      options: {
+        list: [
+          { title: 'أسود (Black)', value: '#000000' },
+          { title: 'أبيض (White)', value: '#FFFFFF' },
+          { title: 'أحمر (Red)', value: '#FF0000' },
+          { title: 'أزرق (Blue)', value: '#0000FF' },
+          { title: 'أصفر (Yellow)', value: '#FFFF00' },
+          { title: 'أخضر (Green)', value: '#008000' },
+          { title: 'بني (Brown)', value: '#A52A2A' },
+          { title: 'رمادي (Gray)', value: '#808080' },
+          { title: 'وردي (Pink)', value: '#FFC0CB' },
+          { title: 'بنفسجي (Purple)', value: '#800080' },
+          { title: 'برتقالي (Orange)', value: '#FFA500' },
+          { title: 'بيج (Beige)', value: '#F5F5DC' },
+          { title: 'ذهبي (Gold)', value: '#FFD700' },
+          { title: 'فضي (Silver)', value: '#C0C0C0' },
+          { title: 'كحلي (Navy)', value: '#000080' },
+          { title: 'عنابي (Maroon)', value: '#800000' },
+          { title: 'زيتوني (Olive)', value: '#808000' },
+          { title: 'سماوي (Cyan)', value: '#00FFFF' },
+          { title: 'كريمي (Cream)', value: '#FFFDD0' },
+          { title: 'خردلي (Mustard)', value: '#FFDB58' },
+          { title: 'مشمشي (Apricot)', value: '#FBCEB1' },
+          { title: 'خوخي (Peach)', value: '#FFE5B4' },
+          { title: 'تركوازي (Turquoise)', value: '#40E0D0' },
+          { title: 'نيلي (Indigo)', value: '#4B0082' },
+          { title: 'رصاصي داكن (Dark Gray)', value: '#A9A9A9' },
+          { title: 'شامبين (Champagne)', value: '#F7E7CE' },
+          { title: 'نبيذي (Wine)', value: '#722F37' },
+          { title: 'فيروزي (Teal)', value: '#008080' },
+          { title: 'ليلكي (Lilac)', value: '#C8A2C8' },
+          { title: 'ماجنتا (Magenta)', value: '#FF00FF' },
+          { title: 'كورال (Coral)', value: '#FF7F50' },
+          { title: 'كاكي (Khaki)', value: '#C3B091' },
+        ],
+      },
+      description: 'اختر الألوان المتوفرة لهذا المنتج (يمكنك اختيار أكثر من لون)',
     }),
 
     defineField({
       name: 'sizes',
-      title: 'Tailles disponibles',
+      title: 'المقاسات المتوفرة',
       type: 'array',
       of: [{ type: 'string' }],
       options: {
@@ -89,7 +145,9 @@ export const product = defineType({
           { title: 'M', value: 'M' },
           { title: 'L', value: 'L' },
           { title: 'XL', value: 'XL' },
-          { title: 'Unique', value: 'Unique' },
+          { title: 'XXL', value: 'XXL' },
+          { title: '3XL', value: '3XL' },
+          { title: 'قياس موحد (Unique)', value: 'Unique' },
         ],
         layout: 'tags',
       },
@@ -97,28 +155,14 @@ export const product = defineType({
 
     defineField({
       name: 'inStock',
-      title: 'En stock',
+      title: 'متوفر في المخزن',
       type: 'boolean',
       initialValue: true,
     }),
 
     defineField({
-      name: 'isNewArrival',
-      title: 'Nouvelle arrivée',
-      type: 'boolean',
-      initialValue: false,
-    }),
-
-    defineField({
-      name: 'isFeatured',
-      title: 'Produit vedette',
-      type: 'boolean',
-      initialValue: false,
-    }),
-
-    defineField({
       name: 'order',
-      title: 'Ordre d\'affichage',
+      title: 'ترتيب العرض',
       type: 'number',
       initialValue: 0,
     }),
@@ -126,14 +170,17 @@ export const product = defineType({
 
   preview: {
     select: {
-      title: 'title.fr',
+      title: 'title.ar',
       media: 'images.0',
       price: 'price',
+      originalPrice: 'originalPrice',
     },
-    prepare({ title, media, price }) {
+    prepare({ title, media, price, originalPrice }) {
+      const priceStr = price ? `${price.toLocaleString('fr-DZ')} DA` : '';
+      const origStr = originalPrice ? ` (أصلي: ${originalPrice} DA)` : '';
       return {
-        title: title || 'Sans titre',
-        subtitle: `${price?.toLocaleString('fr-DZ')} DA`,
+        title: title || 'بدون اسم',
+        subtitle: `${priceStr}${origStr}`,
         media,
       };
     },

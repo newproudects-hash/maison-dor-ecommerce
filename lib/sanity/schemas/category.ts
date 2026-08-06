@@ -2,55 +2,67 @@ import { defineField, defineType } from 'sanity';
 
 export const category = defineType({
   name: 'category',
-  title: 'Catégorie',
+  title: 'الأقسام',
   type: 'document',
   fields: [
     defineField({
       name: 'title',
-      title: 'Nom de la catégorie',
+      title: 'اسم القسم',
       type: 'object',
       fields: [
-        { name: 'fr', title: 'Français 🇫🇷', type: 'string', validation: r => r.required() },
-        { name: 'ar', title: 'العربية 🇩🇿', type: 'string' },
+        { name: 'ar', title: 'العربية 🇩🇿', type: 'string', validation: r => r.required() },
+        { name: 'fr', title: 'Français 🇫🇷', type: 'string' },
         { name: 'en', title: 'English 🇺🇸', type: 'string' },
+      ],
+    }),
+    
+    defineField({
+      name: 'slug',
+      title: 'الرابط (Slug)',
+      description: 'الرابط الذي سيظهر في المتصفح (يفضل أن يكون بالإنجليزية أو الفرنسية)',
+      type: 'slug',
+      options: { source: 'title.en', maxLength: 96 },
+      validation: r => r.required(),
+    }),
+    
+    defineField({
+      name: 'description',
+      title: 'وصف القسم',
+      type: 'object',
+      fields: [
+        { name: 'ar', title: 'العربية 🇩🇿', type: 'text', rows: 3 },
+        { name: 'fr', title: 'Français 🇫🇷', type: 'text', rows: 3 },
+        { name: 'en', title: 'English 🇺🇸', type: 'text', rows: 3 },
       ],
     }),
 
     defineField({
-      name: 'slug',
-      title: 'Slug URL',
-      type: 'slug',
-      options: { source: 'title.fr', maxLength: 96 },
-      validation: r => r.required(),
-    }),
-
-    defineField({
       name: 'image',
-      title: 'Image de la catégorie',
+      title: 'صورة القسم',
       type: 'image',
       options: { hotspot: true },
     }),
 
     defineField({
       name: 'heroImage',
-      title: 'Image Hero (page catégorie)',
+      title: 'صورة البانر (Hero)',
       type: 'image',
       options: { hotspot: true },
-      description: 'صورة fullscreen للـ hero section في صفحة هذا القسم',
+      description: 'صورة كبيرة تظهر في أعلى صفحة القسم',
     }),
 
     defineField({
       name: 'order',
-      title: 'Ordre d\'affichage',
+      title: 'ترتيب العرض',
       type: 'number',
       initialValue: 0,
     }),
   ],
 
   preview: {
-    select: { title: 'title.fr', media: 'image' },
+    select: { title: 'title.ar', media: 'image' },
     prepare({ title, media }) {
-      return { title: title || 'Sans titre', media };
+      return { title: title || 'بدون اسم', media };
     },
   },
 });
