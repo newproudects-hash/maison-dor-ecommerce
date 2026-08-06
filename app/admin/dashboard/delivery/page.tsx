@@ -3,6 +3,9 @@ import Link from 'next/link';
 import { ArrowLeft, Save } from 'lucide-react';
 import { revalidatePath } from 'next/cache';
 
+export const dynamic = 'force-dynamic'; // Never pre-render admin pages
+
+
 /*
  * ACTIVE SKILLS: ui-ux-pro-max
  * DECISION: Direct form submission for price updates

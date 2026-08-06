@@ -4,6 +4,9 @@ import { ArrowLeft } from 'lucide-react';
 import { revalidatePath } from 'next/cache';
 import OrderStatusSelect from './OrderStatusSelect';
 
+export const dynamic = 'force-dynamic'; // Never pre-render admin pages
+
+
 /*
  * ACTIVE SKILLS: ui-ux-pro-max
  * DECISION: Table view with color-coded status pills

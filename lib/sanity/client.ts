@@ -1,16 +1,17 @@
 /*
- * ACTIVE SKILLS: supermemory (credentials saved)
- * Sanity Project: 4ryu7eeg | Dataset: product
+ * Sanity Project: 4zyu7eeg | Dataset: production
  */
 import { createClient } from '@sanity/client';
 import { createImageUrlBuilder } from '@sanity/image-url';
-type SanityImageSource = Parameters<ReturnType<typeof createImageUrlBuilder>['image']>[0];
+
+const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || '4zyu7eeg';
+const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET || 'production';
 
 export const sanityClient = createClient({
-  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!,
-  dataset: process.env.NEXT_PUBLIC_SANITY_DATASET!,
+  projectId,
+  dataset,
   apiVersion: '2025-01-01',
-  useCdn: process.env.NODE_ENV === 'production', // CDN in production for speed
+  useCdn: process.env.NODE_ENV === 'production',
   token: process.env.SANITY_API_TOKEN,
 });
 
@@ -23,9 +24,14 @@ export function urlFor(source: any) {
 
 // Helper to get max quality optimized WebP images
 export function getImageUrl(source: any, width: number = 800): string {
-  return urlFor(source)
-    .width(width)
-    .quality(95)        // High luxury quality
-    .format('webp')     // Best compression
-    .url();
+  if (!source) return '';
+  try {
+    return urlFor(source)
+      .width(width)
+      .quality(95)
+      .format('webp')
+      .url();
+  } catch {
+    return '';
+  }
 }
