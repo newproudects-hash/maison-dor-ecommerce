@@ -1,5 +1,5 @@
 import { defineConfig } from 'sanity'
-import { deskTool } from 'sanity/desk'
+import { structureTool } from 'sanity/structure'
 import { schema } from './lib/sanity/schemas'
 
 export default defineConfig({
@@ -9,10 +9,9 @@ export default defineConfig({
   
   title: "Maison D'Or Studio",
 
-  plugins: [deskTool()],
+  plugins: [structureTool()],
 
   schema: {
     types: schema.types,
   },
 })
-
