@@ -81,14 +81,16 @@ export default async function Home() {
             <Link key={cat._id} href={`/boutique/${cat.slug}`} className="relative aspect-[4/5] w-full group overflow-hidden cursor-pointer bg-white border border-neutral-200 rounded-md md:rounded-xl shadow-sm hover:shadow-lg transition-all">
               <Image
                 src={getImageUrl(cat.image) || 'https://picsum.photos/seed/placeholder/300/300'}
-                alt={cat.title}
+                alt={typeof cat.title === 'string' ? cat.title : (cat.title?.ar || cat.title?.fr || cat.title?.en || 'قسم')}
                 fill
                 className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                 referrerPolicy="no-referrer"
               />
               <div className="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition-colors" />
               <div className="absolute bottom-0 left-0 right-0 p-2 text-center">
-                <p className="text-white text-[9px] md:text-xs font-bold tracking-wider uppercase">{cat.title}</p>
+                <p className="text-white text-[9px] md:text-xs font-bold tracking-wider uppercase">
+                  {typeof cat.title === 'string' ? cat.title : (cat.title?.ar || cat.title?.fr || cat.title?.en || 'قسم')}
+                </p>
               </div>
             </Link>
           ))}

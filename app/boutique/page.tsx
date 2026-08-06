@@ -65,7 +65,7 @@ export default async function BoutiquePage({ searchParams }: { searchParams: Pro
                   : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
               }`}
             >
-              {cat.title}
+              {typeof cat.title === 'string' ? cat.title : (cat.title?.ar || cat.title?.fr || cat.title?.en || 'قسم')}
             </Link>
           ))}
         </div>

@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
+    "@sanity/client": "^7.26.2",
     "@sanity/image-url": "^2.1.1",
     "@supabase/supabase-js": "^2.112.1",
     "autoprefixer": "^10.4.21",

@@ -27,6 +27,10 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
   const catInfo = rawCategories.find((c: any) => c.slug === category);
   const products = (rawProductsData?.products || []).map(mapSanityProduct);
 
+  const catTitle = catInfo?.title 
+    ? (typeof catInfo.title === 'string' ? catInfo.title : (catInfo.title.ar || catInfo.title.fr || catInfo.title.en || category))
+    : category;
+
   return (
     <main className="min-h-screen bg-white text-neutral-900">
       <Navbar />
@@ -35,7 +39,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
       <section className="relative pt-16 h-[40vh] md:h-[50vh] overflow-hidden bg-neutral-900">
         <Image
           src={catInfo?.image ? getImageUrl(catInfo.image) : 'https://picsum.photos/seed/default/1200/600'}
-          alt={catInfo?.title || 'Catégorie'}
+          alt={catTitle}
           fill
           className="object-cover opacity-60"
           referrerPolicy="no-referrer"
@@ -45,7 +49,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
         <div className="absolute inset-0 flex flex-col items-center justify-end pb-12 text-center text-white px-4">
           <p className="text-amber-400 text-xs tracking-[0.3em] uppercase font-bold mb-3">Collection MAISON D'OR</p>
           <h1 className="text-4xl md:text-5xl font-serif font-black tracking-wider uppercase mb-2">
-            {catInfo?.title || 'Tous les articles'}
+            {catTitle}
           </h1>
           <p className="text-white/70 text-sm max-w-sm mx-auto">{products.length} articles dans cette catégorie</p>
         </div>
@@ -58,7 +62,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
           <ChevronRight className="w-3 h-3" />
           <Link href="/boutique" className="hover:text-neutral-700 transition-colors">Boutique</Link>
           <ChevronRight className="w-3 h-3" />
-          <span className="text-neutral-700 font-semibold">{catInfo?.title || category}</span>
+          <span className="text-neutral-700 font-semibold">{catTitle}</span>
         </nav>
       </div>
 
