@@ -1,15 +1,19 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
-import { ShoppingBag, ChevronDown, X, Globe, Home, Store, Grid3x3 } from 'lucide-react';
-import { getCart, CartItem } from '@/lib/store/cartStore';
-import { CATEGORIES } from '@/lib/data/products';
+import { ChevronDown, X, Globe, Home, Store, Grid3x3 } from 'lucide-react';
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
+}
+
+interface SanityCategory {
+  _id: string;
+  slug: string;
+  title: string | { ar?: string; fr?: string; en?: string };
 }
 
 const LANGUAGES = [
@@ -18,10 +22,27 @@ const LANGUAGES = [
   { code: 'en', label: 'English', flag: '🇬🇧', sub: 'UK / US' },
 ];
 
+function getCategoryLabel(title: string | { ar?: string; fr?: string; en?: string }): string {
+  if (typeof title === 'string') return title;
+  return title?.fr || title?.ar || title?.en || '';
+}
+
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const [activeLang, setActiveLang] = useState('fr');
+  const [categories, setCategories] = useState<SanityCategory[]>([]);
+
+  // Fetch categories dynamically from Sanity on mount
+  useEffect(() => {
+    if (!isOpen || categories.length > 0) return;
+    fetch('/api/categories')
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data)) setCategories(data);
+      })
+      .catch(() => {/* Silently fail */});
+  }, [isOpen, categories.length]);
 
   return (
     <AnimatePresence>
@@ -47,8 +68,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           >
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-5 border-b border-white/10">
-              <span className="text-white font-serif font-black tracking-widest text-lg">MAISON D'OR</span>
-              <button onClick={onClose} className="text-white/60 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/10">
+              <span className="text-white font-serif font-black tracking-widest text-lg">MAISON D&apos;OR</span>
+              <button onClick={onClose} className="text-white/60 hover:text-white hover:rotate-90 transition-all duration-300 p-1.5 rounded-full hover:bg-white/10">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -93,17 +114,21 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                       className="overflow-hidden"
                     >
                       <div className="pl-4 pr-2 pb-2 space-y-1">
-                        {CATEGORIES.map((cat) => (
-                          <Link
-                            key={cat.id}
-                            href={`/boutique/${cat.id}`}
-                            onClick={onClose}
-                            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-all text-sm font-medium"
-                          >
-                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400/60 group-hover:bg-amber-400" />
-                            {cat.labelFr}
-                          </Link>
-                        ))}
+                        {categories.length === 0 ? (
+                          <p className="text-white/30 text-xs px-4 py-2">Chargement...</p>
+                        ) : (
+                          categories.map((cat) => (
+                            <Link
+                              key={cat._id}
+                              href={`/boutique/${cat.slug}`}
+                              onClick={onClose}
+                              className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-all text-sm font-medium"
+                            >
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-400/60" />
+                              {getCategoryLabel(cat.title)}
+                            </Link>
+                          ))
+                        )}
                       </div>
                     </motion.div>
                   )}
@@ -164,7 +189,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
             {/* Footer */}
             <div className="px-6 py-4 border-t border-white/10">
-              <p className="text-white/30 text-xs text-center tracking-widest">© 2026 MAISON D'OR</p>
+              <p className="text-white/30 text-xs text-center tracking-widest">© 2026 MAISON D&apos;OR</p>
             </div>
           </motion.aside>
         </>

@@ -57,10 +57,11 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     );
   }
 
-  const product = mapSanityProduct(rawProduct as any); // Type assertion needed until Sanity client is typed
-  let related: { id: string; name: string; price: number; image: string; category: string; slug: string; description: string; colors: string[]; sizes: string[]; placement: string[] }[] = [];
+  const product = mapSanityProduct(rawProduct);
+  let related: ReturnType<typeof mapSanityProduct>[] = [];
   try {
-    const rawRelated = await getRelatedProducts(rawProduct.category._id, rawProduct._id);
+    const rp = rawProduct as Record<string, any>;
+    const rawRelated = await getRelatedProducts(rp.category?._id, rp._id);
     related = rawRelated.map(mapSanityProduct);
   } catch {
     // Non-fatal — related products are optional

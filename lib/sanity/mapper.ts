@@ -1,39 +1,46 @@
 import { getImageUrl } from './client';
 import type { Product } from '@/types';
 
-export type SanityProduct = {
-  _id: string;
-  slug: string;
-  title: string | { ar?: string; fr?: string; en?: string };
-  description?: string | { ar?: string; fr?: string; en?: string };
-  price: number;
-  originalPrice?: number;
-  images: any[];
-  colors: string[];
-  sizes: string[];
-  inStock: boolean;
-  placement: string[];
-  category: { _id: string; title: string | { ar?: string; fr?: string; en?: string }; slug: string };
-};
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyObj = Record<string, any>;
 
-export function mapSanityProduct(p: SanityProduct): Product {
-  // Extract correct language string (fallback: ar -> fr -> en)
-  const getName = (titleObj: any) => typeof titleObj === 'string' ? titleObj : (titleObj?.ar || titleObj?.fr || titleObj?.en || 'Produit sans nom');
-  const getDesc = (descObj: any) => typeof descObj === 'string' ? descObj : (descObj?.ar || descObj?.fr || descObj?.en || '');
+// Accept any value from GROQ results — we validate internally
+export function mapSanityProduct(input: unknown): Product {
+  const p = input as AnyObj;
+
+  const getName = (obj: unknown): string => {
+    if (typeof obj === 'string') return obj;
+    if (obj && typeof obj === 'object') {
+      const o = obj as Record<string, string>;
+      return o.ar || o.fr || o.en || 'Produit sans nom';
+    }
+    return 'Produit sans nom';
+  };
+
+  const getDesc = (obj: unknown): string => {
+    if (typeof obj === 'string') return obj;
+    if (obj && typeof obj === 'object') {
+      const o = obj as Record<string, string>;
+      return o.ar || o.fr || o.en || '';
+    }
+    return '';
+  };
+
+  const images: AnyObj[] = Array.isArray(p.images) ? p.images : [];
 
   return {
-    id: p._id,
+    id: String(p._id || ''),
     name: getName(p.title),
-    price: p.price,
-    originalPrice: p.originalPrice,
-    image: p.images && p.images.length > 0 ? getImageUrl(p.images[0]) : '/hero.jpg',
-    images: p.images ? p.images.map(img => getImageUrl(img)) : ['/hero.jpg'],
-    category: p.category?.slug || 'sacs',
-    slug: p.slug,
+    price: Number(p.price) || 0,
+    originalPrice: p.originalPrice != null ? Number(p.originalPrice) : undefined,
+    image: images.length > 0 ? (getImageUrl(images[0]) || '/hero.jpg') : '/hero.jpg',
+    images: images.length > 0 ? images.map((img) => getImageUrl(img) || '/hero.jpg') : ['/hero.jpg'],
+    category: (p.category as AnyObj)?.slug || 'sacs',
+    slug: String(p.slug || ''),
     description: getDesc(p.description),
-    colors: p.colors || [],
-    sizes: p.sizes || [],
-    placement: p.placement || [],
-    inStock: p.inStock ?? true,
+    colors: Array.isArray(p.colors) ? (p.colors as string[]) : [],
+    sizes: Array.isArray(p.sizes) ? (p.sizes as string[]) : [],
+    placement: Array.isArray(p.placement) ? (p.placement as string[]) : [],
+    inStock: p.inStock !== false,
   };
 }
