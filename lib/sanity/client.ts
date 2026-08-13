@@ -15,15 +15,17 @@ export const sanityClient = createClient({
   token: process.env.SANITY_API_TOKEN,
 });
 
+import type { SanityImageSource } from '@sanity/image-url/lib/types/types';
+
 // Image URL Builder
 const builder = createImageUrlBuilder(sanityClient);
 
-export function urlFor(source: any) {
+export function urlFor(source: SanityImageSource) {
   return builder.image(source);
 }
 
 // Helper to get max quality optimized WebP images
-export function getImageUrl(source: any, width: number = 800): string {
+export function getImageUrl(source: SanityImageSource, width: number = 800): string {
   if (!source) return '';
   try {
     return urlFor(source)

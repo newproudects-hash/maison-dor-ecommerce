@@ -3,17 +3,46 @@ import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import ProductCard from '@/components/ui/ProductCard';
+import type { Metadata } from 'next';
 import { getProducts, getCategories } from '@/lib/sanity/queries';
 import { mapSanityProduct } from '@/lib/sanity/mapper';
 import { getImageUrl } from '@/lib/sanity/client';
 
 export const revalidate = 60;
 
+// Dynamic SEO metadata per category
+export async function generateMetadata(
+  { params }: { params: Promise<{ category: string }> }
+): Promise<Metadata> {
+  const { category } = await params;
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.maisondor.dz';
+  try {
+    const categories = await getCategories();
+    const catInfo = categories.find((c: { slug: string }) => c.slug === category);
+    
+    const catTitle = catInfo?.title 
+      ? (typeof catInfo.title === 'string' ? catInfo.title : (catInfo.title.ar || catInfo.title.fr || catInfo.title.en || category))
+      : category;
+
+    return {
+      title: `${catTitle} — Sacs et Accessoires`,
+      description: `Découvrez notre collection de ${catTitle} de luxe chez MAISON D'OR.`,
+      openGraph: {
+        title: `${catTitle} | MAISON D'OR`,
+        description: `Collection exclusive de ${catTitle} livrés partout en Algérie.`,
+        url: `${baseUrl}/boutique/${category}`,
+      },
+    };
+  } catch {
+    return { title: 'Boutique' };
+  }
+}
+
 export default async function CategoryPage({ params }: { params: Promise<{ category: string }> }) {
   const { category } = await params;
   
-  let rawProductsData: any = { products: [] };
-  let rawCategories: any[] = [];
+  let rawProductsData: { products: unknown[] } = { products: [] };
+  let rawCategories: { slug: string; title: string | { ar?: string; fr?: string; en?: string }; image: unknown }[] = [];
 
   try {
     [rawProductsData, rawCategories] = await Promise.all([
@@ -24,7 +53,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
     console.warn('[Category] Sanity fetch failed:', err);
   }
 
-  const catInfo = rawCategories.find((c: any) => c.slug === category);
+  const catInfo = rawCategories.find((c) => c.slug === category);
   const products = (rawProductsData?.products || []).map(mapSanityProduct);
 
   const catTitle = catInfo?.title 
@@ -38,7 +67,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
       {/* Hero */}
       <section className="relative pt-16 h-[40vh] md:h-[50vh] overflow-hidden bg-neutral-900">
         <Image
-          src={catInfo?.image ? getImageUrl(catInfo.image) : 'https://picsum.photos/seed/default/1200/600'}
+          src={catInfo?.image ? getImageUrl(catInfo.image) : '/hero.jpg'}
           alt={catTitle}
           fill
           className="object-cover opacity-60"
@@ -77,7 +106,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
-            {products.map((product: any) => (
+            {products.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>

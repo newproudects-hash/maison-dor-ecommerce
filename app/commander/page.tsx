@@ -50,15 +50,16 @@ export default function CommanderPage() {
           deliveryType: delivery,
           deliveryPrice: shipping,
           address: form.adresse,
-          items: cart.map(c => ({
-            productId: c.id,
-            productName: c.name,
-            quantity: c.quantity,
-            price: c.price,
-            size: c.size || '',
-            color: c.color || '',
-            imageUrl: c.image || ''
-          })),
+          items: cart.map(item => ({
+          productId: item.productId,
+          productName: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          size: item.size,
+          color: item.color,
+          imageUrl: item.image,
+          slug: item.slug,
+        })),
           subtotal,
           total
         })
@@ -111,7 +112,7 @@ export default function CommanderPage() {
 
         <div className="flex justify-center gap-8 mb-8">
           {['Informations', 'Livraison', 'Confirmation'].map((label, i) => (
-            <span key={i} className={`text-xs font-bold tracking-wider uppercase ${step === i + 1 ? 'text-[#082215]' : 'text-neutral-400'}`}>
+            <span key={label} className={`text-xs font-bold tracking-wider uppercase ${step === i + 1 ? 'text-[#082215]' : 'text-neutral-400'}`}>
               {label}
             </span>
           ))}
@@ -263,13 +264,21 @@ export default function CommanderPage() {
                   {cart.map((item) => (
                     <div key={item.id} className="flex items-center gap-3">
                       <div className="relative w-12 h-14 rounded-lg overflow-hidden bg-neutral-100 shrink-0">
-                        <Image src={item.image} alt={item.name} fill className="object-cover" />
+                        <Image src={item.image} alt={item.name} fill className="object-cover" referrerPolicy="no-referrer" />
                       </div>
                       <div className="flex-1">
                         <p className="text-sm font-semibold text-neutral-800 leading-tight">{item.name}</p>
-                        <p className="text-xs text-neutral-400">x{item.quantity}</p>
+                        <div className="flex gap-2 text-[10px] text-neutral-500 mt-0.5">
+                          {item.size && <span>Taille: {item.size}</span>}
+                          {item.color && (
+                            <span className="flex items-center gap-1">
+                              Couleur: <span className="w-2 h-2 rounded-full border border-neutral-200" style={{ backgroundColor: item.color }} />
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-neutral-400 mt-0.5">x{item.quantity}</p>
                       </div>
-                      <p className="font-black text-sm">${(item.price * item.quantity).toFixed(2)}</p>
+                      <p className="font-black text-sm">{(item.price * item.quantity).toLocaleString('fr-DZ')} DA</p>
                     </div>
                   ))}
                 </div>
@@ -278,7 +287,7 @@ export default function CommanderPage() {
                 <div className="space-y-2 border-t border-neutral-100 pt-4">
                   <div className="flex justify-between text-sm text-neutral-500">
                     <span>Sous-total</span>
-                    <span className="font-semibold text-neutral-800">${subtotal.toFixed(2)}</span>
+                    <span className="font-semibold text-neutral-800">{subtotal.toLocaleString('fr-DZ')} DA</span>
                   </div>
                   <div className="flex justify-between text-sm text-neutral-500">
                     <span>Livraison ({delivery === 'domicile' ? 'Domicile' : 'Stop Desk'})</span>
@@ -286,7 +295,7 @@ export default function CommanderPage() {
                   </div>
                   <div className="flex justify-between text-base font-black text-neutral-900 pt-2 border-t border-neutral-100">
                     <span>Total</span>
-                    <span>${subtotal.toFixed(2)} + {shipping} DA</span>
+                    <span>{total.toLocaleString('fr-DZ')} DA</span>
                   </div>
                 </div>
               </div>

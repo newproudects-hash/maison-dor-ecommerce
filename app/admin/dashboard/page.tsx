@@ -34,6 +34,7 @@ export default function AdminDashboard() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
   const [updatingId, setUpdatingId] = useState<number | null>(null);
 
   const fetchOrders = async () => {
@@ -85,9 +86,17 @@ export default function AdminDashboard() {
   const pendingOrders = orders.filter(o => o.status === 'pending').length;
   const deliveredOrders = orders.filter(o => o.status === 'delivered').length;
 
-  const filteredOrders = activeFilter === 'all'
-    ? orders
-    : orders.filter(o => o.status === activeFilter);
+  const filteredOrders = orders
+    .filter(o => activeFilter === 'all' || o.status === activeFilter)
+    .filter(o => {
+      const term = searchTerm.toLowerCase();
+      return (
+        o.order_number.toLowerCase().includes(term) ||
+        o.customer_name.toLowerCase().includes(term) ||
+        o.phone.includes(term) ||
+        o.wilaya.toLowerCase().includes(term)
+      );
+    });
 
   const STATS = [
     { label: 'إجمالي الطلبات', value: orders.length, icon: Package,       color: '#C9A84C', bg: 'rgba(201,168,76,0.12)' },
@@ -214,6 +223,17 @@ export default function AdminDashboard() {
             </div>
           </div>
 
+          {/* Search Bar */}
+          <div className="px-6 py-4 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+            <input
+              type="text"
+              placeholder="البحث برقم الطلب، اسم العميل، الهاتف، أو الولاية..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-slate-500 transition-colors"
+            />
+          </div>
+
           {/* Table */}
           <div className="overflow-x-auto">
             <table className="w-full text-right">
@@ -229,9 +249,9 @@ export default function AdminDashboard() {
               <tbody>
                 {loading ? (
                   [...Array(5)].map((_, i) => (
-                    <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                    <tr key={`skeleton-row-${i}`} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                       {[...Array(8)].map((_, j) => (
-                        <td key={j} className="px-5 py-4">
+                        <td key={`skeleton-col-${j}`} className="px-5 py-4">
                           <div className="h-4 rounded-lg animate-pulse" style={{ background: 'rgba(255,255,255,0.06)', width: `${60 + Math.random() * 40}%` }} />
                         </td>
                       ))}

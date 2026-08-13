@@ -20,9 +20,9 @@ export const product = defineType({
       name: 'slug',
       title: 'الرابط (Slug)',
       type: 'slug',
-      options: { source: 'title.en', maxLength: 96 },
+      options: { source: 'title.ar', maxLength: 96 },
       validation: r => r.required(),
-      description: 'الرابط الذي يظهر في المتصفح (يفضل أن يكون بالإنجليزية)',
+      description: 'الرابط الذي يظهر في المتصفح',
     }),
 
     defineField({
@@ -48,7 +48,7 @@ export const product = defineType({
       name: 'price',
       title: 'السعر الحالي / بعد التخفيض (DA)',
       type: 'number',
-      validation: r => r.required().min(0),
+      validation: r => r.required().positive().error('السعر يجب أن يكون أكبر من الصفر'),
     }),
 
     defineField({
@@ -149,8 +149,8 @@ export const product = defineType({
           { title: 'XXL', value: 'XXL' },
           { title: '3XL', value: '3XL' },
           { title: 'قياس موحد (Unique)', value: 'Unique' },
-          // مقاسات الأحذية من 1 إلى 50
-          ...Array.from({ length: 50 }, (_, i) => ({ title: String(i + 1), value: String(i + 1) }))
+          // مقاسات الأحذية أو غيرها من 1 إلى 60
+          ...Array.from({ length: 60 }, (_, i) => ({ title: String(i + 1), value: String(i + 1) }))
         ],
         layout: 'grid',
       },
@@ -161,6 +161,26 @@ export const product = defineType({
       title: 'متوفر في المخزن',
       type: 'boolean',
       initialValue: true,
+    }),
+
+    defineField({
+      name: 'stockQuantity',
+      title: 'كمية المخزون',
+      type: 'number',
+      description: 'الكمية المتوفرة في المخزن (يترك فارغاً إذا كانت غير محدودة)',
+      validation: r => r.min(0).integer(),
+    }),
+
+    defineField({
+      name: 'seo',
+      title: 'إعدادات محركات البحث (SEO)',
+      type: 'object',
+      fields: [
+        { name: 'metaTitle', title: 'عنوان الميتا (Meta Title)', type: 'string', description: 'عنوان مخصص لمحركات البحث (اختياري)' },
+        { name: 'metaDescription', title: 'وصف الميتا (Meta Description)', type: 'text', rows: 3, description: 'وصف قصير يظهر في نتائج البحث (يفضل بين 150-160 حرف)' },
+        { name: 'keywords', title: 'الكلمات المفتاحية', type: 'array', of: [{type: 'string'}], options: { layout: 'tags' } },
+      ],
+      options: { collapsible: true, collapsed: true },
     }),
 
     defineField({

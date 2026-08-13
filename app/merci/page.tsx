@@ -14,10 +14,12 @@ function MerciContent() {
 
   // Sound effect
   useEffect(() => {
+    let ctx: AudioContext | null = null;
     try {
-      const ctx = new AudioContext();
+      ctx = new AudioContext();
       const notes = [523.25, 659.25, 783.99, 1046.5];
       notes.forEach((freq, i) => {
+        if (!ctx) return;
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.connect(gain);
@@ -33,7 +35,14 @@ function MerciContent() {
     } catch {
       // Audio not supported
     }
+    
+    return () => {
+      if (ctx && ctx.state !== 'closed') {
+        ctx.close().catch(() => {});
+      }
+    };
   }, []);
+
 
   // Confetti
   useEffect(() => {
@@ -48,7 +57,7 @@ function MerciContent() {
     const colors = ['#D4AF37', '#082215', '#25D366', '#1877F2', '#E1306C', '#ffffff', '#FBD38D'];
     const particles: { x: number; y: number; vx: number; vy: number; color: string; size: number; angle: number; spin: number }[] = [];
 
-    for (let i = 0; i < 160; i++) {
+    for (let i = 0; i < 60; i++) {
       particles.push({
         x: Math.random() * canvas.width,
         y: -10 - Math.random() * 200,

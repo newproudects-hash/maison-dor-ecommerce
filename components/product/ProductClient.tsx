@@ -1,21 +1,66 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Plus, Minus, ShoppingBag, Heart } from 'lucide-react';
 import { addToCart } from '@/lib/store/cartStore';
+import type { Product } from '@/types';
 
-export default function ProductClient({ product }: { product: any }) {
+const MAX_QTY = 20;
+
+export default function ProductClient({ product }: { product: Product }) {
   const [qty, setQty] = useState(1);
-  const [selectedColor, setSelectedColor] = useState(0);
-  const [selectedSize, setSelectedSize] = useState(0);
+  const [selectedColor, setSelectedColor] = useState<string | undefined>(
+    product.colors && product.colors.length > 0 ? product.colors[0] : undefined
+  );
+  const [selectedSize, setSelectedSize] = useState<string | undefined>(
+    product.sizes && product.sizes.length > 0 ? product.sizes[0] : undefined
+  );
   const [added, setAdded] = useState(false);
+  const [wishlisted, setWishlisted] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Load wishlist state from localStorage
+  useEffect(() => {
+    try {
+      const wishlist: string[] = JSON.parse(localStorage.getItem('maison_wishlist') || '[]');
+      setWishlisted(wishlist.includes(product.id));
+    } catch { /* ignore */ }
+  }, [product.id]);
+
+  // Cleanup timeout on unmount (fixes memory leak)
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
 
   const handleAdd = () => {
-    for (let i = 0; i < qty; i++) {
-      addToCart({ id: product.id, name: product.name, price: product.price, image: product.image, category: product.category });
-    }
+    // Add once with correct quantity — no loop!
+    addToCart({
+      productId: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.image,
+      category: product.category,
+      slug: product.slug,
+      size: selectedSize,
+      color: selectedColor,
+      quantity: qty,
+    });
     setAdded(true);
-    setTimeout(() => setAdded(false), 2000);
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => setAdded(false), 2000);
+  };
+
+  const handleWishlist = () => {
+    try {
+      const wishlist: string[] = JSON.parse(localStorage.getItem('maison_wishlist') || '[]');
+      const newWishlist = wishlisted
+        ? wishlist.filter((id) => id !== product.id)
+        : [...wishlist, product.id];
+      localStorage.setItem('maison_wishlist', JSON.stringify(newWishlist));
+      setWishlisted(!wishlisted);
+    } catch { /* ignore */ }
   };
 
   return (
@@ -23,15 +68,25 @@ export default function ProductClient({ product }: { product: any }) {
       {/* Colors */}
       {product.colors && product.colors.length > 0 && (
         <div>
-          <p className="text-xs font-bold tracking-widest uppercase text-neutral-500 mb-3">Couleur</p>
-          <div className="flex gap-2">
-            {product.colors.map((color: string, i: number) => (
+          <p className="text-xs font-bold tracking-widest uppercase text-neutral-500 mb-3">
+            Couleur
+            {selectedColor && (
+              <span className="ml-2 text-neutral-700 normal-case font-normal tracking-normal">
+                — {selectedColor}
+              </span>
+            )}
+          </p>
+          <div className="flex gap-2 flex-wrap">
+            {product.colors.map((color: string) => (
               <button
-                key={i}
-                onClick={() => setSelectedColor(i)}
-                className={`w-8 h-8 rounded-full border-2 transition-all ${selectedColor === i ? 'border-neutral-900 scale-110' : 'border-neutral-200'}`}
+                key={color}
+                onClick={() => setSelectedColor(color)}
+                className={`w-8 h-8 rounded-full border-2 transition-all ${
+                  selectedColor === color ? 'border-neutral-900 scale-110 shadow-md' : 'border-neutral-200'
+                }`}
                 style={{ backgroundColor: color }}
                 aria-label={`Couleur ${color}`}
+                aria-pressed={selectedColor === color}
               />
             ))}
           </div>
@@ -43,11 +98,16 @@ export default function ProductClient({ product }: { product: any }) {
         <div>
           <p className="text-xs font-bold tracking-widest uppercase text-neutral-500 mb-3">Taille</p>
           <div className="flex gap-2 flex-wrap">
-            {product.sizes.map((size: string, i: number) => (
+            {product.sizes.map((size: string) => (
               <button
-                key={i}
-                onClick={() => setSelectedSize(i)}
-                className={`px-4 py-2 rounded-lg text-sm font-bold border-2 transition-all ${selectedSize === i ? 'border-neutral-900 bg-neutral-900 text-white' : 'border-neutral-200 text-neutral-600 hover:border-neutral-400'}`}
+                key={size}
+                onClick={() => setSelectedSize(size)}
+                aria-pressed={selectedSize === size}
+                className={`px-4 py-2 rounded-lg text-sm font-bold border-2 transition-all ${
+                  selectedSize === size
+                    ? 'border-neutral-900 bg-neutral-900 text-white'
+                    : 'border-neutral-200 text-neutral-600 hover:border-neutral-400'
+                }`}
               >
                 {size}
               </button>
@@ -59,12 +119,22 @@ export default function ProductClient({ product }: { product: any }) {
       {/* Quantity */}
       <div>
         <p className="text-xs font-bold tracking-widest uppercase text-neutral-500 mb-3">Quantité</p>
-        <div className="flex items-center gap-0 border-2 border-neutral-200 rounded-xl w-fit overflow-hidden">
-          <button onClick={() => setQty(Math.max(1, qty - 1))} className="px-4 py-3 hover:bg-neutral-100 transition-colors">
+        <div className="flex items-center border-2 border-neutral-200 rounded-xl w-fit overflow-hidden">
+          <button
+            onClick={() => setQty(Math.max(1, qty - 1))}
+            className="px-4 py-3 hover:bg-neutral-100 transition-colors"
+            aria-label="Diminuer la quantité"
+          >
             <Minus className="w-4 h-4" />
           </button>
-          <span className="px-5 py-3 font-black text-neutral-900 text-lg min-w-[60px] text-center">{qty}</span>
-          <button onClick={() => setQty(qty + 1)} className="px-4 py-3 hover:bg-neutral-100 transition-colors">
+          <span className="px-5 py-3 font-black text-neutral-900 text-lg min-w-[60px] text-center">
+            {qty}
+          </span>
+          <button
+            onClick={() => setQty(Math.min(MAX_QTY, qty + 1))}
+            className="px-4 py-3 hover:bg-neutral-100 transition-colors"
+            aria-label="Augmenter la quantité"
+          >
             <Plus className="w-4 h-4" />
           </button>
         </div>
@@ -75,16 +145,22 @@ export default function ProductClient({ product }: { product: any }) {
         <button
           onClick={handleAdd}
           className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-sm tracking-wide transition-all duration-300 shadow-sm hover:shadow-md ${
-            added
-              ? 'bg-green-600 text-white'
-              : 'bg-[#082215] text-white hover:bg-[#0d3020]'
+            added ? 'bg-green-600 text-white' : 'bg-[#082215] text-white hover:bg-[#0d3020]'
           }`}
         >
           <ShoppingBag className="w-4 h-4" />
           {added ? '✓ Ajouté au panier !' : 'Ajouter au panier'}
         </button>
-        <button className="border-2 border-neutral-200 rounded-2xl px-4 py-4 hover:border-red-300 hover:text-red-500 hover:bg-red-50 transition-colors">
-          <Heart className="w-5 h-5" />
+        <button
+          onClick={handleWishlist}
+          className={`border-2 rounded-2xl px-4 py-4 transition-colors ${
+            wishlisted
+              ? 'border-red-400 text-red-500 bg-red-50'
+              : 'border-neutral-200 hover:border-red-300 hover:text-red-500 hover:bg-red-50'
+          }`}
+          aria-label={wishlisted ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+        >
+          <Heart className={`w-5 h-5 ${wishlisted ? 'fill-red-500' : ''}`} />
         </button>
       </div>
     </div>

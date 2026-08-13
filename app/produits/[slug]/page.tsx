@@ -1,7 +1,9 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
+import type { Metadata } from 'next';
 import Navbar from '@/components/layout/Navbar';
+import ProductGallery from '@/components/product/ProductGallery';
 import ProductClient from '@/components/product/ProductClient';
 import ProductCard from '@/components/ui/ProductCard';
 import { getProduct, getRelatedProducts } from '@/lib/sanity/queries';
@@ -9,14 +11,40 @@ import { mapSanityProduct } from '@/lib/sanity/mapper';
 
 export const revalidate = 60;
 
+// Dynamic SEO metadata per product
+export async function generateMetadata(
+  { params }: { params: Promise<{ slug: string }> }
+): Promise<Metadata> {
+  const { slug } = await params;
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.maisondor.dz';
+  try {
+    const raw = await getProduct(slug);
+    if (!raw) return { title: 'Produit introuvable' };
+    const p = mapSanityProduct(raw);
+    return {
+      title: p.name,
+      description: p.description || `${p.name} — ${p.price.toLocaleString('fr-DZ')} DA. Livraison partout en Algérie.`,
+      openGraph: {
+        title: `${p.name} | MAISON D'OR`,
+        description: p.description || `Disponible à ${p.price.toLocaleString('fr-DZ')} DA`,
+        images: [{ url: p.image, alt: p.name }],
+        url: `${baseUrl}/produits/${slug}`,
+      },
+    };
+  } catch {
+    return { title: "MAISON D'OR" };
+  }
+}
+
+
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   
-  let rawProduct: any = null;
+  let rawProduct: unknown = null;
   try {
     rawProduct = await getProduct(slug);
-  } catch (err) {
-    console.warn('[Product] Sanity fetch failed:', err);
+  } catch {
+    // Silent fail
   }
 
   if (!rawProduct) {
@@ -29,17 +57,41 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     );
   }
 
-  const product = mapSanityProduct(rawProduct);
-  let related: any[] = [];
+  const product = mapSanityProduct(rawProduct as any); // Type assertion needed until Sanity client is typed
+  let related: { id: string; name: string; price: number; image: string; category: string; slug: string; description: string; colors: string[]; sizes: string[]; placement: string[] }[] = [];
   try {
     const rawRelated = await getRelatedProducts(rawProduct.category._id, rawProduct._id);
     related = rawRelated.map(mapSanityProduct);
-  } catch (err) {
-    console.warn('[Product] Failed to fetch related products:', err);
+  } catch {
+    // Non-fatal — related products are optional
   }
+
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.maisondor.dz';
+
+  // JSON-LD structured data for Google Shopping
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    description: product.description,
+    image: product.image,
+    url: `${baseUrl}/produits/${product.slug}`,
+    offers: {
+      '@type': 'Offer',
+      price: product.price,
+      priceCurrency: 'DZD',
+      availability: 'https://schema.org/InStock',
+      seller: { '@type': 'Organization', name: "MAISON D'OR" },
+    },
+  };
 
   return (
     <main className="min-h-screen bg-white text-neutral-900">
+      {/* JSON-LD structured data for Google Shopping */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Navbar />
 
       <div className="pt-16 max-w-7xl mx-auto px-4 md:px-8">
@@ -56,17 +108,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
         {/* Main Content */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 pb-16">
-          {/* Image */}
-          <div className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-neutral-100 shadow-lg animate-fade-in-up">
-            <Image
-              src={product.image}
-              alt={product.name}
-              fill
-              className="object-cover"
-              referrerPolicy="no-referrer"
-              priority
-            />
-          </div>
+          {/* Image Gallery */}
+          <ProductGallery images={product.images && product.images.length > 0 ? product.images : [product.image]} alt={product.name} />
 
           {/* Info */}
           <div className="flex flex-col justify-center gap-6">
@@ -74,12 +117,10 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               <p className="text-amber-600 text-xs tracking-[0.25em] uppercase font-bold mb-2 capitalize">{product.category}</p>
               <h1 className="text-3xl md:text-4xl font-serif font-black text-neutral-900 leading-tight">{product.name}</h1>
               <div className="flex items-center gap-2 mt-3">
-                <div className="flex text-amber-400">{'★★★★★'}</div>
-                <span className="text-xs text-neutral-400">124 avis</span>
               </div>
             </div>
 
-            <p className="text-4xl font-black text-neutral-900">${product.price}</p>
+            <p className="text-4xl font-black text-neutral-900">{product.price.toLocaleString('fr-DZ')} <span className="text-2xl font-bold text-neutral-500">DA</span></p>
 
             <p className="text-neutral-500 text-sm leading-relaxed">{product.description}</p>
 

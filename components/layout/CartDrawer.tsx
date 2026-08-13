@@ -42,6 +42,12 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+            drag="x"
+            dragConstraints={{ left: 0, right: 300 }}
+            dragElastic={0.1}
+            onDragEnd={(e, info) => {
+              if (info.offset.x > 100) onClose();
+            }}
             className="fixed top-0 right-0 h-full w-full sm:w-[420px] bg-white z-50 flex flex-col shadow-2xl"
           >
             {/* Header */}
@@ -82,12 +88,19 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                       className="flex gap-4 p-5"
                     >
                       <div className="relative w-20 h-24 rounded-xl overflow-hidden bg-neutral-100 shrink-0">
-                        <Image src={item.image} alt={item.name} fill className="object-cover" />
+                        <Image src={item.image} alt={item.name} fill className="object-cover" referrerPolicy="no-referrer" />
                       </div>
                       <div className="flex-1 flex flex-col justify-between">
                         <div>
                           <p className="font-semibold text-sm text-neutral-900 leading-tight">{item.name}</p>
-                          <p className="text-xs text-neutral-400 mt-0.5 capitalize">{item.category}</p>
+                          <div className="flex gap-2 items-center text-xs text-neutral-500 mt-1">
+                            {item.size && <span>Taille: <strong className="text-neutral-700">{item.size}</strong></span>}
+                            {item.color && (
+                              <span className="flex items-center gap-1">
+                                Couleur: <span className="w-3 h-3 rounded-full border border-neutral-200" style={{ backgroundColor: item.color }} />
+                              </span>
+                            )}
+                          </div>
                         </div>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-1 border border-neutral-200 rounded-lg overflow-hidden">
@@ -99,12 +112,20 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                               <Plus className="w-3 h-3" />
                             </button>
                           </div>
-                          <p className="font-black text-neutral-900">${(item.price * item.quantity).toFixed(2)}</p>
+                          <p className="font-black text-neutral-900">{(item.price * item.quantity).toLocaleString('fr-DZ')} DA</p>
                         </div>
                       </div>
-                      <button onClick={() => removeFromCart(item.id)} className="text-neutral-300 hover:text-red-400 transition-colors self-start mt-1">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <button
+                          onClick={() => {
+                            if (window.confirm('Êtes-vous sûr de vouloir retirer cet article du panier ?')) {
+                              removeFromCart(item.id);
+                            }
+                          }}
+                          className="p-2 text-neutral-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+                          aria-label="Supprimer l'article"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                     </motion.div>
                   ))}
                 </div>
@@ -117,7 +138,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm text-neutral-500">
                     <span>Sous-total</span>
-                    <span className="font-semibold text-neutral-800">${total.toFixed(2)}</span>
+                    <span className="font-semibold text-neutral-800">{total.toLocaleString('fr-DZ')} DA</span>
                   </div>
                   <div className="flex justify-between text-sm text-neutral-500">
                     <span>Livraison</span>
@@ -125,7 +146,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                   </div>
                   <div className="flex justify-between text-base font-black text-neutral-900 pt-2 border-t border-neutral-100">
                     <span>Total</span>
-                    <span>${total.toFixed(2)}</span>
+                    <span>{total.toLocaleString('fr-DZ')} DA</span>
                   </div>
                 </div>
 

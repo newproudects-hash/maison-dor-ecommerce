@@ -10,16 +10,16 @@ export const revalidate = 60;
 export default async function BoutiquePage({ searchParams }: { searchParams: Promise<{ c?: string }> }) {
   const { c: activeCategory = 'all' } = await searchParams;
   
-  let rawProductsData: any = { products: [] };
-  let rawCategories: any[] = [];
+  let rawProductsData: { products: unknown[] } = { products: [] };
+  let rawCategories: { _id: string; slug: string; title: string | { ar?: string; fr?: string; en?: string } }[] = [];
 
   try {
     [rawProductsData, rawCategories] = await Promise.all([
       getProducts({ page: 1, perPage: 100, categorySlug: activeCategory === 'all' ? undefined : activeCategory }),
       getCategories(),
     ]);
-  } catch (err) {
-    console.warn('[Boutique] Sanity fetch failed:', err);
+  } catch {
+    // Sanity fetch failed, sections will be empty
   }
 
   const filtered = (rawProductsData?.products || []).map(mapSanityProduct);
@@ -55,7 +55,7 @@ export default async function BoutiquePage({ searchParams }: { searchParams: Pro
           >
             Tout
           </Link>
-          {rawCategories.map((cat: any) => (
+          {rawCategories.map((cat) => (
             <Link
               key={cat._id}
               href={`/boutique?c=${cat.slug}`}
@@ -81,7 +81,7 @@ export default async function BoutiquePage({ searchParams }: { searchParams: Pro
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
-            {filtered.map((product: any) => (
+            {filtered.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>

@@ -10,9 +10,9 @@ import { getImageUrl } from '@/lib/sanity/client';
 export const revalidate = 60; // Revalidate every 60 seconds
 
 export default async function Home() {
-  let rawNewArrivals: any[] = [];
-  let rawBestSellers: any[] = [];
-  let rawCategories: any[] = [];
+  let rawNewArrivals: unknown[] = [];
+  let rawBestSellers: unknown[] = [];
+  let rawCategories: { _id: string; slug: string; title: string | { ar?: string; fr?: string; en?: string }; image: unknown }[] = [];
 
   try {
     [rawNewArrivals, rawBestSellers, rawCategories] = await Promise.all([
@@ -20,8 +20,8 @@ export default async function Home() {
       getProductsByPlacement('best_sellers', 6),
       getCategories(),
     ]);
-  } catch (err) {
-    console.warn('[Homepage] Sanity fetch failed, showing empty sections:', err);
+  } catch {
+    // Sanity fetch failed, sections will be empty
   }
 
   const newArrivals = (rawNewArrivals || []).map(mapSanityProduct);
@@ -39,6 +39,7 @@ export default async function Home() {
           width={1920}
           height={1080}
           className="w-full h-auto object-contain"
+          referrerPolicy="no-referrer"
           priority
         />
       </section>
@@ -56,7 +57,7 @@ export default async function Home() {
             </p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-6 max-w-7xl mx-auto">
-            {newArrivals.map((product: any) => (
+            {newArrivals.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>
@@ -74,13 +75,14 @@ export default async function Home() {
           <h2 className="text-xl md:text-3xl font-serif font-black text-neutral-900 tracking-wide uppercase">Catégories</h2>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 w-full gap-2 px-2 md:px-6 max-w-[1400px] mx-auto">
-          {rawCategories.map((cat: any) => (
+          {rawCategories.map((cat) => (
             <Link key={cat._id} href={`/boutique/${cat.slug}`} className="relative aspect-[4/5] w-full group overflow-hidden cursor-pointer bg-white border border-neutral-200 rounded-md md:rounded-xl shadow-sm hover:shadow-lg transition-all">
               <Image
-                src={getImageUrl(cat.image) || 'https://picsum.photos/seed/placeholder/300/300'}
-                alt={typeof cat.title === 'string' ? cat.title : (cat.title?.ar || cat.title?.fr || cat.title?.en || 'قسم')}
+                src={getImageUrl(cat.image) || '/hero.jpg'}
+                alt={typeof cat.title === 'string' ? cat.title : (cat.title?.ar || cat.title?.fr || cat.title?.en || 'Catégorie')}
                 fill
                 className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                referrerPolicy="no-referrer"
               />
               <div className="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition-colors" />
               <div className="absolute bottom-0 left-0 right-0 p-2 text-center">
@@ -103,7 +105,7 @@ export default async function Home() {
             </p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-6 max-w-7xl mx-auto">
-            {bestSellers.map((product: any) => (
+            {bestSellers.map((product) => (
               <ProductCard key={product.id + 'bs'} product={product} />
             ))}
           </div>

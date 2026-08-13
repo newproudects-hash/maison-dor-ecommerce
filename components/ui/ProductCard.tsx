@@ -3,12 +3,34 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { Heart } from 'lucide-react';
 import { addToCart } from '@/lib/store/cartStore';
 
-export default function ProductCard({ product }: { product: { id: string | number; name: string; price: number; image: string; category: string; slug: string } }) {
+export default function ProductCard({ product }: { product: { id: string; name: string; price: number; image: string; category: string; slug: string } }) {
+  const [wishlisted, setWishlisted] = React.useState(false);
+
+  React.useEffect(() => {
+    try {
+      const wishlist: string[] = JSON.parse(localStorage.getItem('maison_wishlist') || '[]');
+      setWishlisted(wishlist.includes(product.id));
+    } catch { /* ignore */ }
+  }, [product.id]);
+
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();
-    addToCart({ id: String(product.id), name: product.name, price: product.price, image: product.image, category: product.category });
+    addToCart({ productId: product.id, name: product.name, price: product.price, image: product.image, category: product.category, slug: product.slug });
+  };
+
+  const handleWishlist = (e: React.MouseEvent) => {
+    e.preventDefault();
+    try {
+      const wishlist: string[] = JSON.parse(localStorage.getItem('maison_wishlist') || '[]');
+      const newWishlist = wishlisted
+        ? wishlist.filter((id) => id !== product.id)
+        : [...wishlist, product.id];
+      localStorage.setItem('maison_wishlist', JSON.stringify(newWishlist));
+      setWishlisted(!wishlisted);
+    } catch { /* ignore */ }
   };
 
   return (
@@ -20,18 +42,26 @@ export default function ProductCard({ product }: { product: { id: string | numbe
         className="object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
         referrerPolicy="no-referrer"
       />
+      <button
+        onClick={handleWishlist}
+        className="absolute top-3 right-3 z-20 p-2 rounded-full bg-white/30 backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white/50"
+        aria-label="Toggle Wishlist"
+      >
+        <Heart className={`w-4 h-4 ${wishlisted ? 'fill-red-500 text-red-500' : 'text-white'}`} />
+      </button>
+
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent opacity-90 group-hover:opacity-100 transition-opacity" />
       <div className="absolute bottom-0 left-0 w-full p-3 md:p-5 flex items-end justify-between">
         <div className="flex flex-col gap-1">
-          <h3 className="text-[10px] md:text-base font-bold text-white tracking-tight leading-none drop-shadow-sm">{product.name}</h3>
-          <p className="text-[10px] md:text-sm font-extrabold text-amber-300 leading-none drop-shadow-sm">${product.price}</p>
+          <h3 className="text-xs md:text-base font-bold text-white tracking-tight leading-none drop-shadow-sm">{product.name}</h3>
+          <p className="text-sm md:text-lg font-extrabold text-amber-300 leading-none drop-shadow-sm">{product.price.toLocaleString('fr-DZ')} DA</p>
         </div>
         <button
           onClick={handleAdd}
-          className="opacity-70 hover:opacity-100 hover:scale-110 transition-all ml-1 text-white bg-white/20 backdrop-blur-sm rounded-full p-1.5"
+          className="opacity-70 hover:opacity-100 hover:scale-110 transition-all ml-1 text-white bg-white/20 backdrop-blur-sm rounded-full p-2"
           aria-label="Ajouter au panier"
         >
-          <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1.5"/><circle cx="20" cy="21" r="1.5"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 1.96-1.61L23 6H6"/></svg>
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1.5"/><circle cx="20" cy="21" r="1.5"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 1.96-1.61L23 6H6"/></svg>
         </button>
       </div>
     </Link>
