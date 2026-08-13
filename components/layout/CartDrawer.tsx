@@ -59,7 +59,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                   <span className="bg-neutral-900 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">{itemCount}</span>
                 )}
               </div>
-              <button onClick={onClose} className="text-neutral-400 hover:text-neutral-900 transition-colors p-1 rounded-lg hover:bg-neutral-100">
+              <button onClick={onClose} className="text-neutral-400 hover:text-red-500 hover:rotate-90 hover:bg-red-50 transition-all duration-300 p-2 rounded-full">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -144,19 +144,18 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                     <span>Livraison</span>
                     <span className="font-semibold text-neutral-800">Calculé à l'étape suivante</span>
                   </div>
-                  <div className="flex justify-between text-base font-black text-neutral-900 pt-2 border-t border-neutral-100">
+                  <div className="flex justify-between text-base font-black text-neutral-900 pt-3 border-t border-neutral-100">
                     <span>Total</span>
-                    <span>{total.toLocaleString('fr-DZ')} DA</span>
+                    <span className="text-xl">{total.toLocaleString('fr-DZ')} DA</span>
                   </div>
                 </div>
 
                 <Link
                   href="/commander"
                   onClick={onClose}
-                  className="flex items-center justify-center gap-2 w-full bg-[#082215] text-white py-4 rounded-2xl font-bold tracking-wide hover:bg-[#0d3020] transition-colors group"
+                  className="block w-full py-4 text-center rounded-2xl font-black tracking-wide text-white bg-gradient-to-r from-[#082215] to-[#0a2a1a] shadow-[0_10px_20px_rgba(8,34,21,0.2)] hover:shadow-[0_15px_30px_rgba(8,34,21,0.3)] hover:-translate-y-1 transition-all duration-300"
                 >
-                  Commander
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  Passer la commande
                 </Link>
               </div>
             )}

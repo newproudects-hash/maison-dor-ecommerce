@@ -144,12 +144,25 @@ export default function ProductClient({ product }: { product: Product }) {
       <div className="flex gap-3 mt-2">
         <button
           onClick={handleAdd}
-          className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-sm tracking-wide transition-all duration-300 shadow-sm hover:shadow-md ${
-            added ? 'bg-green-600 text-white' : 'bg-[#082215] text-white hover:bg-[#0d3020]'
+          className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-sm tracking-wide transition-all duration-300 shadow-sm border-2 ${
+            added ? 'border-green-600 bg-green-50 text-green-700' : 'border-neutral-200 bg-white text-neutral-800 hover:border-neutral-900'
           }`}
         >
           <ShoppingBag className="w-4 h-4" />
-          {added ? '✓ Ajouté au panier !' : 'Ajouter au panier'}
+          {added ? '✓ Ajouté' : 'Ajouter au panier'}
+        </button>
+
+        <button
+          onClick={() => {
+            handleAdd();
+            // Optional: trigger cart drawer open here if there is a global state, or redirect to checkout
+            // But since cart opens automatically when cart-updated is fired (if configured), we can just redirect or open.
+            // Let's redirect to checkout immediately for "Order Now"
+            window.location.href = '/commander';
+          }}
+          className="flex-[1.5] flex items-center justify-center gap-2 py-4 rounded-2xl font-black text-sm tracking-wide transition-all duration-300 shadow-lg bg-[#082215] text-white hover:bg-[#0d3020] hover:shadow-xl hover:-translate-y-0.5"
+        >
+          Commander Maintenant
         </button>
         <button
           onClick={handleWishlist}
