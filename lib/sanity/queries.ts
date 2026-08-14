@@ -55,17 +55,19 @@ export async function getProductsByPlacement(placementVal: string, limit = 6) {
 
 // ── Single Product (with slug fallback) ──
 export async function getProduct(slug: string) {
+  const decodedSlug = decodeURIComponent(slug);
+
   // Primary: search by slug.current
   const bySlug = await sanityClient.fetch(
     `*[_type == "product" && slug.current == $slug][0] { ${PRODUCT_FIELDS} }`,
-    { slug }
+    { slug: decodedSlug }
   );
   if (bySlug) return bySlug;
 
   // Fallback: search by _id (useful for direct links)
   const byId = await sanityClient.fetch(
     `*[_type == "product" && _id == $slug][0] { ${PRODUCT_FIELDS} }`,
-    { slug }
+    { slug: decodedSlug }
   );
   return byId || null;
 }
