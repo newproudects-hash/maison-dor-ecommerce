@@ -1,4 +1,5 @@
 import { sanityClient } from './client';
+import { getOrFetch } from '../cache/redis';
 
 // ── Shared Field Projection ──
 const PRODUCT_FIELDS = `
@@ -30,18 +31,28 @@ export async function getProducts({
     ? `*[_type == "product" && category->slug.current == $categorySlug && inStock == true]`
     : `*[_type == "product" && inStock == true]`;
 
-  const [products, total] = await Promise.all([
-    sanityClient.fetch(
-      `${filter} | order(_createdAt desc) [${offset}...${offset + perPage}] { ${PRODUCT_FIELDS} }`,
-      { categorySlug }
-    ),
-    sanityClient.fetch(
-      `count(${filter})`,
-      { categorySlug }
-    ),
-  ]);
+  // Use getOrFetch for caching the products list
+  const cacheKey = \`products:\${categorySlug || 'all'}:p\${page}:s\${perPage}\`;
+  
+  const result = await getOrFetch(
+    cacheKey,
+    async () => {
+      const [products, total] = await Promise.all([
+        sanityClient.fetch(
+          \`\${filter} | order(_createdAt desc) [\${offset}...\${offset + perPage}] { \${PRODUCT_FIELDS} }\`,
+          { categorySlug }
+        ),
+        sanityClient.fetch(
+          \`count(\${filter})\`,
+          { categorySlug }
+        ),
+      ]);
+      return { products, total, pages: Math.ceil(total / perPage) };
+    },
+    1800 // Cache for 30 minutes
+  );
 
-  return { products, total, pages: Math.ceil(total / perPage) };
+  return result;
 }
 
 // ── Placement Based Queries ──
@@ -59,28 +70,36 @@ export async function getProduct(slug: string) {
   const rawSlug = slug;                        // as-is from URL: "MONTRES%20TOMI"
   const decodedSlug = decodeURIComponent(slug); // decoded:       "MONTRES TOMI"
 
-  // 1. Search by raw slug (handles case where Sanity stored "%20" literally)
-  const byRaw = await sanityClient.fetch(
-    `*[_type == "product" && slug.current == $slug][0] { ${PRODUCT_FIELDS} }`,
-    { slug: rawSlug }
-  );
-  if (byRaw) return byRaw;
+  const cacheKey = `product:${rawSlug}`;
+  
+  return getOrFetch(
+    cacheKey,
+    async () => {
+      // 1. Search by raw slug (handles case where Sanity stored "%20" literally)
+      const byRaw = await sanityClient.fetch(
+        `*[_type == "product" && slug.current == $slug][0] { ${PRODUCT_FIELDS} }`,
+        { slug: rawSlug }
+      );
+      if (byRaw) return byRaw;
 
-  // 2. Search by decoded slug (handles normal slugs with spaces)
-  if (decodedSlug !== rawSlug) {
-    const byDecoded = await sanityClient.fetch(
-      `*[_type == "product" && slug.current == $slug][0] { ${PRODUCT_FIELDS} }`,
-      { slug: decodedSlug }
-    );
-    if (byDecoded) return byDecoded;
-  }
+      // 2. Search by decoded slug (handles normal slugs with spaces)
+      if (decodedSlug !== rawSlug) {
+        const byDecoded = await sanityClient.fetch(
+          `*[_type == "product" && slug.current == $slug][0] { ${PRODUCT_FIELDS} }`,
+          { slug: decodedSlug }
+        );
+        if (byDecoded) return byDecoded;
+      }
 
-  // 3. Fallback: search by _id
-  const byId = await sanityClient.fetch(
-    `*[_type == "product" && _id == $slug][0] { ${PRODUCT_FIELDS} }`,
-    { slug: rawSlug }
+      // 3. Fallback: search by _id
+      const byId = await sanityClient.fetch(
+        `*[_type == "product" && _id == $slug][0] { ${PRODUCT_FIELDS} }`,
+        { slug: rawSlug }
+      );
+      return byId || null;
+    },
+    7200 // Cache for 2 hours
   );
-  return byId || null;
 }
 
 // ── Related Products ──
@@ -94,10 +113,14 @@ export async function getRelatedProducts(categoryId: string, currentId: string) 
 
 // ── All Categories ──
 export async function getCategories() {
-  return sanityClient.fetch(
-    `*[_type == "category"] | order(order asc) {
-      _id, title, "slug": slug.current, image, heroImage
-    }`
+  return getOrFetch(
+    'categories:all',
+    async () => sanityClient.fetch(
+      `*[_type == "category"] | order(order asc) {
+        _id, title, "slug": slug.current, image, heroImage
+      }`
+    ),
+    86400 // Cache for 24 hours
   );
 }
 
@@ -112,12 +135,16 @@ export async function getSiteSettings() {
 
 // ── Home Page Settings (Singleton) ──
 export async function getHomePageSettings() {
-  return sanityClient.fetch(
-    `*[_type == "homePage"][0] {
-      heroImage,
-      heroImageMobile,
-      marqueeText,
-      announcementBar
-    }`
+  return getOrFetch(
+    'settings:home',
+    async () => sanityClient.fetch(
+      `*[_type == "homePage"][0] {
+        heroImage,
+        heroImageMobile,
+        marqueeText,
+        announcementBar
+      }`
+    ),
+    86400 // Cache for 24 hours
   );
 }
