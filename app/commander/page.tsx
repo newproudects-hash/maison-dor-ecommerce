@@ -69,7 +69,9 @@ export default function CommanderPage() {
       
       clearCart();
       router.push(`/merci?orderId=${orderNumber}`);
-    } catch (e) {
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Erreur inconnue';
+      console.error('[Commander] Submit error:', msg);
       alert('Une erreur s\'est produite. Veuillez réessayer.');
     } finally {
       setIsSubmitting(false);

@@ -14,10 +14,12 @@ export default async function BoutiquePage({ searchParams }: { searchParams: Pro
   let rawCategories: { _id: string; slug: string; title: string | { ar?: string; fr?: string; en?: string } }[] = [];
 
   try {
-    [rawProductsData, rawCategories] = await Promise.all([
+    const settled = await Promise.allSettled([
       getProducts({ page: 1, perPage: 100, categorySlug: activeCategory === 'all' ? undefined : activeCategory }),
       getCategories(),
     ]);
+    rawProductsData = settled[0].status === 'fulfilled' ? (settled[0].value as typeof rawProductsData) : { products: [] };
+    rawCategories   = settled[1].status === 'fulfilled' ? (settled[1].value as typeof rawCategories) : [];
   } catch {
     // Sanity fetch failed, sections will be empty
   }
