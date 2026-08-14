@@ -16,14 +16,18 @@ export default async function Home() {
   let homeSettings: { heroImage?: unknown; heroImageMobile?: unknown; marqueeText?: string; announcementBar?: { enabled?: boolean; text?: string; bgColor?: string } } | null = null;
 
   try {
-    [rawNewArrivals, rawBestSellers, rawCategories, homeSettings] = await Promise.all([
+    const settled = await Promise.allSettled([
       getProductsByPlacement('new_arrivals', 6),
       getProductsByPlacement('best_sellers', 6),
       getCategories(),
       getHomePageSettings(),
     ]);
+    rawNewArrivals  = settled[0].status === 'fulfilled' ? (settled[0].value as unknown[]) : [];
+    rawBestSellers  = settled[1].status === 'fulfilled' ? (settled[1].value as unknown[]) : [];
+    rawCategories   = settled[2].status === 'fulfilled' ? (settled[2].value as typeof rawCategories) : [];
+    homeSettings    = settled[3].status === 'fulfilled' ? (settled[3].value as typeof homeSettings) : null;
   } catch {
-    // Sanity fetch failed, sections will be empty
+    // Sanity fetch failed entirely, sections will be empty
   }
 
   const newArrivals = (rawNewArrivals || []).map(mapSanityProduct);

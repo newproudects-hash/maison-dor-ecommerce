@@ -7,7 +7,8 @@ export async function PATCH(req: Request) {
     // Basic Auth Check
     const cookieStore = await cookies();
     const token = cookieStore.get('admin_token')?.value;
-    if (token !== 'maison-dor-admin-secured') {
+    const adminToken = process.env.ADMIN_SECRET_TOKEN;
+    if (!adminToken || token !== adminToken) {
       return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
     }
 
