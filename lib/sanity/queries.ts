@@ -53,12 +53,21 @@ export async function getProductsByPlacement(placementVal: string, limit = 6) {
   );
 }
 
-// ── Single Product ──
+// ── Single Product (with slug fallback) ──
 export async function getProduct(slug: string) {
-  return sanityClient.fetch(
+  // Primary: search by slug.current
+  const bySlug = await sanityClient.fetch(
     `*[_type == "product" && slug.current == $slug][0] { ${PRODUCT_FIELDS} }`,
     { slug }
   );
+  if (bySlug) return bySlug;
+
+  // Fallback: search by _id (useful for direct links)
+  const byId = await sanityClient.fetch(
+    `*[_type == "product" && _id == $slug][0] { ${PRODUCT_FIELDS} }`,
+    { slug }
+  );
+  return byId || null;
 }
 
 // ── Related Products ──
@@ -84,6 +93,18 @@ export async function getSiteSettings() {
   return sanityClient.fetch(
     `*[_type == "settings"][0] {
       heroImage, boutiqueHeroImage, marqueeText, socialLinks
+    }`
+  );
+}
+
+// ── Home Page Settings (Singleton) ──
+export async function getHomePageSettings() {
+  return sanityClient.fetch(
+    `*[_type == "homePage"][0] {
+      heroImage,
+      heroImageMobile,
+      marqueeText,
+      announcementBar
     }`
   );
 }

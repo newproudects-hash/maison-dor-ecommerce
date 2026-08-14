@@ -3,22 +3,24 @@ import Link from 'next/link';
 import Navbar from '@/components/layout/Navbar';
 import Marquee from '@/components/sections/Marquee';
 import ProductCard from '@/components/ui/ProductCard';
-import { getProductsByPlacement, getProducts, getCategories } from '@/lib/sanity/queries';
+import { getProductsByPlacement, getCategories, getHomePageSettings } from '@/lib/sanity/queries';
 import { mapSanityProduct } from '@/lib/sanity/mapper';
 import { getImageUrl } from '@/lib/sanity/client';
 
-export const revalidate = 60; // Revalidate every 60 seconds
+export const revalidate = 60;
 
 export default async function Home() {
   let rawNewArrivals: unknown[] = [];
   let rawBestSellers: unknown[] = [];
   let rawCategories: { _id: string; slug: string; title: string | { ar?: string; fr?: string; en?: string }; image: unknown }[] = [];
+  let homeSettings: { heroImage?: unknown; heroImageMobile?: unknown; marqueeText?: string; announcementBar?: { enabled?: boolean; text?: string; bgColor?: string } } | null = null;
 
   try {
-    [rawNewArrivals, rawBestSellers, rawCategories] = await Promise.all([
+    [rawNewArrivals, rawBestSellers, rawCategories, homeSettings] = await Promise.all([
       getProductsByPlacement('new_arrivals', 6),
       getProductsByPlacement('best_sellers', 6),
       getCategories(),
+      getHomePageSettings(),
     ]);
   } catch {
     // Sanity fetch failed, sections will be empty
@@ -27,25 +29,53 @@ export default async function Home() {
   const newArrivals = (rawNewArrivals || []).map(mapSanityProduct);
   const bestSellers = (rawBestSellers || []).map(mapSanityProduct);
 
+  // Hero image: prefer Sanity, fallback to local /hero.jpg
+  const heroSrc = homeSettings?.heroImage ? (getImageUrl(homeSettings.heroImage) || '/hero.jpg') : '/hero.jpg';
+  const heroMobileSrc = homeSettings?.heroImageMobile ? (getImageUrl(homeSettings.heroImageMobile) || heroSrc) : heroSrc;
+
+  // Announcement bar
+  const announcement = homeSettings?.announcementBar;
+
   return (
     <main className="min-h-screen bg-white text-neutral-900 overflow-x-hidden font-sans relative">
       <Navbar />
 
-      {/* 1. Hero Section — below navbar */}
+      {/* Announcement Bar */}
+      {announcement?.enabled && announcement?.text && (
+        <div
+          className="fixed top-0 left-0 w-full z-40 text-black text-center text-xs font-bold py-1.5 tracking-wide"
+          style={{ backgroundColor: announcement.bgColor || '#D4AF37', marginTop: 0 }}
+        >
+          {announcement.text}
+        </div>
+      )}
+
+      {/* 1. Hero Section */}
       <section className="relative w-full bg-neutral-900 flex items-center justify-center overflow-hidden pt-[56px] md:pt-[60px]">
+        {/* Mobile hero */}
         <Image
-          src="/hero.jpg"
+          src={heroMobileSrc}
+          alt="Maison D'Or - Luxury is in the details"
+          width={800}
+          height={1000}
+          className="block md:hidden w-full h-auto object-contain"
+          referrerPolicy="no-referrer"
+          priority
+        />
+        {/* Desktop hero */}
+        <Image
+          src={heroSrc}
           alt="Maison D'Or - Luxury is in the details"
           width={1920}
           height={1080}
-          className="w-full h-auto object-contain"
+          className="hidden md:block w-full h-auto object-contain"
           referrerPolicy="no-referrer"
           priority
         />
       </section>
 
       {/* 2. Thin Marquee */}
-      <Marquee />
+      <Marquee text={homeSettings?.marqueeText} />
 
       {/* 3. New Arrivals */}
       {newArrivals.length > 0 && (
@@ -70,30 +100,32 @@ export default async function Home() {
       )}
 
       {/* 4. Categories */}
-      <section id="categories" className="w-full py-8 md:py-16 bg-neutral-50">
-        <div className="text-center mb-8 md:mb-10 px-4">
-          <h2 className="text-xl md:text-3xl font-serif font-black text-neutral-900 tracking-wide uppercase">Catégories</h2>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 w-full gap-2 px-2 md:px-6 max-w-[1400px] mx-auto">
-          {rawCategories.map((cat) => (
-            <Link key={cat._id} href={`/boutique/${cat.slug}`} className="relative aspect-[4/5] w-full group overflow-hidden cursor-pointer bg-white border border-neutral-200 rounded-md md:rounded-xl shadow-sm hover:shadow-lg transition-all">
-              <Image
-                src={getImageUrl(cat.image) || '/hero.jpg'}
-                alt={typeof cat.title === 'string' ? cat.title : (cat.title?.ar || cat.title?.fr || cat.title?.en || 'Catégorie')}
-                fill
-                className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                referrerPolicy="no-referrer"
-              />
-              <div className="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition-colors" />
-              <div className="absolute bottom-0 left-0 right-0 p-2 text-center">
-                <p className="text-white text-[9px] md:text-xs font-bold tracking-wider uppercase">
-                  {typeof cat.title === 'string' ? cat.title : (cat.title?.ar || cat.title?.fr || cat.title?.en || 'قسم')}
-                </p>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
+      {rawCategories.length > 0 && (
+        <section id="categories" className="w-full py-8 md:py-16 bg-neutral-50">
+          <div className="text-center mb-8 md:mb-10 px-4">
+            <h2 className="text-xl md:text-3xl font-serif font-black text-neutral-900 tracking-wide uppercase">Catégories</h2>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 w-full gap-2 px-2 md:px-6 max-w-[1400px] mx-auto">
+            {rawCategories.map((cat) => (
+              <Link key={cat._id} href={`/boutique/${cat.slug}`} className="relative aspect-[4/5] w-full group overflow-hidden cursor-pointer bg-white border border-neutral-200 rounded-md md:rounded-xl shadow-sm hover:shadow-lg transition-all">
+                <Image
+                  src={getImageUrl(cat.image) || '/hero.jpg'}
+                  alt={typeof cat.title === 'string' ? cat.title : (cat.title?.ar || cat.title?.fr || cat.title?.en || 'Catégorie')}
+                  fill
+                  className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                  referrerPolicy="no-referrer"
+                />
+                <div className="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition-colors" />
+                <div className="absolute bottom-0 left-0 right-0 p-2 text-center">
+                  <p className="text-white text-[9px] md:text-xs font-bold tracking-wider uppercase">
+                    {typeof cat.title === 'string' ? cat.title : (cat.title?.ar || cat.title?.fr || cat.title?.en || 'قسم')}
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* 5. Best Sellers */}
       {bestSellers.length > 0 && (

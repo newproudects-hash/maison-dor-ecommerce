@@ -20,9 +20,22 @@ export const product = defineType({
       name: 'slug',
       title: 'الرابط (Slug)',
       type: 'slug',
-      options: { source: 'title.ar', maxLength: 96 },
+      options: {
+        source: (doc: any) => {
+          const t = doc.title;
+          const base = (typeof t === 'object' ? (t?.fr || t?.en || t?.ar) : t) || '';
+          return base
+            .toLowerCase()
+            .trim()
+            .replace(/[\s\u0600-\u06FF]+/g, '-')
+            .replace(/[^a-z0-9-]/g, '')
+            .replace(/-+/g, '-')
+            .replace(/^-|-$/g, '');
+        },
+        maxLength: 96,
+      },
       validation: r => r.required(),
-      description: 'الرابط الذي يظهر في المتصفح',
+      description: 'الرابط الذي يظهر في المتصفح (بالأحرف اللاتينية)',
     }),
 
     defineField({
