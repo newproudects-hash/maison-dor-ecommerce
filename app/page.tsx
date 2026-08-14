@@ -10,10 +10,10 @@ import { getImageUrl } from '@/lib/sanity/client';
 export const revalidate = 60;
 
 export default async function Home() {
-  let rawNewArrivals: unknown[] = [];
-  let rawBestSellers: unknown[] = [];
-  let rawCategories: { _id: string; slug: string; title: string | { ar?: string; fr?: string; en?: string }; image: unknown }[] = [];
-  let homeSettings: { heroImage?: unknown; heroImageMobile?: unknown; marqueeText?: string; announcementBar?: { enabled?: boolean; text?: string; bgColor?: string } } | null = null;
+  let rawNewArrivals: any[] = [];
+  let rawBestSellers: any[] = [];
+  let rawCategories: any[] = [];
+  let homeSettings: any = null;
 
   try {
     const settled = await Promise.allSettled([
@@ -22,10 +22,10 @@ export default async function Home() {
       getCategories(),
       getHomePageSettings(),
     ]);
-    rawNewArrivals  = settled[0].status === 'fulfilled' ? (settled[0].value as unknown[]) : [];
-    rawBestSellers  = settled[1].status === 'fulfilled' ? (settled[1].value as unknown[]) : [];
-    rawCategories   = settled[2].status === 'fulfilled' ? (settled[2].value as typeof rawCategories) : [];
-    homeSettings    = settled[3].status === 'fulfilled' ? (settled[3].value as typeof homeSettings) : null;
+    rawNewArrivals  = settled[0].status === 'fulfilled' ? settled[0].value as any[] : [];
+    rawBestSellers  = settled[1].status === 'fulfilled' ? settled[1].value as any[] : [];
+    rawCategories   = settled[2].status === 'fulfilled' ? settled[2].value as any[] : [];
+    homeSettings    = settled[3].status === 'fulfilled' ? settled[3].value as any : null;
   } catch {
     // Sanity fetch failed entirely, sections will be empty
   }
