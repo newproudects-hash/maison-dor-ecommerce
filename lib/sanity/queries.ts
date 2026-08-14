@@ -53,21 +53,32 @@ export async function getProductsByPlacement(placementVal: string, limit = 6) {
   );
 }
 
-// ── Single Product (with slug fallback) ──
+// ── Single Product (triple fallback to handle all slug formats) ──
 export async function getProduct(slug: string) {
-  const decodedSlug = decodeURIComponent(slug);
+  // slug from URL: might be "MONTRES%20TOMI" or "montres-tomi"
+  const rawSlug = slug;                        // as-is from URL: "MONTRES%20TOMI"
+  const decodedSlug = decodeURIComponent(slug); // decoded:       "MONTRES TOMI"
 
-  // Primary: search by slug.current
-  const bySlug = await sanityClient.fetch(
+  // 1. Search by raw slug (handles case where Sanity stored "%20" literally)
+  const byRaw = await sanityClient.fetch(
     `*[_type == "product" && slug.current == $slug][0] { ${PRODUCT_FIELDS} }`,
-    { slug: decodedSlug }
+    { slug: rawSlug }
   );
-  if (bySlug) return bySlug;
+  if (byRaw) return byRaw;
 
-  // Fallback: search by _id (useful for direct links)
+  // 2. Search by decoded slug (handles normal slugs with spaces)
+  if (decodedSlug !== rawSlug) {
+    const byDecoded = await sanityClient.fetch(
+      `*[_type == "product" && slug.current == $slug][0] { ${PRODUCT_FIELDS} }`,
+      { slug: decodedSlug }
+    );
+    if (byDecoded) return byDecoded;
+  }
+
+  // 3. Fallback: search by _id
   const byId = await sanityClient.fetch(
     `*[_type == "product" && _id == $slug][0] { ${PRODUCT_FIELDS} }`,
-    { slug: decodedSlug }
+    { slug: rawSlug }
   );
   return byId || null;
 }
