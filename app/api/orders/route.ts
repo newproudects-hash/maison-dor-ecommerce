@@ -117,15 +117,15 @@ export async function POST(req: Request) {
     const result = orderSchema.safeParse(body);
     if (!result.success) {
       // Potential malicious input -> alert if highly malformed
-      if (result.error.errors.length > 5) {
+      if (result.error.issues.length > 5) {
          await sendSecurityAlertToTelegram(
            'Malicious Request Payload (Orders API)', 
-           `IP ${ip} sent a highly malformed order request.\n\nErrors: ${JSON.stringify(result.error.errors)}`, 
+           `IP ${ip} sent a highly malformed order request.\n\nErrors: ${JSON.stringify(result.error.issues)}`, 
            ip
          );
       }
       return NextResponse.json(
-        { success: false, error: 'بيانات الطلب غير صالحة: ' + result.error.errors[0].message },
+        { success: false, error: 'بيانات الطلب غير صالحة: ' + result.error.issues[0].message },
         { status: 400 }
       );
     }
