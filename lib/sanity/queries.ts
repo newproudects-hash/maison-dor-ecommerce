@@ -32,18 +32,18 @@ export async function getProducts({
     : `*[_type == "product" && inStock == true]`;
 
   // Use getOrFetch for caching the products list
-  const cacheKey = \`products:\${categorySlug || 'all'}:p\${page}:s\${perPage}\`;
+  const cacheKey = `products:${categorySlug || 'all'}:p${page}:s${perPage}`;
   
   const result = await getOrFetch(
     cacheKey,
     async () => {
       const [products, total] = await Promise.all([
         sanityClient.fetch(
-          \`\${filter} | order(_createdAt desc) [\${offset}...\${offset + perPage}] { \${PRODUCT_FIELDS} }\`,
+          `${filter} | order(_createdAt desc) [${offset}...${offset + perPage}] { ${PRODUCT_FIELDS} }`,
           { categorySlug }
         ),
         sanityClient.fetch(
-          \`count(\${filter})\`,
+          `count(${filter})`,
           { categorySlug }
         ),
       ]);

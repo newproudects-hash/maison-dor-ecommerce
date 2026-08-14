@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { JWT } from 'google-auth-library';
+import { z } from 'zod';
+import { sendSecurityAlertToTelegram } from '@/lib/utils/telegram';
 
 // Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -14,16 +16,39 @@ const GOOGLE_PRIVATE_KEY = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n')
 const GOOGLE_SHEET_ID = process.env.GOOGLE_SHEET_ID;
 
 // ─── Rate Limiting (in-memory, per IP) ────────────
-const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
-function checkRateLimit(ip: string): boolean {
+const rateLimitMap = new Map<string, { count: number; resetTime: number; blockedUntil?: number }>();
+async function checkRateLimit(ip: string): Promise<boolean> {
   const now = Date.now();
   const entry = rateLimitMap.get(ip);
-  if (!entry || now > entry.resetTime) {
+  
+  if (!entry) {
     rateLimitMap.set(ip, { count: 1, resetTime: now + 60_000 });
     return true;
   }
-  if (entry.count >= 5) return false;
+
+  // If currently blocked
+  if (entry.blockedUntil && now < entry.blockedUntil) {
+    return false;
+  }
+
+  if (now > entry.resetTime) {
+    rateLimitMap.set(ip, { count: 1, resetTime: now + 60_000 });
+    return true;
+  }
+  
   entry.count++;
+  if (entry.count > 5) {
+    if (!entry.blockedUntil) {
+      // First time blocking: block for 15 minutes
+      entry.blockedUntil = now + (15 * 60 * 1000);
+      await sendSecurityAlertToTelegram(
+        'Rate Limit Exceeded (Orders API)', 
+        `IP ${ip} has exceeded the rate limit (5 req/min) and is blocked for 15 minutes.`, 
+        ip
+      );
+    }
+    return false;
+  }
   return true;
 }
 
@@ -47,51 +72,71 @@ function sanitize(input: string): string {
     .trim();
 }
 
-// ─── Validate Algerian Phone ───────────────────────
-function isValidPhone(phone: string): boolean {
-  const cleaned = phone.replace(/\s/g, '');
-  return /^0[567]\d{8}$/.test(cleaned);
-}
+// ─── Schema Validation ─────────────────────────────
+const orderSchema = z.object({
+  orderNumber: z.string().min(1),
+  firstName: z.string().min(2, 'الاسم الأول قصير جداً').max(50),
+  lastName: z.string().min(2, 'اسم العائلة قصير جداً').max(50),
+  phone: z.string().regex(/^0[567]\d{8}$/, 'رقم الهاتف غير صحيح'),
+  wilayaName: z.string().min(1),
+  wilayaCode: z.string().or(z.number()),
+  deliveryType: z.enum(['domicile', 'bureau']),
+  deliveryPrice: z.number().min(0),
+  address: z.string().max(200).optional().nullable(),
+  items: z.array(z.object({
+    productId: z.string(),
+    productName: z.string(),
+    price: z.number().min(0),
+    quantity: z.number().min(1).max(20),
+    size: z.string().optional(),
+    color: z.string().optional(),
+    imageUrl: z.string().optional(),
+    slug: z.string().optional(),
+  })).min(1, 'السلة فارغة'),
+  subtotal: z.number().min(0),
+  total: z.number().min(0)
+});
 
 export async function POST(req: Request) {
   try {
-    // 1. Rate limiting
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-    if (!checkRateLimit(ip)) {
+    // Rate limit by IP (Support Cloudflare cf-connecting-ip)
+    const ip = req.headers.get('cf-connecting-ip')
+            || req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() 
+            || 'unknown';
+    const isAllowed = await checkRateLimit(ip);
+    if (!isAllowed) {
       return NextResponse.json(
-        { success: false, error: 'تجاوزت الحد المسموح. حاول مرة أخرى بعد دقيقة.' },
+        { success: false, error: 'تجاوزت الحد المسموح. يرجى المحاولة لاحقاً.' },
         { status: 429 }
       );
     }
 
     const body = await req.json();
+    
+    // 2. Strict Input validation with Zod
+    const result = orderSchema.safeParse(body);
+    if (!result.success) {
+      // Potential malicious input -> alert if highly malformed
+      if (result.error.errors.length > 5) {
+         await sendSecurityAlertToTelegram(
+           'Malicious Request Payload (Orders API)', 
+           `IP ${ip} sent a highly malformed order request.\n\nErrors: ${JSON.stringify(result.error.errors)}`, 
+           ip
+         );
+      }
+      return NextResponse.json(
+        { success: false, error: 'بيانات الطلب غير صالحة: ' + result.error.errors[0].message },
+        { status: 400 }
+      );
+    }
+    
     const {
       orderNumber, firstName, lastName, phone,
       wilayaName, wilayaCode, deliveryType, deliveryPrice,
       address, items, subtotal, total
-    } = body;
+    } = result.data;
 
-    // 2. Input validation
-    if (!firstName || !lastName || !phone || !wilayaName || !items || !Array.isArray(items) || items.length === 0) {
-      return NextResponse.json(
-        { success: false, error: 'بيانات الطلب غير مكتملة.' },
-        { status: 400 }
-      );
-    }
-
-    if (!isValidPhone(phone)) {
-      return NextResponse.json(
-        { success: false, error: 'رقم الهاتف غير صحيح. يجب أن يبدأ بـ 05 أو 06 أو 07.' },
-        { status: 400 }
-      );
-    }
-
-    if (typeof total !== 'number' || total <= 0) {
-      return NextResponse.json(
-        { success: false, error: 'المبلغ الإجمالي غير صحيح.' },
-        { status: 400 }
-      );
-    }
+    // Zod already handled presence and format validation.
 
     // 3. Duplicate order protection (same phone + same total within 30 seconds)
     const dedupKey = `${phone}-${total}`;

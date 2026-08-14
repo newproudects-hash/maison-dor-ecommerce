@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getServerSupabase } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
+import { createClient } from '@supabase/supabase-js';
+import { sendSecurityAlertToTelegram } from '@/lib/utils/telegram';
 
 export async function PATCH(req: Request) {
   try {
@@ -18,7 +20,6 @@ export async function PATCH(req: Request) {
     
     // Using service role key for update if needed, but since we are using supabase-js client with Anon key in RLS it might fail if RLS blocks updates.
     // Wait, let's use the service role key to bypass RLS for admin operations.
-    const { createClient } = await import('@supabase/supabase-js');
     const adminSupabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -33,6 +34,16 @@ export async function PATCH(req: Request) {
       console.error('[Admin Delivery API] Error updating price:', error);
       return NextResponse.json({ success: false, message: 'Database error' }, { status: 500 });
     }
+
+    // Audit Logging
+    const ip = req.headers.get('cf-connecting-ip')
+            || req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() 
+            || 'unknown';
+    await sendSecurityAlertToTelegram(
+      'Audit: Delivery Price Changed',
+      `Admin changed delivery prices for Wilaya ${wilaya_code}.\n\nNew Home Price: ${home_price} DA\nNew Office Price: ${office_price} DA`,
+      ip
+    );
 
     return NextResponse.json({ success: true });
   } catch (error) {

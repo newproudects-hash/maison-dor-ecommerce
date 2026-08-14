@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { JWT } from 'google-auth-library';
+import { cookies } from 'next/headers';
+import { sendSecurityAlertToTelegram } from '@/lib/utils/telegram';
 
 const GOOGLE_CLIENT_EMAIL = process.env.GOOGLE_CLIENT_EMAIL;
 const GOOGLE_PRIVATE_KEY = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n');
@@ -16,6 +18,14 @@ const STATUS_OPTIONS: Record<string, string> = {
 
 export async function PATCH(req: Request) {
   try {
+    // SECURITY FIX: Basic Auth Check
+    const cookieStore = await cookies();
+    const token = cookieStore.get('admin_token')?.value;
+    const adminToken = process.env.ADMIN_SECRET_TOKEN;
+    if (!adminToken || token !== adminToken) {
+      return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+    }
+
     const { orderNumber, status } = await req.json();
 
     if (!GOOGLE_CLIENT_EMAIL || !GOOGLE_PRIVATE_KEY || !GOOGLE_SHEET_ID) {
@@ -43,6 +53,16 @@ export async function PATCH(req: Request) {
         updated++;
       }
     }
+
+    // SIEM Audit Logging
+    const ip = req.headers.get('cf-connecting-ip')
+            || req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() 
+            || 'unknown';
+    await sendSecurityAlertToTelegram(
+      'Audit: Order Status Changed',
+      `Admin changed status for order #${orderNumber} to "${statusAr}".`,
+      ip
+    );
 
     return NextResponse.json({ success: true, updated });
   } catch (error: unknown) {

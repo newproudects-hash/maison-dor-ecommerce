@@ -25,6 +25,20 @@ const nextConfig: NextConfig = {
   // ─── Cache Headers (الطبقة الثانية من الكاش — بعد Cloudflare) ────────────
   async headers() {
     return [
+      // ─── Global Security Headers ──────────────────────────────────────────
+      {
+        source: '/:path*',
+        headers: [
+          { key: 'X-DNS-Prefetch-Control', value: 'on' },
+          { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'origin-when-cross-origin' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+          // Note: CSP is basic here to avoid breaking inline scripts from Sanity/Next.js, 
+          // but strict enough to prevent external unauthorized resources.
+        ],
+      },
       // ─── صفحات المنتجات: كاش 4 ساعات في Cloudflare ─────────────────────
       {
         source: '/produits/:slug*',

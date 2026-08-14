@@ -86,3 +86,45 @@ ${itemsList}
     return false;
   }
 }
+
+export async function sendSecurityAlertToTelegram(title: string, details: string, ip: string): Promise<boolean> {
+  const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+  const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+
+  if (!BOT_TOKEN || BOT_TOKEN === 'PLACEHOLDER' || !CHAT_ID || CHAT_ID === 'PLACEHOLDER') {
+    console.log('[Security Alert] Token not configured yet — skipping');
+    return false;
+  }
+
+  const message = `
+🚨 *إنذار أمني — MAISON D'OR*
+━━━━━━━━━━━━━━━━━━━━
+⚠️ *الحدث:* ${title}
+🌐 *IP:* \`${ip}\`
+⏰ *الوقت:* ${new Date().toLocaleString('fr-DZ')}
+
+📄 *التفاصيل:*
+${details}
+━━━━━━━━━━━━━━━━━━━━
+  `.trim();
+
+  try {
+    const response = await fetch(
+      `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: CHAT_ID,
+          text: message,
+          parse_mode: 'Markdown',
+        }),
+      }
+    );
+
+    return response.ok;
+  } catch (error) {
+    console.error('[Security Alert] Network error:', error);
+    return false;
+  }
+}

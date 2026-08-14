@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
 import Navbar from '@/components/layout/Navbar';
@@ -6,6 +7,18 @@ import { getProducts, getCategories } from '@/lib/sanity/queries';
 import { mapSanityProduct } from '@/lib/sanity/mapper';
 
 export const revalidate = 60;
+
+export async function generateMetadata({ searchParams }: { searchParams: Promise<{ c?: string }> }): Promise<Metadata> {
+  const { c: activeCategory = 'all' } = await searchParams;
+  const title = activeCategory === 'all' 
+    ? "Boutique | MAISON D'OR - Collections de Sacs" 
+    : `Boutique - ${activeCategory.charAt(0).toUpperCase() + activeCategory.slice(1)} | MAISON D'OR`;
+  
+  return {
+    title,
+    description: "Découvrez notre collection exclusive de sacs luxueux, conçus pour la femme moderne.",
+  };
+}
 
 export default async function BoutiquePage({ searchParams }: { searchParams: Promise<{ c?: string }> }) {
   const { c: activeCategory = 'all' } = await searchParams;

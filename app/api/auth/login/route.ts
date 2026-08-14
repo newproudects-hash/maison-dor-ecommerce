@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { sendSecurityAlertToTelegram } from '@/lib/utils/telegram';
 
 // Brute-force protection: track login attempts per IP
 const loginAttempts = new Map<string, { count: number; blockedUntil: number }>();
@@ -8,8 +9,10 @@ const BLOCK_DURATION_MS = 15 * 60 * 1000; // 15 minutes
 
 export async function POST(req: Request) {
   try {
-    // Rate limit by IP
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    // Rate limit by IP (Support Cloudflare cf-connecting-ip)
+    const ip = req.headers.get('cf-connecting-ip')
+            || req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() 
+            || 'unknown';
     const now = Date.now();
     const attempts = loginAttempts.get(ip);
 
@@ -37,6 +40,12 @@ export async function POST(req: Request) {
     if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
       // Reset attempt count on success
       loginAttempts.delete(ip);
+      
+      await sendSecurityAlertToTelegram(
+        'Admin Login Success',
+        `Successful login to the Admin Dashboard.\n\nEmail: ${email}`,
+        ip
+      );
 
       const cookieStore = await cookies();
       cookieStore.set('admin_token', ADMIN_TOKEN, {
@@ -53,6 +62,13 @@ export async function POST(req: Request) {
     const prev = loginAttempts.get(ip);
     const newCount = (prev?.count || 0) + 1;
     if (newCount >= MAX_ATTEMPTS) {
+      if (!prev || prev.blockedUntil === 0) {
+        await sendSecurityAlertToTelegram(
+          'Brute Force Admin Login Attempt',
+          `Multiple failed login attempts (>= ${MAX_ATTEMPTS}) detected for admin panel.\n\nAttempted Email: ${email}\nAction: IP Blocked for 15 minutes.`,
+          ip
+        );
+      }
       loginAttempts.set(ip, { count: newCount, blockedUntil: now + BLOCK_DURATION_MS });
     } else {
       loginAttempts.set(ip, { count: newCount, blockedUntil: 0 });
