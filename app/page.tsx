@@ -91,9 +91,9 @@ export default async function Home() {
       {newArrivals.length > 0 && (
         <section id="store" className="pt-12 pb-8 md:pt-20 md:pb-12 px-4 md:px-8 bg-white">
           <div className="text-center mb-8 md:mb-10">
-            <h2 className="text-xl md:text-3xl font-serif font-black text-neutral-900 tracking-wide uppercase">Nouveautés</h2>
+            <h2 className="text-xl md:text-3xl font-serif font-black text-neutral-900 tracking-wide uppercase">وصلنا حديثاً</h2>
             <p className="text-neutral-500 text-[11px] md:text-xs mt-3 max-w-md mx-auto leading-relaxed">
-              Notre nouvelle collection est conçue pour résister à vos activités tout en vous gardant élégante.
+              مجموعتنا الجديدة مصممة لتواكب أسلوب حياتك مع الحفاظ على أناقتك المطلقة.
             </p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-6 max-w-7xl mx-auto">
@@ -103,7 +103,7 @@ export default async function Home() {
           </div>
           <div className="text-center mt-8">
             <Link href="/boutique" className="inline-flex items-center gap-2 border-2 border-neutral-900 text-neutral-900 px-8 py-3 text-sm font-bold tracking-widest uppercase hover:bg-neutral-900 hover:text-white transition-all duration-300">
-              Voir tout
+              عرض الكل
             </Link>
           </div>
         </section>
@@ -113,7 +113,7 @@ export default async function Home() {
       {rawCategories.length > 0 && (
         <section id="categories" className="w-full py-8 md:py-16 bg-neutral-50">
           <div className="text-center mb-8 md:mb-10 px-4">
-            <h2 className="text-xl md:text-3xl font-serif font-black text-neutral-900 tracking-wide uppercase">Catégories</h2>
+            <h2 className="text-xl md:text-3xl font-serif font-black text-neutral-900 tracking-wide uppercase">الأقسام</h2>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 w-full gap-2 px-2 md:px-6 max-w-[1400px] mx-auto">
             {rawCategories.map((cat) => (
@@ -141,9 +141,9 @@ export default async function Home() {
       {bestSellers.length > 0 && (
         <section className="py-12 md:py-16 px-4 md:px-8 bg-white">
           <div className="text-center mb-8 md:mb-10">
-            <h2 className="text-xl md:text-3xl font-serif font-black text-neutral-900 tracking-wide uppercase">Meilleures Ventes</h2>
+            <h2 className="text-xl md:text-3xl font-serif font-black text-neutral-900 tracking-wide uppercase">الأكثر مبيعاً</h2>
             <p className="text-neutral-500 text-[11px] md:text-xs mt-3 max-w-md mx-auto leading-relaxed">
-              Les produits les plus appréciés par nos clientes.
+              المنتجات الأكثر طلباً وإعجاباً من قبل عميلاتنا.
             </p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-6 max-w-7xl mx-auto">

@@ -46,8 +46,8 @@ export default function Marquee({ text }: { text?: string }) {
         .animate-marquee-scroll {
           /* Adjust duration based on how many items we scroll. 
              Since we shift by 1 block (-2%), the speed depends on block width.
-             A generic 15s usually feels right for an average block. */
-          animation: marquee-scroll 15s linear infinite;
+             A generic 5s usually feels right for an average block. */
+          animation: marquee-scroll 5s linear infinite;
         }
         @keyframes marquee-scroll {
           0%   { transform: translateX(0); }

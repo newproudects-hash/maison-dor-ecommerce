@@ -10,7 +10,7 @@ const PRODUCT_FIELDS = `
   price,
   images,
   colors,
-  colorVariants {
+  colorVariants[] {
     colorName,
     colorHex,
     "imageUrl": image.asset->url
@@ -33,11 +33,11 @@ export async function getProducts({
 }) {
   const offset = (page - 1) * perPage;
   const filter = categorySlug
-    ? `*[_type == "product" && lower(category->slug.current) == lower($categorySlug) && inStock != false]`
+    ? `*[_type == "product" && category->slug.current == $categorySlug && inStock != false]`
     : `*[_type == "product" && inStock != false]`;
 
   // Use getOrFetch for caching the products list
-  const cacheKey = `products:${categorySlug || 'all'}:p${page}:s${perPage}`;
+  const cacheKey = `products_v2:${categorySlug || 'all'}:p${page}:s${perPage}`;
   
   const result = await getOrFetch(
     cacheKey,
@@ -75,7 +75,7 @@ export async function getProduct(slug: string) {
   const rawSlug = slug;                        // as-is from URL: "MONTRES%20TOMI"
   const decodedSlug = decodeURIComponent(slug); // decoded:       "MONTRES TOMI"
 
-  const cacheKey = `product:${rawSlug}`;
+  const cacheKey = `product_v2:${rawSlug}`;
   
   return getOrFetch(
     cacheKey,
@@ -119,7 +119,7 @@ export async function getRelatedProducts(categoryId: string, currentId: string) 
 // ── All Categories ──
 export async function getCategories() {
   return getOrFetch(
-    'categories:all',
+    'categories_v2:all',
     async () => sanityClient.fetch(
       `*[_type == "category"] | order(order asc) {
         _id, title, "slug": slug.current, image, heroImage
@@ -141,7 +141,7 @@ export async function getSiteSettings() {
 // ── Home Page Settings (Singleton) ──
 export async function getHomePageSettings() {
   return getOrFetch(
-    'settings:home',
+    'settings_v2:home',
     async () => sanityClient.fetch(
       `*[_type == "homePage"][0] {
         heroImage,
