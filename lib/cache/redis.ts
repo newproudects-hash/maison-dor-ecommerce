@@ -6,9 +6,10 @@
  *
  * الاستخدام:
  *   const data = await getOrFetch('product:tomi', () => fetchFromSanity(), 3600);
- *
  * ملاحظة: إذا لم تُضبط متغيرات Redis، يعمل النظام بدونها (graceful fallback)
  */
+
+import crypto from 'crypto';
 
 type RedisClient = {
   get: (key: string) => Promise<unknown>;
@@ -67,8 +68,9 @@ const isEnabled = clients.length > 0;
 // ─── خوارزمية Consistent Hashing لتوزيع الضغط ───────────────────────────────
 function getClient(key: string): RedisClient | null {
   if (!isEnabled) return null;
-  // كل key يذهب دائماً لنفس الحساب (ثبات التوزيع)
-  const hash = key.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  // FIX #41: Proper hashing for distribution instead of sum of ASCII
+  const hashString = crypto.createHash('md5').update(key).digest('hex');
+  const hash = parseInt(hashString.slice(0, 8), 16);
   return clients[hash % clients.length];
 }
 

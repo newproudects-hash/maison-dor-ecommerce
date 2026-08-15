@@ -1,8 +1,8 @@
 import { getImageUrl } from './client';
 import type { Product } from '@/types';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyObj = Record<string, any>;
+// FIX #40: Use Record<string, unknown> instead of any for safe parsing
+type AnyObj = Record<string, unknown>;
 
 // Accept any value from GROQ results — we validate internally
 export function mapSanityProduct(input: unknown): Product {
@@ -39,11 +39,14 @@ export function mapSanityProduct(input: unknown): Product {
     slug: String(p.slug || ''),
     description: getDesc(p.description),
     colors: Array.isArray(p.colors) ? (p.colors as string[]) : [],
-    colorVariants: Array.isArray(p.colorVariants) ? p.colorVariants.map((v: any) => ({
-      colorName: String(v.colorName || ''),
-      colorHex: v.colorHex ? String(v.colorHex) : undefined,
-      imageUrl: v.imageUrl ? String(v.imageUrl) : undefined,
-    })) : [],
+    colorVariants: Array.isArray(p.colorVariants) ? p.colorVariants.map((v: unknown) => {
+      const vObj = v as Record<string, unknown>;
+      return {
+        colorName: String(vObj?.colorName || ''),
+        colorHex: vObj?.colorHex ? String(vObj.colorHex) : undefined,
+        imageUrl: vObj?.imageUrl ? String(vObj.imageUrl) : undefined,
+      };
+    }) : [],
     sizes: Array.isArray(p.sizes) ? (p.sizes as string[]) : [],
     placement: Array.isArray(p.placement) ? (p.placement as string[]) : [],
     inStock: p.inStock !== false,

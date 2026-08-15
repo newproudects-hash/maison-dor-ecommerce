@@ -1,6 +1,9 @@
 import { MetadataRoute } from 'next';
 import { getProducts, getCategories } from '@/lib/sanity/queries';
 
+// FIX #21: Cache sitemap to avoid fetching all products every time
+export const revalidate = 3600; // Cache for 1 hour
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.maisondor.dz';
 

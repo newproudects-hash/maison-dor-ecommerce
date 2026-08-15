@@ -9,23 +9,21 @@ import { useEffect } from 'react';
 export default function ProductGallery({ images: initialImages, alt, selectedVariantImage }: { images: string[], alt: string, selectedVariantImage?: string }) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // If a variant image is selected, we want it to be part of the images array (usually prepended or just shown)
-  const images = selectedVariantImage && !initialImages.includes(selectedVariantImage)
-    ? [selectedVariantImage, ...initialImages]
-    : initialImages;
+  const displayImages = initialImages.length > 0 ? initialImages : ['/hero.jpg'];
+  const hasVariantImage = selectedVariantImage && !displayImages.includes(selectedVariantImage);
 
   // React to variant selection
   useEffect(() => {
     if (selectedVariantImage) {
-      const idx = images.indexOf(selectedVariantImage);
+      const idx = displayImages.indexOf(selectedVariantImage);
       if (idx !== -1) {
         setCurrentIndex(idx);
       }
     }
-  }, [selectedVariantImage, images]);
+  }, [selectedVariantImage, displayImages]);
 
-  const next = () => setCurrentIndex((prev) => (prev + 1) % images.length);
-  const prev = () => setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
+  const next = () => setCurrentIndex((prev) => (prev + 1) % displayImages.length);
+  const prev = () => setCurrentIndex((prev) => (prev - 1 + displayImages.length) % displayImages.length);
 
   return (
     <div className="flex flex-col gap-3">
@@ -41,7 +39,8 @@ export default function ProductGallery({ images: initialImages, alt, selectedVar
             className="absolute inset-0"
           >
             <Image
-              src={images[currentIndex]}
+              // FIX #43: Show variant image temporarily without mutating array indexes
+              src={hasVariantImage ? selectedVariantImage : displayImages[currentIndex]}
               alt={`${alt} - Image ${currentIndex + 1}`}
               fill
               className="object-cover object-center"
@@ -51,7 +50,7 @@ export default function ProductGallery({ images: initialImages, alt, selectedVar
           </motion.div>
         </AnimatePresence>
 
-        {images.length > 1 && (
+        {displayImages.length > 1 && (
           <>
             <button
               onClick={prev}
@@ -70,9 +69,9 @@ export default function ProductGallery({ images: initialImages, alt, selectedVar
       </div>
 
       {/* Thumbnails */}
-      {images.length > 1 && (
+      {displayImages.length > 1 && (
         <div className="flex gap-2 overflow-x-auto scrollbar-hide py-1">
-          {images.map((img, i) => (
+          {displayImages.map((img, i) => (
             <button
               key={i}
               onClick={() => setCurrentIndex(i)}

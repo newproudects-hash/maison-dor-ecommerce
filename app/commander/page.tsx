@@ -202,8 +202,9 @@ export default function CommanderPage() {
                   <textarea
                     value={form.adresse}
                     onChange={(e) => setForm({ ...form, adresse: e.target.value })}
-                    placeholder="Cité, rue, numéro d'appartement..."
+                    placeholder="Numéro de bâtiment, rue..."
                     rows={3}
+                    maxLength={200} /* FIX #27: Max length for address */
                     className="w-full border-2 border-neutral-200 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#082215] transition-colors resize-none"
                   />
                 </div>

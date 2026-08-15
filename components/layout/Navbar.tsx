@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
 import { Menu, ShoppingBag } from 'lucide-react';
 import { getCart } from '@/lib/store/cartStore';
+import { usePathname } from 'next/navigation';
 import Sidebar from './Sidebar';
 import CartDrawer from './CartDrawer';
 
@@ -12,6 +13,8 @@ export default function Navbar() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
+  const [scrolled, setScrolled] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     const update = () => {
@@ -23,9 +26,24 @@ export default function Navbar() {
     return () => window.removeEventListener('cart-updated', update);
   }, []);
 
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll);
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // FIX #31: Solid background on non-home pages or when scrolled
+  const isHome = pathname === '/';
+  const navClass = (scrolled || !isHome)
+    ? 'bg-neutral-900 border-neutral-800 shadow-md'
+    : 'bg-black/30 backdrop-blur-md border-white/10';
+
   return (
     <>
-      <nav className="fixed top-0 left-0 w-full z-30 px-4 md:px-8 py-3 flex items-center justify-between bg-black/30 backdrop-blur-md border-b border-white/10">
+      <nav className={`fixed top-0 left-0 w-full z-30 px-4 md:px-8 py-3 flex items-center justify-between border-b transition-all duration-300 ${navClass}`}>
         {/* Left: hamburger */}
         <button
           onClick={() => setSidebarOpen(true)}

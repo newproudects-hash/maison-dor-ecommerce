@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import ProductGallery from './ProductGallery';
 import ProductClient from './ProductClient';
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import type { Product } from '@/types';
 
 export default function ProductInteractive({ product }: { product: Product }) {
@@ -31,10 +32,14 @@ export default function ProductInteractive({ product }: { product: Product }) {
 
         <p className="text-neutral-500 text-sm leading-relaxed">{product.description}</p>
 
-        <ProductClient 
-          product={product} 
-          onVariantSelect={handleVariantSelect} 
-        />
+        <ErrorBoundary>
+          <Suspense fallback={<div className="h-20 animate-pulse bg-neutral-100 rounded-xl"></div>}>
+            <ProductClient 
+              product={product} 
+              onVariantSelect={handleVariantSelect} 
+            />
+          </Suspense>
+        </ErrorBoundary>
 
         {/* Delivery info */}
         <div className="bg-neutral-50 rounded-2xl p-4 space-y-2 mt-4">

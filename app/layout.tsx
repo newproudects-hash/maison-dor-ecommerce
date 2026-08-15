@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     template: "%s | MAISON D'OR",
   },
   description: "Découvrez la collection exclusive MAISON D'OR — sacs, accessoires et mode femme de luxe livrés partout en Algérie.",
-  keywords: ['sacs de luxe', 'maroquinerie algérie', 'mode femme', 'maison dor', 'sac algérie'],
+  // FIX #66: Removed deprecated meta keywords
   authors: [{ name: "MAISON D'OR" }],
   creator: "MAISON D'OR",
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://www.maisondor.dz'),
@@ -40,9 +40,11 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({children}: {children: React.ReactNode}) {
+  // FIX #47: Use standard fr-DZ and auto direction to better support bilingual content
   return (
-    <html lang="fr">
-      <body className={`${playfair.variable} ${jakarta.variable} font-sans antialiased flex flex-col min-h-screen`} suppressHydrationWarning>
+    <html lang="fr-DZ" dir="auto">
+      {/* FIX #53: Removed unjustified suppressHydrationWarning */}
+      <body className={`${playfair.variable} ${jakarta.variable} font-sans antialiased flex flex-col min-h-screen`}>
         {children}
         <Footer />
         <BackToTop />

@@ -6,14 +6,15 @@ import ProductCard from '@/components/ui/ProductCard';
 import { getProductsByPlacement, getCategories, getHomePageSettings } from '@/lib/sanity/queries';
 import { mapSanityProduct } from '@/lib/sanity/mapper';
 import { getImageUrl } from '@/lib/sanity/client';
+import type { SanityProductRaw, Category } from '@/types';
 
 export const revalidate = 60;
 
 export default async function Home() {
-  let rawNewArrivals: any[] = [];
-  let rawBestSellers: any[] = [];
-  let rawCategories: any[] = [];
-  let homeSettings: any = null;
+  let rawNewArrivals: SanityProductRaw[] = [];
+  let rawBestSellers: SanityProductRaw[] = [];
+  let rawCategories: Category[] = [];
+  let homeSettings: Record<string, unknown> | null = null;
 
   try {
     const settled = await Promise.allSettled([
@@ -22,10 +23,10 @@ export default async function Home() {
       getCategories(),
       getHomePageSettings(),
     ]);
-    rawNewArrivals  = settled[0].status === 'fulfilled' ? settled[0].value as any[] : [];
-    rawBestSellers  = settled[1].status === 'fulfilled' ? settled[1].value as any[] : [];
-    rawCategories   = settled[2].status === 'fulfilled' ? settled[2].value as any[] : [];
-    homeSettings    = settled[3].status === 'fulfilled' ? settled[3].value as any : null;
+    rawNewArrivals  = settled[0].status === 'fulfilled' ? settled[0].value as SanityProductRaw[] : [];
+    rawBestSellers  = settled[1].status === 'fulfilled' ? settled[1].value as SanityProductRaw[] : [];
+    rawCategories   = settled[2].status === 'fulfilled' ? settled[2].value as Category[] : [];
+    homeSettings    = settled[3].status === 'fulfilled' ? settled[3].value as Record<string, unknown> : null;
   } catch {
     // Sanity fetch failed entirely, sections will be empty
   }

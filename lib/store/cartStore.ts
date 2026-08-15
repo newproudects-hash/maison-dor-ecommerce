@@ -13,6 +13,7 @@ export interface CartItem {
 
 const CART_KEY = 'maison_dor_cart';
 const MAX_QUANTITY_PER_ITEM = 20;
+const MAX_TOTAL_CART_ITEMS = 50; // FIX #23: Limit max items in cart
 
 export function getCart(): CartItem[] {
   if (typeof window === 'undefined') return [];
@@ -42,6 +43,11 @@ export function addToCart(item: Omit<CartItem, 'id' | 'quantity'> & { quantity?:
   if (existing) {
     existing.quantity = Math.min(existing.quantity + qty, MAX_QUANTITY_PER_ITEM);
   } else {
+    // FIX #23: Check total distinct items to prevent localStorage overflow attack
+    if (cart.length >= MAX_TOTAL_CART_ITEMS) {
+      alert("Votre panier est plein. Veuillez procéder au paiement ou supprimer des articles.");
+      return;
+    }
     cart.push({ ...item, id: key, quantity: qty });
   }
   saveCart(cart);
