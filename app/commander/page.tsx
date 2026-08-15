@@ -22,17 +22,27 @@ export default function CommanderPage() {
     prenom: '', nom: '', phone: '', wilaya: '', adresse: '',
   });
   const [delivery, setDelivery] = useState<DeliveryType>('domicile');
+  // FIX #14: Frontend phone validation
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+  // FIX #64: Replace alert() with inline error
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const subtotal = getCartTotal(cart);
   const shipping = delivery === 'domicile' ? LIVRAISON_DOMICILE : LIVRAISON_BUREAU;
   const total = subtotal + shipping;
 
-  const isStep1Valid = form.prenom && form.nom && form.phone && form.wilaya;
+  const validatePhone = (phone: string) => {
+    if (!phone) return null;
+    return /^0[567]\d{8}$/.test(phone) ? null : 'رقم الهاتف يجب أن يبدأ بـ 05, 06, أو 07 ويتكون من 10 أرقام';
+  };
+
+  const isStep1Valid = form.prenom && form.nom && form.phone && form.wilaya && !phoneError;
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
+    setSubmitError(null);
     try {
       const orderNumber = generateOrderNumber();
       const wilayaCode = WILAYAS.findIndex(w => w === form.wilaya) + 1;
@@ -40,6 +50,7 @@ export default function CommanderPage() {
       const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        // FIX #61: Don't send subtotal/total — server recalculates them
         body: JSON.stringify({
           orderNumber,
           firstName: form.prenom,
@@ -51,28 +62,30 @@ export default function CommanderPage() {
           deliveryPrice: shipping,
           address: form.adresse,
           items: cart.map(item => ({
-          productId: item.productId,
-          productName: item.name,
-          price: item.price,
-          quantity: item.quantity,
-          size: item.size,
-          color: item.color,
-          imageUrl: item.image,
-          slug: item.slug,
-        })),
+            productId: item.productId,
+            productName: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            size: item.size,
+            color: item.color,
+            imageUrl: item.image,
+            slug: item.slug,
+          })),
           subtotal,
           total
         })
       });
-      
-      if (!res.ok) throw new Error('Erreur réseau');
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erreur réseau');
       
       clearCart();
       router.push(`/merci?orderId=${orderNumber}`);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Erreur inconnue';
       console.error('[Commander] Submit error:', msg);
-      alert('Une erreur s\'est produite. Veuillez réessayer.');
+      // FIX #64: Show inline error instead of alert()
+      setSubmitError('حدث خطأ أثناء إرسال طلبك. يرجى المحاولة مرة أخرى.');
     } finally {
       setIsSubmitting(false);
     }
@@ -156,10 +169,18 @@ export default function CommanderPage() {
                   <input
                     type="tel"
                     value={form.phone}
-                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setForm({ ...form, phone: val });
+                      setPhoneError(validatePhone(val));
+                    }}
                     placeholder="0561631029"
-                    className="w-full border-2 border-neutral-200 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#082215] transition-colors"
+                    className={`w-full border-2 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none transition-colors ${
+                      phoneError ? 'border-red-400 focus:border-red-500' : 'border-neutral-200 focus:border-[#082215]'
+                    }`}
                   />
+                  {/* FIX #14: Show phone validation error inline */}
+                  {phoneError && <p className="text-red-500 text-xs mt-1">{phoneError}</p>}
                 </div>
 
                 <div>
@@ -272,11 +293,16 @@ export default function CommanderPage() {
                         <p className="text-sm font-semibold text-neutral-800 leading-tight">{item.name}</p>
                         <div className="flex gap-2 text-[10px] text-neutral-500 mt-0.5">
                           {item.size && <span>Taille: {item.size}</span>}
-                          {item.color && (
-                            <span className="flex items-center gap-1">
-                              Couleur: <span className="w-2 h-2 rounded-full border border-neutral-200" style={{ backgroundColor: item.color }} />
-                            </span>
-                          )}
+                            {item.color && (
+                              <span className="flex items-center gap-1">
+                                Couleur:
+                                {/* FIX #29: Smart color display */}
+                                {/^#[0-9A-Fa-f]{3,6}$/.test(item.color)
+                                  ? <span className="w-2 h-2 rounded-full border border-neutral-200 inline-block" style={{ backgroundColor: item.color }} />
+                                  : <strong className="text-neutral-600">{item.color}</strong>
+                                }
+                              </span>
+                            )}
                         </div>
                         <p className="text-xs text-neutral-400 mt-0.5">x{item.quantity}</p>
                       </div>
@@ -306,9 +332,15 @@ export default function CommanderPage() {
                 <button onClick={() => setStep(2)} className="flex items-center gap-1.5 border-2 border-neutral-200 text-neutral-600 px-5 py-4 rounded-2xl font-bold text-sm hover:border-neutral-400 transition-colors">
                   <ChevronLeft className="w-4 h-4" /> Retour
                 </button>
-                <button onClick={handleSubmit} disabled={isSubmitting} className="flex-1 bg-[#082215] text-white py-4 rounded-2xl font-bold text-sm tracking-wide flex items-center justify-center gap-2 hover:bg-[#0d3020] transition-colors disabled:opacity-50">
-                  {isSubmitting ? <span className="animate-pulse">Traitement...</span> : <><Check className="w-4 h-4" /> Confirmer la commande</>}
-                </button>
+                <div className="flex-1 flex flex-col gap-2">
+                  {/* FIX #64: Inline error instead of alert() */}
+                  {submitError && (
+                    <p className="text-red-500 text-xs text-center bg-red-50 border border-red-200 rounded-xl px-3 py-2">{submitError}</p>
+                  )}
+                  <button onClick={handleSubmit} disabled={isSubmitting} className="w-full bg-[#082215] text-white py-4 rounded-2xl font-bold text-sm tracking-wide flex items-center justify-center gap-2 hover:bg-[#0d3020] transition-colors disabled:opacity-50">
+                    {isSubmitting ? <span className="animate-pulse">Traitement...</span> : <><Check className="w-4 h-4" /> Confirmer la commande</>}
+                  </button>
+                </div>
               </div>
             </motion.div>
           )}

@@ -1,29 +1,52 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Plus, Minus, Trash2, ShoppingBag, ArrowRight } from 'lucide-react';
-import { getCart, removeFromCart, updateQuantity, getCartTotal, CartItem } from '@/lib/store/cartStore';
+import { X, Plus, Minus, ShoppingBag, ArrowRight } from 'lucide-react';
+import { getCart, removeFromCart, updateQuantity, clearCart, getCartTotal, CartItem } from '@/lib/store/cartStore';
+import { CartItemDeleteButton } from './CartItemDeleteButton';
 
 interface CartDrawerProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+// FIX #29/#30: Smart color display — show name if not a hex, show swatch only if valid hex
+function ColorBadge({ color }: { color: string }) {
+  const isHex = /^#[0-9A-Fa-f]{3,6}$/.test(color);
+  return (
+    <span className="flex items-center gap-1">
+      Couleur:
+      {isHex
+        ? <span className="w-3 h-3 rounded-full border border-neutral-200 inline-block" style={{ backgroundColor: color }} />
+        : <strong className="text-neutral-700">{color}</strong>
+      }
+    </span>
+  );
+}
+
 export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [clearConfirm, setClearConfirm] = useState(false);
+
+  const refreshCart = useCallback(() => setCart(getCart()), []);
 
   useEffect(() => {
-    setCart(getCart());
-    const handler = () => setCart(getCart());
+    refreshCart();
+    const handler = () => refreshCart();
     window.addEventListener('cart-updated', handler);
     return () => window.removeEventListener('cart-updated', handler);
-  }, [isOpen]);
+  }, [isOpen, refreshCart]);
 
   const total = getCartTotal(cart);
   const itemCount = cart.reduce((s, i) => s + i.quantity, 0);
+
+  const handleClearAll = () => {
+    clearCart();
+    setClearConfirm(false);
+  };
 
   return (
     <AnimatePresence>
@@ -54,7 +77,8 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
             <div className="flex items-center justify-between px-6 py-5 border-b border-neutral-100">
               <div className="flex items-center gap-2">
                 <ShoppingBag className="w-5 h-5 text-neutral-800" />
-                <span className="font-serif font-black text-neutral-900 tracking-wide text-lg">Ma Panier</span>
+                {/* FIX #26: "Ma Panier" → "Mon Panier" */}
+                <span className="font-serif font-black text-neutral-900 tracking-wide text-lg">Mon Panier</span>
                 {itemCount > 0 && (
                   <span className="bg-neutral-900 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">{itemCount}</span>
                 )}
@@ -95,11 +119,8 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                           <p className="font-semibold text-sm text-neutral-900 leading-tight">{item.name}</p>
                           <div className="flex gap-2 items-center text-xs text-neutral-500 mt-1">
                             {item.size && <span>Taille: <strong className="text-neutral-700">{item.size}</strong></span>}
-                            {item.color && (
-                              <span className="flex items-center gap-1">
-                                Couleur: <span className="w-3 h-3 rounded-full border border-neutral-200" style={{ backgroundColor: item.color }} />
-                              </span>
-                            )}
+                            {/* FIX #30: Use ColorBadge instead of raw backgroundColor */}
+                            {item.color && <ColorBadge color={item.color} />}
                           </div>
                         </div>
                         <div className="flex items-center justify-between">
@@ -115,17 +136,8 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                           <p className="font-black text-neutral-900">{(item.price * item.quantity).toLocaleString('fr-DZ')} DA</p>
                         </div>
                       </div>
-                      <button
-                          onClick={() => {
-                            if (window.confirm('Êtes-vous sûr de vouloir retirer cet article du panier ?')) {
-                              removeFromCart(item.id);
-                            }
-                          }}
-                          className="p-2 text-neutral-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors"
-                          aria-label="Supprimer l'article"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                      {/* FIX #36: Use CartItemDeleteButton instead of window.confirm() */}
+                      <CartItemDeleteButton item={item} />
                     </motion.div>
                   ))}
                 </div>
@@ -142,7 +154,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                   </div>
                   <div className="flex justify-between text-sm text-neutral-500">
                     <span>Livraison</span>
-                    <span className="font-semibold text-neutral-800">Calculé à l'étape suivante</span>
+                    <span className="font-semibold text-neutral-800">Calculé à l&apos;étape suivante</span>
                   </div>
                   <div className="flex justify-between text-base font-black text-neutral-900 pt-3 border-t border-neutral-100">
                     <span>Total</span>
@@ -150,12 +162,27 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                   </div>
                 </div>
 
+                {/* FIX #35: Add clear cart button */}
+                <div className="flex items-center justify-end">
+                  {clearConfirm ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-neutral-500">Vider tout?</span>
+                      <button onClick={handleClearAll} className="text-xs font-bold text-red-500 hover:underline">Oui</button>
+                      <button onClick={() => setClearConfirm(false)} className="text-xs font-bold text-neutral-400 hover:underline">Non</button>
+                    </div>
+                  ) : (
+                    <button onClick={() => setClearConfirm(true)} className="text-xs text-neutral-400 hover:text-red-400 transition-colors underline-offset-2 hover:underline">
+                      Vider le panier
+                    </button>
+                  )}
+                </div>
+
                 <Link
                   href="/commander"
                   onClick={onClose}
-                  className="block w-full py-4 text-center rounded-2xl font-black tracking-wide text-white bg-gradient-to-r from-[#082215] to-[#0a2a1a] shadow-[0_10px_20px_rgba(8,34,21,0.2)] hover:shadow-[0_15px_30px_rgba(8,34,21,0.3)] hover:-translate-y-1 transition-all duration-300"
+                  className="block w-full py-4 text-center rounded-2xl font-black tracking-wide text-white bg-gradient-to-r from-[#082215] to-[#0a2a1a] shadow-[0_10px_20px_rgba(8,34,21,0.2)] hover:shadow-[0_15px_30px_rgba(8,34,21,0.3)] hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-2"
                 >
-                  Passer la commande
+                  Passer la commande <ArrowRight className="w-4 h-4" />
                 </Link>
               </div>
             )}

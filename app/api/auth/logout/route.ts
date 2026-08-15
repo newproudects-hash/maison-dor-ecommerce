@@ -1,8 +1,13 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 
+// FIX #5: Logout endpoint to clear admin session cookie
 export async function POST() {
-  const cookieStore = await cookies();
-  cookieStore.delete('admin_token');
-  return NextResponse.json({ success: true });
+  try {
+    const cookieStore = await cookies();
+    cookieStore.delete('admin_token');
+    return NextResponse.json({ success: true });
+  } catch {
+    return NextResponse.json({ success: false }, { status: 500 });
+  }
 }

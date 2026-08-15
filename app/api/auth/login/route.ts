@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { sendSecurityAlertToTelegram } from '@/lib/utils/telegram';
+import { timingSafeEqual, createHash } from 'crypto';
 
 // Brute-force protection: track login attempts per IP
 const loginAttempts = new Map<string, { count: number; blockedUntil: number }>();
@@ -37,7 +38,10 @@ export async function POST(req: Request) {
       );
     }
 
-    if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+    if (email === ADMIN_EMAIL && timingSafeEqual(
+      createHash('sha256').update(password).digest(),
+      createHash('sha256').update(ADMIN_PASSWORD).digest()
+    )) {
       // Reset attempt count on success
       loginAttempts.delete(ip);
       
@@ -53,7 +57,7 @@ export async function POST(req: Request) {
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
         path: '/',
-        maxAge: 60 * 60 * 24 * 7, // 1 week
+        maxAge: 60 * 60 * 24, // FIX #5: 24 hours (was 7 days — too long)
       });
       return NextResponse.json({ success: true });
     }
@@ -75,7 +79,7 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json(
-      { success: false, message: `بيانات الدخول غير صحيحة. (${MAX_ATTEMPTS - newCount} محاولات متبقية)` },
+      { success: false, message: 'بيانات الدخول غير صحيحة.' },
       { status: 401 }
     );
   } catch {

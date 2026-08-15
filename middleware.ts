@@ -20,10 +20,16 @@ export function middleware(request: NextRequest) {
   // 2. Protect /admin routes (except /admin/login)
   if (path.startsWith('/admin') && path !== '/admin/login') {
     const adminToken = request.cookies.get('admin_token')?.value;
-
-    // Verify against env var — never a hardcoded string
     if (!ADMIN_TOKEN || adminToken !== ADMIN_TOKEN) {
       return NextResponse.redirect(new URL('/admin/login', request.url));
+    }
+  }
+
+  // 2b. FIX #3: Protect /api/admin routes with same check
+  if (path.startsWith('/api/admin')) {
+    const adminToken = request.cookies.get('admin_token')?.value;
+    if (!ADMIN_TOKEN || adminToken !== ADMIN_TOKEN) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
   }
 
@@ -38,5 +44,6 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*'],
+  // FIX #3: Also protect /api/admin routes via middleware (not just page routes)
+  matcher: ['/admin/:path*', '/api/admin/:path*'],
 };

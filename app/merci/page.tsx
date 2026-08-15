@@ -9,7 +9,16 @@ import { useSearchParams } from 'next/navigation';
 
 function MerciContent() {
   const searchParams = useSearchParams();
-  const orderId = searchParams.get('orderId') || 'MD-' + Math.floor(10000 + Math.random() * 90000);
+  const orderId = searchParams.get('orderId');
+
+  // FIX #13: Redirect to boutique if accessed directly without a real order
+  if (!orderId) {
+    if (typeof window !== 'undefined') {
+      window.location.replace('/boutique');
+    }
+    return null;
+  }
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Sound effect

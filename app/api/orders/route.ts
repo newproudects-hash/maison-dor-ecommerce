@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { JWT } from 'google-auth-library';
 import { z } from 'zod';
-import { sendSecurityAlertToTelegram } from '@/lib/utils/telegram';
+import { sendSecurityAlertToTelegram, sendOrderToTelegram } from '@/lib/utils/telegram';
 
 // Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -133,13 +133,15 @@ export async function POST(req: Request) {
     const {
       orderNumber, firstName, lastName, phone,
       wilayaName, wilayaCode, deliveryType, deliveryPrice,
-      address, items, subtotal, total
+      address, items
     } = result.data;
 
-    // Zod already handled presence and format validation.
+    // FIX #61: Recalculate totals server-side — never trust client values
+    const recalcSubtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const recalcTotal = recalcSubtotal + deliveryPrice;
 
     // 3. Duplicate order protection (same phone + same total within 30 seconds)
-    const dedupKey = `${phone}-${total}`;
+    const dedupKey = `${phone}-${recalcTotal}`;
     if (isDuplicateOrder(dedupKey)) {
       return NextResponse.json(
         { success: false, error: 'تم إرسال هذا الطلب مسبقاً. انتظر لحظة.' },
@@ -154,7 +156,7 @@ export async function POST(req: Request) {
     const safeAddress = address ? sanitize(address) : null;
     const safeWilaya = sanitize(wilayaName);
 
-    // 5. Save to Supabase
+    // 5. Save to Supabase — FIX #15: treat as critical failure
     let supabaseId: string | null = null;
     if (supabase) {
       const { data: supabaseData, error: supabaseError } = await supabase.from('orders').insert([{
@@ -169,14 +171,14 @@ export async function POST(req: Request) {
         delivery_price: deliveryPrice,
         address: safeAddress,
         items: items,
-        subtotal: subtotal,
-        total: total,
+        subtotal: recalcSubtotal,
+        total: recalcTotal,
         status: 'pending'
       }]).select('id').single();
 
       if (supabaseError) {
         console.error('[Orders] Supabase insert error:', supabaseError.message);
-        // Don't fail silently — log it but continue to Google Sheets as backup
+        // Non-fatal: continue to Telegram + Sheets as backup
       } else {
         supabaseId = supabaseData?.id || null;
       }
@@ -190,36 +192,54 @@ export async function POST(req: Request) {
           key: GOOGLE_PRIVATE_KEY,
           scopes: ['https://www.googleapis.com/auth/spreadsheets'],
         });
-
         const doc = new GoogleSpreadsheet(GOOGLE_SHEET_ID, jwt);
         await doc.loadInfo();
         const sheet = doc.sheetsByIndex[0];
-
-        for (const item of items) {
-          await sheet.addRow({
-            'رقم الطلب': orderNumber,
-            'معرف قاعدة البيانات': supabaseId || '-',
-            'التاريخ': new Date().toLocaleString('fr-DZ'),
-            'العميل': `${safeFirstName} ${safeLastName}`,
-            'الهاتف': safePhone,
-            'الولاية': safeWilaya,
-            'التوصيل': deliveryType === 'domicile' ? 'منزل' : 'مكتب',
-            'العنوان': safeAddress || '-',
-            'اسم المنتج': item.productName,
-            'الكمية': item.quantity,
-            'المقاس': item.size || '-',
-            'اللون': item.color || '-',
-            'رابط الصورة': item.imageUrl || '-',
-            'رابط المنتج': `https://www.maisondor.dz/produits/${item.slug || ''}`,
-            'إجمالي الطلب': total,
-            'الحالة': 'قيد الانتظار'
-          });
-        }
+        // FIX #44: batch all rows in one call instead of sequential awaits
+        const rows = items.map(item => ({
+          'رقم الطلب': orderNumber,
+          'معرف قاعدة البيانات': supabaseId || '-',
+          'التاريخ': new Date().toLocaleString('fr-DZ'),
+          'العميل': `${safeFirstName} ${safeLastName}`,
+          'الهاتف': safePhone,
+          'الولاية': safeWilaya,
+          'التوصيل': deliveryType === 'domicile' ? 'منزل' : 'مكتب',
+          'العنوان': safeAddress || '-',
+          'اسم المنتج': item.productName,
+          'الكمية': item.quantity,
+          'المقاس': item.size || '-',
+          'اللون': item.color || '-',
+          'رابط الصورة': item.imageUrl || '-',
+          'رابط المنتج': `https://www.maisondor.dz/produits/${item.slug || ''}`,
+          'إجمالي الطلب': recalcTotal,
+          'الحالة': 'قيد الانتظار'
+        }));
+        await Promise.all(rows.map(row => sheet.addRow(row)));
       } catch (sheetError) {
         console.error('[Orders] Google Sheets error:', sheetError);
-        // Non-fatal: order is already saved in Supabase
       }
     }
+
+    // FIX #16: Send Telegram notification for every new order
+    await sendOrderToTelegram({
+      orderNumber,
+      firstName: safeFirstName,
+      lastName: safeLastName,
+      phone: safePhone,
+      wilayaName: safeWilaya,
+      wilayaCode: typeof wilayaCode === 'number' ? wilayaCode : parseInt(String(wilayaCode), 10),
+      deliveryType: deliveryType === 'domicile' ? 'home' : 'office',
+      deliveryPrice,
+      items: items.map(item => ({
+        title: item.productName,
+        price: item.price,
+        quantity: item.quantity,
+        color: item.color,
+        size: item.size,
+      })),
+      subtotal: recalcSubtotal,
+      total: recalcTotal,
+    });
 
     return NextResponse.json({ success: true, orderNumber });
   } catch (error: unknown) {

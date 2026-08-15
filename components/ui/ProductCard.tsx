@@ -3,11 +3,13 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Heart } from 'lucide-react';
+import { Heart, ShoppingBag, Check } from 'lucide-react';
 import { addToCart } from '@/lib/store/cartStore';
 
 export default function ProductCard({ product }: { product: { id: string; name: string; price: number; image: string; category: string; slug: string } }) {
   const [wishlisted, setWishlisted] = React.useState(false);
+  // FIX #68: Show feedback after adding to cart
+  const [added, setAdded] = React.useState(false);
 
   React.useEffect(() => {
     try {
@@ -19,6 +21,9 @@ export default function ProductCard({ product }: { product: { id: string; name: 
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     addToCart({ productId: product.id, name: product.name, price: product.price, image: product.image, category: product.category, slug: product.slug });
+    // FIX #68: Briefly show a checkmark
+    setAdded(true);
+    setTimeout(() => setAdded(false), 1800);
   };
 
   const handleWishlist = (e: React.MouseEvent) => {
@@ -39,6 +44,7 @@ export default function ProductCard({ product }: { product: { id: string; name: 
         src={product.image}
         alt={product.name}
         fill
+        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
         className="object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
         referrerPolicy="no-referrer"
       />
@@ -56,12 +62,20 @@ export default function ProductCard({ product }: { product: { id: string; name: 
           <h3 className="text-xs md:text-base font-bold text-white tracking-tight leading-none drop-shadow-sm">{product.name}</h3>
           <p className="text-sm md:text-lg font-extrabold text-amber-300 leading-none drop-shadow-sm">{product.price.toLocaleString('fr-DZ')} DA</p>
         </div>
+        {/* FIX #68: Cart button with added feedback */}
         <button
           onClick={handleAdd}
-          className="opacity-70 hover:opacity-100 hover:scale-110 transition-all ml-1 text-white bg-white/20 backdrop-blur-sm rounded-full p-2"
+          className={`ml-1 rounded-full p-2 transition-all duration-300 ${
+            added
+              ? 'bg-green-500 text-white scale-110'
+              : 'opacity-70 hover:opacity-100 hover:scale-110 text-white bg-white/20 backdrop-blur-sm'
+          }`}
           aria-label="Ajouter au panier"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1.5"/><circle cx="20" cy="21" r="1.5"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 1.96-1.61L23 6H6"/></svg>
+          {added
+            ? <Check className="w-5 h-5" />
+            : <ShoppingBag className="w-5 h-5" />
+          }
         </button>
       </div>
     </Link>

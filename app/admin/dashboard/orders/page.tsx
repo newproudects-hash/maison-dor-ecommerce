@@ -23,12 +23,22 @@ async function updateOrderStatus(formData: FormData) {
   revalidatePath('/admin/dashboard/orders');
 }
 
-export default async function AdminOrdersPage() {
+export default async function AdminOrdersPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
+  const { q } = await searchParams;
   const supabase = getServerSupabase();
-  const { data: orders } = await supabase
+
+  // FIX #55: Add limit + FIX #28: filter by search query
+  let query = supabase
     .from('orders')
     .select('*')
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .limit(200);
+
+  if (q) {
+    query = query.ilike('order_number', `%${q}%`);
+  }
+
+  const { data: orders } = await query;
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -68,9 +78,17 @@ export default async function AdminOrdersPage() {
             </div>
           </div>
 
-          <div className="flex items-center bg-[#111] border border-white/10 px-4 py-2 w-64">
-            <svg className="w-4 h-4 text-white/50 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-            <span className="bg-transparent border-none text-sm text-white/40 w-full">Chercher N° MDO...</span>
+          <div className="flex items-center bg-[#111] border border-white/10 px-4 py-2 w-72">
+            <svg className="w-4 h-4 text-white/50 mr-2 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            {/* FIX #28: Real search form instead of fake span */}
+            <form method="GET" className="flex-1">
+              <input
+                name="q"
+                defaultValue={q || ''}
+                placeholder="Chercher N° MDO..."
+                className="bg-transparent border-none text-sm text-white/70 w-full outline-none placeholder:text-white/40"
+              />
+            </form>
           </div>
         </header>
 
@@ -99,9 +117,11 @@ export default async function AdminOrdersPage() {
                       <div className="text-xs text-white/50">{order.phone}</div>
                     </td>
                     <td className="px-6 py-4">
-                      {order.wilaya_name} ({order.wilaya_code})
+                      {/* FIX #18: field is 'wilaya' not 'wilaya_name' */}
+                      {order.wilaya} ({order.wilaya_code})
                       <div className="text-xs text-white/50">
-                        {order.delivery_type === 'home' ? 'Domicile' : 'Bureau'}
+                        {/* FIX #19: delivery_type is 'domicile'/'bureau' not 'home' */}
+                        {order.delivery_type === 'domicile' ? 'Domicile' : 'Stop Desk'}
                       </div>
                     </td>
                     <td className="px-6 py-4 font-bold">{order.total.toLocaleString('fr-DZ')} DA</td>
