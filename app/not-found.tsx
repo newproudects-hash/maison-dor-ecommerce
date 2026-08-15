@@ -1,11 +1,9 @@
-import Link from 'next/link';
-import Navbar from '@/components/layout/Navbar';
+﻿import Link from 'next/link';
 import { ShoppingBag } from 'lucide-react';
 
 export default function NotFound() {
   return (
     <main className="min-h-screen bg-white text-neutral-900 flex flex-col">
-      <Navbar />
       <div className="flex-1 flex flex-col items-center justify-center px-4 text-center">
         <h1 className="text-8xl md:text-9xl font-serif font-black text-neutral-100 mb-6 drop-shadow-sm">404</h1>
         <h2 className="text-2xl md:text-3xl font-bold mb-4">Page Introuvable</h2>

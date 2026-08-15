@@ -1,7 +1,6 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
-import Navbar from '@/components/layout/Navbar';
 import { Search, Package, Clock, CheckCircle, Truck, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -49,7 +48,6 @@ export default function SuiviPage() {
 
   return (
     <main className="min-h-screen bg-neutral-50 text-neutral-900 font-sans">
-      <Navbar />
       
       <div className="max-w-2xl mx-auto px-4 pt-32 pb-20">
         <div className="text-center mb-10">

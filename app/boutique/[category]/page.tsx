@@ -1,7 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
-import Navbar from '@/components/layout/Navbar';
 import ProductCard from '@/components/ui/ProductCard';
 import type { Metadata } from 'next';
 import { getProducts, getCategories } from '@/lib/sanity/queries';
@@ -65,7 +64,6 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
 
   return (
     <main className="min-h-screen bg-white text-neutral-900">
-      <Navbar />
 
       {/* Hero */}
       <section className="relative pt-16 h-[40vh] md:h-[50vh] overflow-hidden bg-neutral-900">
@@ -79,20 +77,20 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
         <div className="absolute inset-0 flex flex-col items-center justify-end pb-12 text-center text-white px-4">
-          <p className="text-amber-400 text-xs tracking-[0.3em] uppercase font-bold mb-3">Collection MAISON D'OR</p>
+          <p className="text-amber-400 text-xs tracking-[0.3em] uppercase font-bold mb-3">مجموعة MAISON D&apos;OR</p>
           <h1 className="text-4xl md:text-5xl font-serif font-black tracking-wider uppercase mb-2">
             {catTitle}
           </h1>
-          <p className="text-white/70 text-sm max-w-sm mx-auto">{products.length} articles dans cette catégorie</p>
+          <p className="text-white/70 text-sm max-w-sm mx-auto">{products.length} منتج في هذا القسم</p>
         </div>
       </section>
 
       {/* Breadcrumb */}
       <div className="px-4 md:px-8 py-4 max-w-7xl mx-auto border-b border-neutral-100">
         <nav className="flex items-center gap-1.5 text-xs text-neutral-400">
-          <Link href="/" className="hover:text-neutral-700 transition-colors">Accueil</Link>
+          <Link href="/" className="hover:text-neutral-700 transition-colors">الرئيسية</Link>
           <ChevronRight className="w-3 h-3" />
-          <Link href="/boutique" className="hover:text-neutral-700 transition-colors">Boutique</Link>
+          <Link href="/boutique" className="hover:text-neutral-700 transition-colors">المتجر</Link>
           <ChevronRight className="w-3 h-3" />
           <span className="text-neutral-700 font-semibold">{catTitle}</span>
         </nav>
@@ -105,7 +103,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
             href="/boutique"
             className="shrink-0 px-4 py-2 rounded-full text-xs font-bold tracking-wider uppercase transition-all bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
           >
-            Tout
+            الكل
           </Link>
           {rawCategories.map((cat) => (
             <Link
@@ -127,9 +125,9 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
       <section className="px-4 md:px-8 py-10 max-w-7xl mx-auto">
         {products.length === 0 ? (
           <div className="text-center py-24">
-            <p className="text-neutral-400 text-lg">Aucun article dans cette catégorie.</p>
+            <p className="text-neutral-400 text-lg">لا توجد منتجات في هذا القسم.</p>
             <Link href="/boutique" className="mt-4 inline-block text-sm text-neutral-700 underline">
-              Voir toute la boutique
+              عرض كل المتجر
             </Link>
           </div>
         ) : (

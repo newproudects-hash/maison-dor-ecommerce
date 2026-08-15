@@ -9,26 +9,24 @@ import { usePathname } from 'next/navigation';
 import Sidebar from './Sidebar';
 import CartDrawer from './CartDrawer';
 
-/** Premium hand-crafted bag/cart SVG icon — thin lines, luxury feel */
-function LuxuryCartIcon({ className }: { className?: string }) {
+/** Apple SF-style minimal bag icon */
+function AppleBagIcon({ className }: { className?: string }) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
+      viewBox="0 0 28 28"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.1"
+      strokeWidth="1.2"
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
       aria-hidden="true"
     >
-      {/* Bag body */}
-      <path d="M6 2 L4 22 L20 22 L18 2 Z" />
-      {/* Handles */}
-      <path d="M9 2 C9 -1 15 -1 15 2" />
-      {/* Inner detail line */}
-      <line x1="6.5" y1="8" x2="17.5" y2="8" strokeWidth="0.8" />
+      {/* Bag body — slightly rounded rectangle */}
+      <rect x="4" y="10" width="20" height="15" rx="2.5" ry="2.5" />
+      {/* Handle */}
+      <path d="M10 10 C10 5.5 18 5.5 18 10" />
     </svg>
   );
 }
@@ -51,45 +49,43 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-    };
-    window.addEventListener('scroll', handleScroll);
+    const handleScroll = () => setScrolled(window.scrollY > 10);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const isHome = pathname === '/';
-  const navClass = (scrolled || !isHome)
-    ? 'bg-neutral-900 border-neutral-800 shadow-md'
-    : 'bg-black/30 backdrop-blur-md border-white/10';
+  const navBg = (scrolled || !isHome)
+    ? 'bg-neutral-900/95 backdrop-blur-sm border-neutral-800 shadow-md'
+    : 'bg-black/20 backdrop-blur-md border-white/10';
 
   return (
     <>
-      <nav className={`sticky top-0 left-0 w-full z-30 px-4 md:px-8 py-3 flex items-center justify-between border-b transition-all duration-300 ${navClass}`}>
+      <nav className={`w-full z-40 px-4 md:px-8 py-3.5 flex items-center justify-between border-b transition-all duration-300 ${navBg}`}>
         {/* Left: hamburger */}
         <button
           onClick={() => setSidebarOpen(true)}
-          className="flex items-center gap-2 text-white hover:opacity-70 transition-opacity p-1"
-          aria-label="Menu"
+          className="flex items-center text-white/90 hover:text-white transition-colors p-1"
+          aria-label="القائمة"
         >
-          <Menu strokeWidth={1.5} className="w-5 h-5 md:w-6 md:h-6" />
+          <Menu strokeWidth={1.4} className="w-[22px] h-[22px] md:w-6 md:h-6" />
         </button>
 
         {/* Center: Logo */}
         <Link href="/" className="absolute left-1/2 -translate-x-1/2">
-          <h1 className="text-sm md:text-lg font-serif font-black tracking-widest uppercase text-white select-none">
+          <h1 className="text-[13px] md:text-base font-serif font-black tracking-[0.2em] uppercase text-white select-none">
             MAISON D&apos;OR
           </h1>
         </Link>
 
-        {/* Right: Luxury Cart Button */}
+        {/* Right: Apple-style Cart */}
         <button
           onClick={() => setCartOpen(true)}
-          className="relative text-white hover:opacity-75 transition-opacity p-1"
+          className="relative text-white/90 hover:text-white transition-colors p-1"
           aria-label="السلة"
         >
-          <LuxuryCartIcon className="w-[22px] h-[22px] md:w-[26px] md:h-[26px]" />
+          <AppleBagIcon className="w-[22px] h-[22px] md:w-6 md:h-6" />
           <AnimatePresence>
             {cartCount > 0 && (
               <motion.span
@@ -97,8 +93,8 @@ export default function Navbar() {
                 initial={{ scale: 0, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0, opacity: 0 }}
-                transition={{ type: 'spring', stiffness: 500, damping: 25 }}
-                className="absolute -top-1.5 -right-1.5 bg-[#C9A84C] text-black text-[9px] font-black rounded-full w-[17px] h-[17px] flex items-center justify-center shadow-md"
+                transition={{ type: 'spring', stiffness: 600, damping: 28 }}
+                className="absolute -top-1.5 -right-1.5 bg-[#C9A84C] text-black text-[9px] font-black rounded-full w-[16px] h-[16px] flex items-center justify-center shadow"
               >
                 {cartCount}
               </motion.span>

@@ -1,5 +1,4 @@
-import Link from 'next/link';
-import Navbar from '@/components/layout/Navbar';
+﻿import Link from 'next/link';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -10,7 +9,6 @@ export const metadata: Metadata = {
 export default function TermsPage() {
   return (
     <main className="min-h-screen bg-white text-neutral-900">
-      <Navbar />
       <div className="max-w-3xl mx-auto px-4 md:px-8 pt-28 pb-20">
         <h1 className="text-3xl md:text-4xl font-serif font-black mb-3">Conditions d'utilisation</h1>
         <p className="text-neutral-400 text-sm mb-10">Dernière mise à jour : Août 2026</p>

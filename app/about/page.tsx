@@ -1,6 +1,5 @@
-import Link from 'next/link';
+﻿import Link from 'next/link';
 import Image from 'next/image';
-import Navbar from '@/components/layout/Navbar';
 import { Phone, Mail, MapPin } from 'lucide-react';
 import type { Metadata } from 'next';
 
@@ -13,7 +12,6 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <main className="min-h-screen bg-white text-neutral-900 overflow-hidden">
-      <Navbar />
       
       {/* Hero Section */}
       <section className="relative w-full h-[40vh] min-h-[400px] flex items-center justify-center">

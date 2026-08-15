@@ -1,7 +1,5 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import Image from 'next/image';
-import Navbar from '@/components/layout/Navbar';
 import ProductCard from '@/components/ui/ProductCard';
 import { getProducts, getCategories } from '@/lib/sanity/queries';
 import { mapSanityProduct } from '@/lib/sanity/mapper';
@@ -10,8 +8,8 @@ export const revalidate = 60;
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: "Boutique | MAISON D'OR - Collections de Sacs",
-    description: "Découvrez notre collection exclusive de sacs luxueux, conçus pour la femme moderne.",
+    title: "المتجر | MAISON D'OR",
+    description: "اكتشف مجموعتنا الحصرية من الحقائب والإكسسوارات الفاخرة.",
   };
 }
 
@@ -34,18 +32,17 @@ export default async function BoutiquePage() {
 
   return (
     <main className="min-h-screen bg-white text-neutral-900">
-      <Navbar />
 
       {/* Hero */}
-      <section className="relative pt-16 bg-[#082215] text-white py-20 px-4 text-center overflow-hidden">
+      <section className="relative bg-[#082215] text-white py-20 px-4 text-center overflow-hidden">
         <div className="absolute inset-0 opacity-10"
           style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, #D4AF37 0%, transparent 50%), radial-gradient(circle at 80% 50%, #D4AF37 0%, transparent 50%)' }}
         />
-        <div className="relative z-10 animate-fade-in-up">
-          <p className="text-amber-400 text-xs tracking-[0.3em] uppercase font-bold mb-3">Collection 2026</p>
-          <h1 className="text-4xl md:text-6xl font-serif font-black tracking-wider uppercase mb-4">Notre Boutique</h1>
+        <div className="relative z-10">
+          <p className="text-amber-400 text-xs tracking-[0.3em] uppercase font-bold mb-3">مجموعة 2026</p>
+          <h1 className="text-4xl md:text-6xl font-serif font-black tracking-wider uppercase mb-4">متجرنا</h1>
           <p className="text-neutral-300 max-w-md mx-auto text-sm leading-relaxed">
-            Découvrez notre collection exclusive de sacs luxueux, conçus pour la femme moderne.
+            اكتشف مجموعتنا الحصرية من الحقائب والإكسسوارات الفاخرة.
           </p>
         </div>
       </section>
@@ -57,7 +54,7 @@ export default async function BoutiquePage() {
             href="/boutique"
             className="shrink-0 px-4 py-2 rounded-full text-xs font-bold tracking-wider uppercase transition-all bg-neutral-900 text-white"
           >
-            Tout
+            الكل
           </Link>
           {rawCategories.map((cat) => (
             <Link
@@ -73,11 +70,11 @@ export default async function BoutiquePage() {
 
       {/* Products Grid */}
       <section className="px-4 md:px-8 py-10 max-w-7xl mx-auto">
-        <p className="text-neutral-400 text-xs mb-6 tracking-wide">{filtered.length} articles</p>
+        <p className="text-neutral-400 text-xs mb-6 tracking-wide">{filtered.length} منتج</p>
         
         {filtered.length === 0 ? (
           <div className="text-center py-20">
-            <p className="text-neutral-500 text-lg">Aucun article trouvé.</p>
+            <p className="text-neutral-500 text-lg">لا توجد منتجات.‏</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">

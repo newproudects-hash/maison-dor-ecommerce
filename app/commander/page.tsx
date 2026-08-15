@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import Link from 'next/link';
@@ -7,7 +7,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, ChevronLeft, Check, Home, Building2, ShoppingBag } from 'lucide-react';
 import { getCart, clearCart, getCartTotal, CartItem } from '@/lib/store/cartStore';
 import { WILAYAS, LIVRAISON_DOMICILE, LIVRAISON_BUREAU } from '@/lib/data/wilayas';
-import Navbar from '@/components/layout/Navbar';
 import { useRouter } from 'next/navigation';
 import { generateOrderNumber } from '@/lib/utils/orderNumber';
 
@@ -95,8 +94,7 @@ export default function CommanderPage() {
   if (cart.length === 0 && step === 1) {
     return (
       <main className="min-h-screen bg-white flex flex-col items-center justify-center gap-4">
-        <Navbar />
-        <ShoppingBag className="w-12 h-12 text-neutral-300 mt-20" />
+          <ShoppingBag className="w-12 h-12 text-neutral-300 mt-20" />
         <p className="text-neutral-500">Votre panier est vide.</p>
         <Link href="/boutique" className="text-sm underline text-neutral-700">Retour à la boutique</Link>
       </main>
@@ -105,7 +103,6 @@ export default function CommanderPage() {
 
   return (
     <main className="min-h-screen bg-neutral-50 text-neutral-900">
-      <Navbar />
 
       <div className="pt-20 pb-16 px-4 max-w-2xl mx-auto">
         <h1 className="text-2xl font-serif font-black tracking-wide text-center mb-8">Finaliser la commande</h1>

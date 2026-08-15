@@ -1,8 +1,7 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import Link from 'next/link';
-import Navbar from '@/components/layout/Navbar';
 import { Mail, Phone, MapPin, Clock, Send, CheckCircle } from 'lucide-react';
 
 export default function ContactPage() {
@@ -32,7 +31,6 @@ export default function ContactPage() {
 
   return (
     <main className="min-h-screen bg-white text-neutral-900">
-      <Navbar />
       <div className="max-w-4xl mx-auto px-4 md:px-8 pt-28 pb-20">
         <h1 className="text-3xl md:text-4xl font-serif font-black mb-12 text-center">Contactez-nous</h1>
         

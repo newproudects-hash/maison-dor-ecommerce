@@ -52,9 +52,13 @@ export async function getProducts({
           { categorySlug }
         ),
       ]);
+      // Don't cache empty results - might be a query bug or slug mismatch
+      if (!products || products.length === 0) {
+        return { products: [], total: 0, pages: 0, _nocache: true };
+      }
       return { products, total, pages: Math.ceil(total / perPage) };
     },
-    1800 // Cache for 30 minutes
+    categorySlug ? 900 : 1800 // category pages: 15 min, all products: 30 min
   );
 
   return result;
