@@ -40,7 +40,9 @@ export async function generateMetadata(
 }
 
 export default async function CategoryPage({ params }: { params: Promise<{ category: string }> }) {
-  const { category } = await params;
+  const { category: rawCategory } = await params;
+  // Normalize to lowercase to match Sanity slugs
+  const category = rawCategory.toLowerCase();
   
   let rawProductsData: { products: unknown[] } = { products: [] };
   let rawCategories: { slug: string; title: string | { ar?: string; fr?: string; en?: string }; image: unknown }[] = [];

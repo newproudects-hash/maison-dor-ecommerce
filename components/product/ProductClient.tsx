@@ -66,11 +66,11 @@ export default function ProductClient({ product, onVariantSelect }: ProductClien
 
   const handleAdd = (redirect = false) => {
     if (hasVariants && !selectedVariant) {
-      setError("Veuillez choisir une couleur");
+      setError("الرجاء اختيار اللون");
       return;
     }
     if (!hasVariants && hasLegacyColors && !selectedColor) {
-      setError("Veuillez choisir une couleur");
+      setError("الرجاء اختيار اللون");
       return;
     }
 
@@ -123,7 +123,7 @@ export default function ProductClient({ product, onVariantSelect }: ProductClien
       {hasVariants && (
         <div>
           <p className="text-xs font-bold tracking-widest uppercase text-neutral-500 mb-3">
-            Couleur
+            اللون
             {selectedVariant && (
               <span className="ml-2 text-neutral-700 normal-case font-normal tracking-normal">
                 — {selectedVariant.colorName}
@@ -175,7 +175,7 @@ export default function ProductClient({ product, onVariantSelect }: ProductClien
       {!hasVariants && hasLegacyColors && (
         <div>
           <p className="text-xs font-bold tracking-widest uppercase text-neutral-500 mb-3">
-            Couleur
+            اللون
             {selectedColor && (
               <span className="ml-2 text-neutral-700 normal-case font-normal tracking-normal">
                 — {selectedColor}
@@ -202,7 +202,7 @@ export default function ProductClient({ product, onVariantSelect }: ProductClien
       {/* ── Sizes ── */}
       {product.sizes && product.sizes.length > 0 && (
         <div>
-          <p className="text-xs font-bold tracking-widest uppercase text-neutral-500 mb-3">Taille</p>
+          <p className="text-xs font-bold tracking-widest uppercase text-neutral-500 mb-3">المقاس</p>
           <div className="flex gap-2 flex-wrap">
             {product.sizes.map((size: string) => (
               <button
@@ -224,7 +224,7 @@ export default function ProductClient({ product, onVariantSelect }: ProductClien
 
       {/* ── Quantity ── */}
       <div>
-        <p className="text-xs font-bold tracking-widest uppercase text-neutral-500 mb-3">Quantité</p>
+        <p className="text-xs font-bold tracking-widest uppercase text-neutral-500 mb-3">الكمية</p>
         <div className="flex items-center border-2 border-neutral-200 rounded-xl w-fit overflow-hidden">
           <button
             onClick={() => setQty(Math.max(1, qty - 1))}
@@ -257,14 +257,14 @@ export default function ProductClient({ product, onVariantSelect }: ProductClien
           }`}
         >
           <ShoppingBag className="w-4 h-4" />
-          {added ? '✓ Ajouté' : 'Ajouter au panier'}
+          {added ? '✓ تمت الإضافة' : 'إضافة للسلة'}
         </button>
 
         <button
           onClick={() => handleAdd(true)}
           className="flex-[1.5] flex items-center justify-center gap-2 py-4 rounded-2xl font-black text-sm tracking-wide transition-all duration-300 shadow-lg bg-[#082215] text-white hover:bg-[#0d3020] hover:shadow-xl hover:-translate-y-0.5"
         >
-          Commander Maintenant
+          اطلب الآن
         </button>
 
         <button

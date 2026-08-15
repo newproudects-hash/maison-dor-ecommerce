@@ -1,15 +1,13 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-
 const DEFAULT_ITEMS = [
-  'LIVRAISON RAPIDE',
-  'QUALITÉ PREMIUM',
+  'توصيل سريع',
+  'جودة فاخرة',
   "MAISON D'OR",
-  'NOUVEAUX ARRIVAGES',
-  'PAIEMENT À LA LIVRAISON',
-  'ARTISANAT LUXE',
-  'LIVRAISON PARTOUT EN ALGÉRIE',
+  'وصولات جديدة',
+  'الدفع عند الاستلام',
+  'صناعة فاخرة',
+  'التوصيل لكل الجزائر',
   '✦',
 ];
 
@@ -19,39 +17,42 @@ export default function Marquee({ text }: { text?: string }) {
     ? text.split('✦').map(s => s.trim()).filter(Boolean)
     : DEFAULT_ITEMS;
 
+  // We duplicate enough so the track is very long.
+  // CSS will shift by 1/(copies) of total width per "tick"
+  const copies = 40;
+  const allItems: string[] = [];
+  for (let i = 0; i < copies; i++) {
+    items.forEach(item => allItems.push(item));
+  }
+
   return (
-    <div className="w-full overflow-hidden bg-black border-y border-neutral-800 py-3 flex">
-      <div className="flex animate-marquee-scroll whitespace-nowrap will-change-transform">
-        {Array.from({ length: 50 }).map((_, blockIndex) => (
-          <div key={blockIndex} className="flex shrink-0">
-            {items.map((item, i) => (
-              <span
-                key={i}
-                className="inline-flex items-center shrink-0 px-8"
-              >
-                {item === '✦' ? (
-                  <span className="text-[#C9A84C] text-lg">✦</span>
-                ) : (
-                  <span className="text-[10px] md:text-[11px] font-black tracking-[0.2em] uppercase text-white">
-                    {item}
-                  </span>
-                )}
+    <div className="w-full overflow-hidden bg-black border-y border-neutral-800 py-3">
+      <div className="marquee-track flex whitespace-nowrap">
+        {allItems.map((item, i) => (
+          <span
+            key={i}
+            className="inline-flex items-center shrink-0 px-7"
+          >
+            {item === '✦' ? (
+              <span className="text-[#C9A84C] text-base leading-none">✦</span>
+            ) : (
+              <span className="text-[10px] md:text-[11px] font-black tracking-[0.25em] uppercase text-white leading-none">
+                {item}
               </span>
-            ))}
-          </div>
+            )}
+          </span>
         ))}
       </div>
 
       <style jsx>{`
-        .animate-marquee-scroll {
-          /* Adjust duration based on how many items we scroll. 
-             Since we shift by 1 block (-2%), the speed depends on block width.
-             A generic 5s usually feels right for an average block. */
-          animation: marquee-scroll 5s linear infinite;
+        .marquee-track {
+          /* shift 1 copy width (= 1/copies of total) in 3s */
+          animation: scroll-left 3s linear infinite;
         }
-        @keyframes marquee-scroll {
+
+        @keyframes scroll-left {
           0%   { transform: translateX(0); }
-          100% { transform: translateX(-2%); } /* 100% / 50 blocks = 2% per block */
+          100% { transform: translateX(-2.5%); }
         }
       `}</style>
     </div>
