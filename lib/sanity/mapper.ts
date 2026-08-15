@@ -35,7 +35,7 @@ export function mapSanityProduct(input: unknown): Product {
     originalPrice: p.originalPrice != null ? Number(p.originalPrice) : undefined,
     image: images.length > 0 ? (getImageUrl(images[0]) || '/hero.jpg') : '/hero.jpg',
     images: images.length > 0 ? images.map((img) => getImageUrl(img) || '/hero.jpg') : ['/hero.jpg'],
-    category: (p.category as AnyObj)?.slug || 'sacs',
+    category: String((p.category as AnyObj)?.slug || 'sacs'),
     slug: String(p.slug || ''),
     description: getDesc(p.description),
     colors: Array.isArray(p.colors) ? (p.colors as string[]) : [],

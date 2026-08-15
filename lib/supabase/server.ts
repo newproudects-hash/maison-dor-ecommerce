@@ -5,11 +5,7 @@ export function getServerSupabase() {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!url || !key) {
-    // Return a mock-safe client that won't crash build
-    return createServerClient(
-      'https://placeholder.supabase.co',
-      'placeholder-key-for-build'
-    );
+    throw new Error('Supabase URL or Key is missing. Check your environment variables.');
   }
 
   return createServerClient(url, key);
@@ -20,10 +16,7 @@ export function getAnonSupabase() {
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!url || !key) {
-    return createServerClient(
-      'https://placeholder.supabase.co',
-      'placeholder-key-for-build'
-    );
+    throw new Error('Supabase Anon URL or Key is missing. Check your environment variables.');
   }
 
   return createServerClient(url, key);

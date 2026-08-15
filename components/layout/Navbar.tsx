@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, ShoppingBag } from 'lucide-react';
 import { getCart } from '@/lib/store/cartStore';
 import { usePathname } from 'next/navigation';

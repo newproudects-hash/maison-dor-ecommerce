@@ -2,6 +2,7 @@ import type {Metadata} from 'next';
 import { Playfair_Display, Plus_Jakarta_Sans } from 'next/font/google';
 import Footer from '@/components/layout/Footer';
 import BackToTop from '@/components/layout/BackToTop';
+import Pixels from '@/components/analytics/Pixels';
 import './globals.css';
 
 const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-playfair', display: 'swap' });
@@ -45,6 +46,7 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
     <html lang="fr-DZ" dir="auto">
       {/* FIX #53: Removed unjustified suppressHydrationWarning */}
       <body className={`${playfair.variable} ${jakarta.variable} font-sans antialiased flex flex-col min-h-screen`}>
+        <Pixels />
         {children}
         <Footer />
         <BackToTop />

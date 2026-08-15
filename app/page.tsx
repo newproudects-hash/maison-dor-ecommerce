@@ -39,7 +39,7 @@ export default async function Home() {
   const heroMobileSrc = homeSettings?.heroImageMobile ? (getImageUrl(homeSettings.heroImageMobile) || heroSrc) : heroSrc;
 
   // Announcement bar
-  const announcement = homeSettings?.announcementBar;
+  const announcement = homeSettings?.announcementBar as { enabled?: boolean, text?: string, bgColor?: string } | undefined;
 
   return (
     <main className="min-h-screen bg-white text-neutral-900 overflow-x-hidden font-sans relative">
@@ -80,7 +80,7 @@ export default async function Home() {
       </section>
 
       {/* 2. Thin Marquee */}
-      <Marquee text={homeSettings?.marqueeText} />
+      <Marquee text={homeSettings?.marqueeText as string | undefined} />
 
       {/* 3. New Arrivals */}
       {newArrivals.length > 0 && (

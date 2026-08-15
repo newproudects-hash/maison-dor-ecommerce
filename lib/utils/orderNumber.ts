@@ -1,9 +1,12 @@
 export function generateOrderNumber(): string {
-  // FIX #10: Use timestamp + random to drastically reduce collision probability
-  const now = Date.now();
-  const random = Math.floor(Math.random() * 999) + 100; // 3 digits
-  const suffix = (now % 100000).toString().padStart(5, '0'); // last 5 digits of timestamp
-  return `MDO-${suffix}-${random}`;
+  // Use crypto.randomUUID() for cryptographically secure unguessable order IDs
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    const uuid = crypto.randomUUID().split('-')[0].toUpperCase();
+    return `MDO-${uuid}`;
+  }
+  // Fallback for older browsers
+  const randomStr = Math.random().toString(36).substring(2, 10).toUpperCase();
+  return `MDO-${randomStr}`;
 }
 
 export function formatPrice(price: number): string {

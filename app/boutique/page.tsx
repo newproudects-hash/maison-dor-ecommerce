@@ -8,27 +8,20 @@ import { mapSanityProduct } from '@/lib/sanity/mapper';
 
 export const revalidate = 60;
 
-export async function generateMetadata({ searchParams }: { searchParams: Promise<{ c?: string }> }): Promise<Metadata> {
-  const { c: activeCategory = 'all' } = await searchParams;
-  const title = activeCategory === 'all' 
-    ? "Boutique | MAISON D'OR - Collections de Sacs" 
-    : `Boutique - ${activeCategory.charAt(0).toUpperCase() + activeCategory.slice(1)} | MAISON D'OR`;
-  
+export async function generateMetadata(): Promise<Metadata> {
   return {
-    title,
+    title: "Boutique | MAISON D'OR - Collections de Sacs",
     description: "Découvrez notre collection exclusive de sacs luxueux, conçus pour la femme moderne.",
   };
 }
 
-export default async function BoutiquePage({ searchParams }: { searchParams: Promise<{ c?: string }> }) {
-  const { c: activeCategory = 'all' } = await searchParams;
-  
+export default async function BoutiquePage() {
   let rawProductsData: { products: unknown[] } = { products: [] };
   let rawCategories: { _id: string; slug: string; title: string | { ar?: string; fr?: string; en?: string } }[] = [];
 
   try {
     const settled = await Promise.allSettled([
-      getProducts({ page: 1, perPage: 100, categorySlug: activeCategory === 'all' ? undefined : activeCategory }),
+      getProducts({ page: 1, perPage: 100 }),
       getCategories(),
     ]);
     rawProductsData = settled[0].status === 'fulfilled' ? (settled[0].value as typeof rawProductsData) : { products: [] };
@@ -62,23 +55,15 @@ export default async function BoutiquePage({ searchParams }: { searchParams: Pro
         <div className="flex gap-2 overflow-x-auto px-4 py-3 scrollbar-hide max-w-7xl mx-auto">
           <Link
             href="/boutique"
-            className={`shrink-0 px-4 py-2 rounded-full text-xs font-bold tracking-wider uppercase transition-all ${
-              activeCategory === 'all'
-                ? 'bg-neutral-900 text-white'
-                : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
-            }`}
+            className="shrink-0 px-4 py-2 rounded-full text-xs font-bold tracking-wider uppercase transition-all bg-neutral-900 text-white"
           >
             Tout
           </Link>
           {rawCategories.map((cat) => (
             <Link
               key={cat._id}
-              href={`/boutique?c=${cat.slug}`}
-              className={`shrink-0 px-4 py-2 rounded-full text-xs font-bold tracking-wider uppercase transition-all ${
-                activeCategory === cat.slug
-                  ? 'bg-neutral-900 text-white'
-                  : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
-              }`}
+              href={`/boutique/${cat.slug}`}
+              className="shrink-0 px-4 py-2 rounded-full text-xs font-bold tracking-wider uppercase transition-all bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
             >
               {typeof cat.title === 'string' ? cat.title : (cat.title?.ar || cat.title?.fr || cat.title?.en || 'قسم')}
             </Link>

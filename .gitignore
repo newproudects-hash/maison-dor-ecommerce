@@ -7,3 +7,6 @@ coverage/
 !.env.example
 tsconfig.tsbuildinfo
 *.tsbuildinfo
+k6-bin/
+k6.zip
+.gitignore_k6

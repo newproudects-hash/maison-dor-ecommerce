@@ -17,8 +17,8 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(httpsUrl, 301);
   }
 
-  // 2. Protect /admin routes (except /admin/login)
-  if (path.startsWith('/admin') && path !== '/admin/login') {
+  // 2. Protect /admin routes (except /admin/login) and /studio
+  if ((path.startsWith('/admin') && path !== '/admin/login') || path.startsWith('/studio')) {
     const adminToken = request.cookies.get('admin_token')?.value;
     if (!ADMIN_TOKEN || adminToken !== ADMIN_TOKEN) {
       return NextResponse.redirect(new URL('/admin/login', request.url));
@@ -45,5 +45,5 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   // FIX #3: Also protect /api/admin routes via middleware (not just page routes)
-  matcher: ['/admin/:path*', '/api/admin/:path*'],
+  matcher: ['/admin/:path*', '/api/admin/:path*', '/studio/:path*'],
 };

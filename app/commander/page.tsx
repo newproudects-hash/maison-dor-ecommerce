@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, ChevronLeft, Check, Home, Building2, ShoppingBag } from 'lucide-react';
 import { getCart, clearCart, getCartTotal, CartItem } from '@/lib/store/cartStore';
 import { WILAYAS, LIVRAISON_DOMICILE, LIVRAISON_BUREAU } from '@/lib/data/wilayas';
@@ -26,6 +26,7 @@ export default function CommanderPage() {
   const [phoneError, setPhoneError] = useState<string | null>(null);
   // FIX #64: Replace alert() with inline error
   const [submitError, setSubmitError] = useState<string | null>(null);
+
 
   const subtotal = getCartTotal(cart);
   const shipping = delivery === 'domicile' ? LIVRAISON_DOMICILE : LIVRAISON_BUREAU;
@@ -327,6 +328,7 @@ export default function CommanderPage() {
                     <span>{total.toLocaleString('fr-DZ')} DA</span>
                   </div>
                 </div>
+                </div>
               </div>
 
               <div className="flex gap-3">
@@ -338,7 +340,11 @@ export default function CommanderPage() {
                   {submitError && (
                     <p className="text-red-500 text-xs text-center bg-red-50 border border-red-200 rounded-xl px-3 py-2">{submitError}</p>
                   )}
-                  <button onClick={handleSubmit} disabled={isSubmitting} className="w-full bg-[#082215] text-white py-4 rounded-2xl font-bold text-sm tracking-wide flex items-center justify-center gap-2 hover:bg-[#0d3020] transition-colors disabled:opacity-50">
+                  <button 
+                    onClick={handleSubmit} 
+                    disabled={isSubmitting} 
+                    className="w-full bg-[#082215] text-white py-4 rounded-2xl font-bold text-sm tracking-wide flex items-center justify-center gap-2 hover:bg-[#0d3020] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
                     {isSubmitting ? <span className="animate-pulse">Traitement...</span> : <><Check className="w-4 h-4" /> Confirmer la commande</>}
                   </button>
                 </div>

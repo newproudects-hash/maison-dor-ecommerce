@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 
 const DEFAULT_TEXT = 'LIVRAISON RAPIDE ✦ QUALITÉ PREMIUM ✦ MAISON D\'OR ✦ NOUVEAUX ARRIVAGES ✦ LIVRAISON GRATUITE DÈS 10 000 DA ✦ ARTISANAT PREMIUM ✦';
 

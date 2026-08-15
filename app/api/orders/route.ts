@@ -4,6 +4,7 @@ import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { JWT } from 'google-auth-library';
 import { z } from 'zod';
 import { sendSecurityAlertToTelegram, sendOrderToTelegram } from '@/lib/utils/telegram';
+import { WILAYAS } from '@/lib/data/wilayas';
 
 // Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -78,7 +79,7 @@ const orderSchema = z.object({
   firstName: z.string().min(2, 'الاسم الأول قصير جداً').max(50),
   lastName: z.string().min(2, 'اسم العائلة قصير جداً').max(50),
   phone: z.string().regex(/^0[567]\d{8}$/, 'رقم الهاتف غير صحيح'),
-  wilayaName: z.string().min(1),
+  wilayaName: z.string().refine((w) => WILAYAS.includes(w), { message: 'الولاية غير صالحة' }),
   wilayaCode: z.string().or(z.number()),
   deliveryType: z.enum(['domicile', 'bureau']),
   deliveryPrice: z.number().min(0),

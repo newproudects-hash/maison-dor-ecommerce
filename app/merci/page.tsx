@@ -2,48 +2,63 @@
 
 import { Suspense, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { ShoppingBag, CheckCircle, Loader2 } from 'lucide-react';
-
 import { useSearchParams } from 'next/navigation';
+import { trackEvent } from '@/components/analytics/Pixels';
 
 function MerciContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get('orderId');
 
-  // FIX #13: Redirect to boutique if accessed directly without a real order
-  if (!orderId) {
-    if (typeof window !== 'undefined') {
-      window.location.replace('/boutique');
-    }
-    return null;
-  }
-
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Sound effect
+  // Purchase Pixel & Order Fetch
+  useEffect(() => {
+    if (!orderId) return;
+    fetch(`/api/orders/track?orderId=${encodeURIComponent(orderId)}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.order) {
+          trackEvent('Purchase', {
+            transaction_id: orderId,
+            value: data.order.total,
+            currency: 'DZD',
+          });
+        }
+      })
+      .catch(() => {});
+  }, [orderId]);
+
+  // FIX #51: Sound effect (must handle DOMException cleanly if autoplay is blocked)
   useEffect(() => {
     let ctx: AudioContext | null = null;
-    try {
-      ctx = new AudioContext();
-      const notes = [523.25, 659.25, 783.99, 1046.5];
-      notes.forEach((freq, i) => {
-        if (!ctx) return;
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.frequency.value = freq;
-        osc.type = 'sine';
-        gain.gain.setValueAtTime(0, ctx.currentTime + i * 0.15);
-        gain.gain.linearRampToValueAtTime(0.18, ctx.currentTime + i * 0.15 + 0.05);
-        gain.gain.linearRampToValueAtTime(0, ctx.currentTime + i * 0.15 + 0.3);
-        osc.start(ctx.currentTime + i * 0.15);
-        osc.stop(ctx.currentTime + i * 0.15 + 0.35);
-      });
-    } catch {
-      // Audio not supported
-    }
+    
+    const playSound = () => {
+      try {
+        ctx = new AudioContext();
+        const notes = [523.25, 659.25, 783.99, 1046.5];
+        notes.forEach((freq, i) => {
+          if (!ctx) return;
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.frequency.value = freq;
+          osc.type = 'sine';
+          gain.gain.setValueAtTime(0, ctx.currentTime + i * 0.15);
+          gain.gain.linearRampToValueAtTime(0.18, ctx.currentTime + i * 0.15 + 0.05);
+          gain.gain.linearRampToValueAtTime(0, ctx.currentTime + i * 0.15 + 0.3);
+          osc.start(ctx.currentTime + i * 0.15);
+          osc.stop(ctx.currentTime + i * 0.15 + 0.35);
+        });
+      } catch (e) {
+        // Autoplay blocked, fail silently
+      }
+    };
+    
+    // Play on mount, but if it fails due to user interaction required, it just fails silently.
+    playSound();
     
     return () => {
       if (ctx && ctx.state !== 'closed') {
@@ -105,15 +120,28 @@ function MerciContent() {
     const timeout = setTimeout(() => {
       alive = false;
       cancelAnimationFrame(frame);
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (ctx && canvas) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
     }, 4500);
 
     return () => {
       alive = false;
       cancelAnimationFrame(frame);
       clearTimeout(timeout);
+      if (ctx && canvas) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
     };
   }, []);
+
+  // FIX #13: Redirect to boutique if accessed directly without a real order
+  if (!orderId) {
+    if (typeof window !== 'undefined') {
+      window.location.replace('/boutique');
+    }
+    return null;
+  }
 
   return (
     <main className="min-h-screen bg-white flex flex-col items-center justify-center px-4 text-center relative overflow-hidden">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
@@ -18,6 +18,15 @@ interface Order {
   total: number;
   status: string;
   created_at: string;
+  items: Array<{
+    productId: string;
+    productName: string;
+    price: number;
+    quantity: number;
+    size?: string;
+    color?: string;
+    imageUrl?: string;
+  }>;
 }
 
 // Status config
@@ -36,6 +45,9 @@ export default function AdminDashboard() {
   const [activeFilter, setActiveFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [updatingId, setUpdatingId] = useState<number | null>(null);
+  const [expandedRow, setExpandedRow] = useState<number | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 20;
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -72,6 +84,13 @@ export default function AdminDashboard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orderId, status: newStatus }),
       });
+      // Try to update Google sheets as well if endpoint exists
+      fetch('/api/orders/status', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderNumber: orders.find(o => o.id === orderId)?.order_number, status: newStatus }),
+      }).catch(() => {});
+      
       setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
     } catch (e) {
       console.error(e);
@@ -97,6 +116,12 @@ export default function AdminDashboard() {
         o.wilaya.toLowerCase().includes(term)
       );
     });
+
+  const totalPages = Math.max(1, Math.ceil(filteredOrders.length / ITEMS_PER_PAGE));
+  const paginatedOrders = filteredOrders.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   const STATS = [
     { label: 'إجمالي الطلبات', value: orders.length, icon: Package,       color: '#C9A84C', bg: 'rgba(201,168,76,0.12)' },
@@ -264,69 +289,97 @@ export default function AdminDashboard() {
                     </td>
                   </tr>
                 ) : (
-                  filteredOrders.map((order, idx) => {
+                  paginatedOrders.map((order, idx) => {
                     const sc = STATUS_CONFIG[order.status] || STATUS_CONFIG['pending'];
+                    const isExpanded = expandedRow === order.id;
+                    
                     return (
-                      <motion.tr
-                        key={order.id}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: idx * 0.03 }}
-                        className="transition-all"
-                        style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
-                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.025)')}
-                        onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                      >
-                        <td className="px-5 py-4 font-black text-sm" style={{ color: '#C9A84C' }}>
-                          {order.order_number}
-                        </td>
-                        <td className="px-5 py-4 text-xs text-slate-400">
-                          {new Date(order.created_at).toLocaleDateString('ar-DZ', {
-                            day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
-                          })}
-                        </td>
-                        <td className="px-5 py-4">
-                          <p className="font-bold text-sm text-white">{order.customer_name}</p>
-                          <p className="text-[10px] text-slate-500" dir="ltr">{order.phone}</p>
-                        </td>
-                        <td className="px-5 py-4 text-sm text-slate-300 font-medium">{order.wilaya}</td>
-                        <td className="px-5 py-4">
-                          <span className="text-[10px] font-bold tracking-wider px-2 py-1 rounded-md"
-                            style={{ background: 'rgba(255,255,255,0.06)', color: '#94a3b8' }}>
-                            {order.delivery_type === 'home' ? '🏠 منزل' : '🏪 بريد'}
-                          </span>
-                        </td>
-                        <td className="px-5 py-4 font-black text-sm text-white">
-                          {order.total.toLocaleString()} DA
-                        </td>
-                        <td className="px-5 py-4">
-                          <span
-                            className="px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide"
-                            style={{ background: sc.bg, color: sc.color }}
-                          >
-                            {sc.label}
-                          </span>
-                        </td>
-                        <td className="px-5 py-4">
-                          <select
-                            value={order.status}
-                            onChange={e => handleStatusChange(order.id, e.target.value)}
-                            disabled={updatingId === order.id}
-                            className="text-[10px] font-bold px-2 py-1.5 rounded-lg outline-none cursor-pointer transition-all"
-                            style={{
-                              background: 'rgba(255,255,255,0.07)',
-                              color: '#94a3b8',
-                              border: '1px solid rgba(255,255,255,0.1)',
-                            }}
-                          >
-                            <option value="pending">قيد الانتظار</option>
-                            <option value="confirmed">مؤكد</option>
-                            <option value="shipped">جاري التوصيل</option>
-                            <option value="delivered">تم التسليم</option>
-                            <option value="cancelled">ملغي</option>
-                          </select>
-                        </td>
-                      </motion.tr>
+                      <React.Fragment key={order.id}>
+                        <motion.tr
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: idx * 0.03 }}
+                          className="transition-all cursor-pointer"
+                          style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
+                          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.025)')}
+                          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                          onClick={() => setExpandedRow(isExpanded ? null : order.id)}
+                        >
+                          <td className="px-5 py-4 font-black text-sm" style={{ color: '#C9A84C' }}>
+                            {order.order_number}
+                          </td>
+                          <td className="px-5 py-4 text-xs text-slate-400">
+                            {new Date(order.created_at).toLocaleDateString('ar-DZ', {
+                              day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+                            })}
+                          </td>
+                          <td className="px-5 py-4">
+                            <p className="font-bold text-sm text-white">{order.customer_name}</p>
+                            <p className="text-[10px] text-slate-500" dir="ltr">{order.phone}</p>
+                          </td>
+                          <td className="px-5 py-4 text-sm text-slate-300 font-medium">{order.wilaya}</td>
+                          <td className="px-5 py-4">
+                            <span className="text-[10px] font-bold tracking-wider px-2 py-1 rounded-md"
+                              style={{ background: 'rgba(255,255,255,0.06)', color: '#94a3b8' }}>
+                              {order.delivery_type === 'home' ? '🏠 منزل' : '🏪 بريد'}
+                            </span>
+                          </td>
+                          <td className="px-5 py-4 font-black text-sm text-white">
+                            {order.total.toLocaleString()} DA
+                          </td>
+                          <td className="px-5 py-4" onClick={(e) => e.stopPropagation()}>
+                            <span
+                              className="px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide"
+                              style={{ background: sc.bg, color: sc.color }}
+                            >
+                              {sc.label}
+                            </span>
+                          </td>
+                          <td className="px-5 py-4" onClick={(e) => e.stopPropagation()}>
+                            <select
+                              value={order.status}
+                              onChange={e => handleStatusChange(order.id, e.target.value)}
+                              disabled={updatingId === order.id}
+                              className="text-[10px] font-bold px-2 py-1.5 rounded-lg outline-none cursor-pointer transition-all"
+                              style={{
+                                background: 'rgba(255,255,255,0.07)',
+                                color: '#94a3b8',
+                                border: '1px solid rgba(255,255,255,0.1)',
+                              }}
+                            >
+                              <option value="pending">قيد الانتظار</option>
+                              <option value="confirmed">مؤكد</option>
+                              <option value="shipped">جاري التوصيل</option>
+                              <option value="delivered">تم التسليم</option>
+                              <option value="cancelled">ملغي</option>
+                            </select>
+                          </td>
+                        </motion.tr>
+
+                        {/* FIX #54: Expanded row to show products and images */}
+                        {isExpanded && (
+                          <tr style={{ background: 'rgba(0,0,0,0.2)' }}>
+                            <td colSpan={8} className="px-6 py-4">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {order.items?.map((item, i) => (
+                                  <div key={i} className="flex items-center gap-4 bg-slate-800/50 p-3 rounded-xl border border-slate-700/50">
+                                    <img src={item.imageUrl || '/hero.jpg'} alt={item.productName} className="w-16 h-16 object-cover rounded-lg" />
+                                    <div className="text-right flex-1">
+                                      <p className="font-bold text-sm text-white">{item.productName}</p>
+                                      <div className="flex items-center justify-end gap-2 text-xs text-slate-400 mt-1">
+                                        {item.color && <span>اللون: {item.color}</span>}
+                                        {item.size && <span>المقاس: {item.size}</span>}
+                                        <span>الكمية: {item.quantity}</span>
+                                      </div>
+                                      <p className="font-black text-sm text-[#C9A84C] mt-1">{item.price.toLocaleString()} DA</p>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
                     );
                   })
                 )}
@@ -334,11 +387,49 @@ export default function AdminDashboard() {
             </table>
           </div>
 
-          {/* Table Footer */}
-          <div className="px-6 py-4 border-t flex items-center justify-between" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+          {/* Table Footer with Pagination */}
+          <div className="px-6 py-4 border-t flex flex-col md:flex-row items-center justify-between gap-3" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
             <span className="text-xs text-slate-500">
-              {filteredOrders.length} طلب • يتحدث كل 30 ثانية
+              {filteredOrders.length} طلب ({paginatedOrders.length} معروض) &bull; يتحدث كل 30 ثانية
             </span>
+            {totalPages > 1 && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1.5 rounded-lg text-xs font-bold disabled:opacity-30 transition-all"
+                  style={{ background: 'rgba(255,255,255,0.07)', color: '#94a3b8', border: '1px solid rgba(255,255,255,0.1)' }}
+                >
+                  &laquo; السابق
+                </button>
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  const page = currentPage <= 3 ? i + 1 : currentPage - 2 + i;
+                  if (page > totalPages) return null;
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className="w-8 h-8 rounded-lg text-xs font-black transition-all"
+                      style={{
+                        background: currentPage === page ? '#C9A84C' : 'rgba(255,255,255,0.07)',
+                        color: currentPage === page ? '#0f172a' : '#94a3b8',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                      }}
+                    >
+                      {page}
+                    </button>
+                  );
+                })}
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1.5 rounded-lg text-xs font-bold disabled:opacity-30 transition-all"
+                  style={{ background: 'rgba(255,255,255,0.07)', color: '#94a3b8', border: '1px solid rgba(255,255,255,0.1)' }}
+                >
+                  التالي &raquo;
+                </button>
+              </div>
+            )}
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
               <span className="text-[10px] text-slate-500 font-bold">مباشر</span>

@@ -31,6 +31,7 @@ export async function generateMetadata(
         title: `${catTitle} | MAISON D'OR`,
         description: `Collection exclusive de ${catTitle} livrés partout en Algérie.`,
         url: `${baseUrl}/boutique/${category}`,
+        images: catInfo?.image ? [{ url: getImageUrl(catInfo.image) }] : [{ url: '/hero.jpg' }],
       },
     };
   } catch {
@@ -93,6 +94,31 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
           <ChevronRight className="w-3 h-3" />
           <span className="text-neutral-700 font-semibold">{catTitle}</span>
         </nav>
+      </div>
+
+      {/* Filter Pills */}
+      <div className="sticky top-[52px] z-20 bg-white border-b border-neutral-100 shadow-sm">
+        <div className="flex gap-2 overflow-x-auto px-4 py-3 scrollbar-hide max-w-7xl mx-auto">
+          <Link
+            href="/boutique"
+            className="shrink-0 px-4 py-2 rounded-full text-xs font-bold tracking-wider uppercase transition-all bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
+          >
+            Tout
+          </Link>
+          {rawCategories.map((cat) => (
+            <Link
+              key={cat.slug}
+              href={`/boutique/${cat.slug}`}
+              className={`shrink-0 px-4 py-2 rounded-full text-xs font-bold tracking-wider uppercase transition-all ${
+                category === cat.slug
+                  ? 'bg-neutral-900 text-white'
+                  : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+              }`}
+            >
+              {typeof cat.title === 'string' ? cat.title : (cat.title?.ar || cat.title?.fr || cat.title?.en || cat.slug)}
+            </Link>
+          ))}
+        </div>
       </div>
 
       {/* Products */}
