@@ -13,7 +13,7 @@ export const options = {
 
 export default function () {
   // سنقوم بضرب الصفحة الرئيسية للمتجر
-  const res = http.get('http://localhost:3000/');
+  const res = http.get('http://localhost:3001/');
   
   // نتحقق من أن الموقع رد بنجاح (الكود 200) ولم ينهار (الكود 500)
   check(res, {

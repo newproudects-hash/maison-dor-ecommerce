@@ -66,7 +66,7 @@ export default function Navbar() {
           className="relative text-white hover:opacity-70 transition-opacity p-1 flex items-center gap-1.5"
           aria-label="Cart"
         >
-          <ShoppingBag strokeWidth={2.5} className="w-5 h-5 md:w-6 md:h-6" />
+          <ShoppingBag strokeWidth={1.25} className="w-5 h-5 md:w-6 md:h-6" />
           <AnimatePresence>
             {cartCount > 0 && (
               <motion.span
@@ -74,7 +74,7 @@ export default function Navbar() {
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 exit={{ scale: 0 }}
-                className="absolute -top-1.5 -right-1.5 bg-amber-400 text-black text-[10px] font-black rounded-full w-4 h-4 flex items-center justify-center"
+                className="absolute -top-1.5 -right-1.5 bg-amber-400 text-black text-[9px] md:text-[10px] font-black rounded-full w-4 h-4 flex items-center justify-center border border-black"
               >
                 {cartCount}
               </motion.span>

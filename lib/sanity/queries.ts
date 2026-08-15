@@ -33,8 +33,8 @@ export async function getProducts({
 }) {
   const offset = (page - 1) * perPage;
   const filter = categorySlug
-    ? `*[_type == "product" && category->slug.current == $categorySlug && inStock == true]`
-    : `*[_type == "product" && inStock == true]`;
+    ? `*[_type == "product" && lower(category->slug.current) == lower($categorySlug) && inStock != false]`
+    : `*[_type == "product" && inStock != false]`;
 
   // Use getOrFetch for caching the products list
   const cacheKey = `products:${categorySlug || 'all'}:p${page}:s${perPage}`;
@@ -63,7 +63,7 @@ export async function getProducts({
 // ── Placement Based Queries ──
 export async function getProductsByPlacement(placementVal: string, limit = 6) {
   return sanityClient.fetch(
-    `*[_type == "product" && $placementVal in placement && inStock == true]
+    `*[_type == "product" && $placementVal in placement && inStock != false]
      | order(_createdAt desc) [0...$limit] { ${PRODUCT_FIELDS} }`,
     { placementVal, limit }
   );
@@ -110,7 +110,7 @@ export async function getProduct(slug: string) {
 // ── Related Products ──
 export async function getRelatedProducts(categoryId: string, currentId: string) {
   return sanityClient.fetch(
-    `*[_type == "product" && category._ref == $categoryId && _id != $currentId && inStock == true]
+    `*[_type == "product" && category._ref == $categoryId && _id != $currentId && inStock != false]
      | order(_createdAt desc) [0...4] { ${PRODUCT_FIELDS} }`,
     { categoryId, currentId }
   );
