@@ -4,9 +4,25 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useEffect } from 'react';
 
-export default function ProductGallery({ images, alt }: { images: string[], alt: string }) {
+export default function ProductGallery({ images: initialImages, alt, selectedVariantImage }: { images: string[], alt: string, selectedVariantImage?: string }) {
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  // If a variant image is selected, we want it to be part of the images array (usually prepended or just shown)
+  const images = selectedVariantImage && !initialImages.includes(selectedVariantImage)
+    ? [selectedVariantImage, ...initialImages]
+    : initialImages;
+
+  // React to variant selection
+  useEffect(() => {
+    if (selectedVariantImage) {
+      const idx = images.indexOf(selectedVariantImage);
+      if (idx !== -1) {
+        setCurrentIndex(idx);
+      }
+    }
+  }, [selectedVariantImage, images]);
 
   const next = () => setCurrentIndex((prev) => (prev + 1) % images.length);
   const prev = () => setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);

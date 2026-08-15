@@ -147,6 +147,21 @@ export const product = defineType({
     }),
 
     defineField({
+      name: 'colorVariants',
+      title: 'ألوان المنتج مع الصور',
+      type: 'array',
+      of: [{
+        type: 'object',
+        fields: [
+          { name: 'colorName', title: 'اسم اللون (مثال: أبيض)', type: 'string' },
+          { name: 'colorHex', title: 'كود اللون (Hex)', type: 'string' },
+          { name: 'image', title: 'صورة اللون', type: 'image', options: { hotspot: true } }
+        ]
+      }],
+      description: 'يمكنك إضافة صورة مخصصة لكل لون ليختار منها المشتري',
+    }),
+
+    defineField({
       name: 'sizes',
       title: 'المقاسات المتوفرة',
       type: 'array',

@@ -10,6 +10,11 @@ const PRODUCT_FIELDS = `
   price,
   images,
   colors,
+  colorVariants {
+    colorName,
+    colorHex,
+    "imageUrl": image.asset->url
+  },
   sizes,
   inStock,
   placement,

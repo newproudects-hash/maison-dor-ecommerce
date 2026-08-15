@@ -39,6 +39,11 @@ export function mapSanityProduct(input: unknown): Product {
     slug: String(p.slug || ''),
     description: getDesc(p.description),
     colors: Array.isArray(p.colors) ? (p.colors as string[]) : [],
+    colorVariants: Array.isArray(p.colorVariants) ? p.colorVariants.map((v: any) => ({
+      colorName: String(v.colorName || ''),
+      colorHex: v.colorHex ? String(v.colorHex) : undefined,
+      imageUrl: v.imageUrl ? String(v.imageUrl) : undefined,
+    })) : [],
     sizes: Array.isArray(p.sizes) ? (p.sizes as string[]) : [],
     placement: Array.isArray(p.placement) ? (p.placement as string[]) : [],
     inStock: p.inStock !== false,

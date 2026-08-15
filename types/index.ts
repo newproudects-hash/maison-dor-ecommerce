@@ -1,4 +1,4 @@
-﻿// -------------------------------------------
+// -------------------------------------------
 // MAISON D''OR — Centralized TypeScript Types
 // -------------------------------------------
 
@@ -15,6 +15,12 @@ export interface CartItem {
 }
 
 // --- Product --------------------------------
+export interface ColorVariant {
+  colorName: string;
+  colorHex?: string;
+  imageUrl?: string;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -26,6 +32,7 @@ export interface Product {
   slug: string;
   description: string;
   colors: string[];
+  colorVariants?: ColorVariant[];
   sizes: string[];
   placement: string[];
   inStock: boolean;
@@ -97,6 +104,7 @@ export interface SanityProductRaw {
   originalPrice?: number;
   images: unknown[];
   colors: string[];
+  colorVariants?: { colorName: string; colorHex?: string; imageUrl?: string }[];
   sizes: string[];
   inStock: boolean;
   placement: string[];

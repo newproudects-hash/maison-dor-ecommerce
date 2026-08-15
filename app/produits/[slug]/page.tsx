@@ -3,8 +3,7 @@ import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import type { Metadata } from 'next';
 import Navbar from '@/components/layout/Navbar';
-import ProductGallery from '@/components/product/ProductGallery';
-import ProductClient from '@/components/product/ProductClient';
+import ProductInteractive from '@/components/product/ProductInteractive';
 import ProductCard from '@/components/ui/ProductCard';
 import { getProduct, getRelatedProducts } from '@/lib/sanity/queries';
 import { mapSanityProduct } from '@/lib/sanity/mapper';
@@ -109,41 +108,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
         {/* Main Content */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 pb-16">
-          {/* Image Gallery */}
-          <ProductGallery images={product.images && product.images.length > 0 ? product.images : [product.image]} alt={product.name} />
-
-          {/* Info */}
-          <div className="flex flex-col justify-center gap-6">
-            <div>
-              <p className="text-amber-600 text-xs tracking-[0.25em] uppercase font-bold mb-2 capitalize">{product.category}</p>
-              <h1 className="text-3xl md:text-4xl font-serif font-black text-neutral-900 leading-tight">{product.name}</h1>
-              <div className="flex items-center gap-2 mt-3">
-              </div>
-            </div>
-
-            <p className="text-4xl font-black text-neutral-900">{product.price.toLocaleString('fr-DZ')} <span className="text-2xl font-bold text-neutral-500">DA</span></p>
-
-            <p className="text-neutral-500 text-sm leading-relaxed">{product.description}</p>
-
-            {/* Client Component for Variant Selection and Add to Cart */}
-            <ProductClient product={product} />
-
-            {/* Delivery info */}
-            <div className="bg-neutral-50 rounded-2xl p-4 space-y-2 mt-4">
-              <div className="flex items-center gap-2 text-xs text-neutral-600">
-                <span>🚚</span>
-                <span>Livraison partout en Algérie — 2 à 5 jours ouvrables</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs text-neutral-600">
-                <span>✅</span>
-                <span>Retours acceptés dans 30 jours</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs text-neutral-600">
-                <span>🔒</span>
-                <span>Paiement sécurisé à la livraison</span>
-              </div>
-            </div>
-          </div>
+          <ProductInteractive product={product} />
         </div>
 
         {/* Related Products */}

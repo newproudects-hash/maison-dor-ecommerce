@@ -1,23 +1,44 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Minus, ShoppingBag, Heart } from 'lucide-react';
+import Image from 'next/image';
+import { Plus, Minus, ShoppingBag, Heart, Check } from 'lucide-react';
 import { addToCart } from '@/lib/store/cartStore';
-import type { Product } from '@/types';
+import type { Product, ColorVariant } from '@/types';
 
 const MAX_QTY = 20;
 
-export default function ProductClient({ product }: { product: Product }) {
-  const [qty, setQty] = useState(1);
+interface ProductClientProps {
+  product: Product;
+  onVariantSelect?: (imageUrl?: string) => void;
+}
+
+export default function ProductClient({ product, onVariantSelect }: ProductClientProps) {
+  const hasVariants = product.colorVariants && product.colorVariants.length > 0;
+  const hasLegacyColors = product.colors && product.colors.length > 0;
+
+  // Default selected color/variant
+  const [selectedVariant, setSelectedVariant] = useState<ColorVariant | undefined>(
+    hasVariants ? product.colorVariants![0] : undefined
+  );
   const [selectedColor, setSelectedColor] = useState<string | undefined>(
-    product.colors && product.colors.length > 0 ? product.colors[0] : undefined
+    !hasVariants && hasLegacyColors ? product.colors[0] : undefined
   );
   const [selectedSize, setSelectedSize] = useState<string | undefined>(
     product.sizes && product.sizes.length > 0 ? product.sizes[0] : undefined
   );
+  const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
   const [wishlisted, setWishlisted] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Notify parent of initial variant image on mount
+  useEffect(() => {
+    if (hasVariants && selectedVariant?.imageUrl) {
+      onVariantSelect?.(selectedVariant.imageUrl);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Load wishlist state from localStorage
   useEffect(() => {
@@ -27,24 +48,29 @@ export default function ProductClient({ product }: { product: Product }) {
     } catch { /* ignore */ }
   }, [product.id]);
 
-  // Cleanup timeout on unmount (fixes memory leak)
+  // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, []);
 
+  const handleVariantClick = (variant: ColorVariant) => {
+    setSelectedVariant(variant);
+    onVariantSelect?.(variant.imageUrl);
+  };
+
   const handleAdd = () => {
-    // Add once with correct quantity — no loop!
+    const colorLabel = selectedVariant?.colorName || selectedColor;
     addToCart({
       productId: product.id,
       name: product.name,
       price: product.price,
-      image: product.image,
+      image: selectedVariant?.imageUrl || product.image,
       category: product.category,
       slug: product.slug,
       size: selectedSize,
-      color: selectedColor,
+      color: colorLabel,
       quantity: qty,
     });
     setAdded(true);
@@ -65,8 +91,61 @@ export default function ProductClient({ product }: { product: Product }) {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Colors */}
-      {product.colors && product.colors.length > 0 && (
+
+      {/* ── Color Variants WITH Images ── */}
+      {hasVariants && (
+        <div>
+          <p className="text-xs font-bold tracking-widest uppercase text-neutral-500 mb-3">
+            Couleur
+            {selectedVariant && (
+              <span className="ml-2 text-neutral-700 normal-case font-normal tracking-normal">
+                — {selectedVariant.colorName}
+              </span>
+            )}
+          </p>
+          <div className="flex gap-3 flex-wrap">
+            {product.colorVariants!.map((variant, i) => {
+              const isSelected = selectedVariant?.colorName === variant.colorName;
+              return (
+                <button
+                  key={i}
+                  onClick={() => handleVariantClick(variant)}
+                  aria-label={`Couleur ${variant.colorName}`}
+                  aria-pressed={isSelected}
+                  className={`relative w-16 h-16 rounded-xl overflow-hidden border-2 transition-all duration-200 ${
+                    isSelected
+                      ? 'border-neutral-900 scale-105 shadow-lg ring-2 ring-neutral-900 ring-offset-1'
+                      : 'border-neutral-200 hover:border-neutral-500 hover:shadow-md'
+                  }`}
+                >
+                  {variant.imageUrl ? (
+                    <Image
+                      src={variant.imageUrl}
+                      alt={variant.colorName}
+                      fill
+                      className="object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <div
+                      className="w-full h-full"
+                      style={{ backgroundColor: variant.colorHex || '#ccc' }}
+                    />
+                  )}
+                  {isSelected && (
+                    <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                      <Check className="w-5 h-5 text-white drop-shadow" />
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ── Legacy plain colors (only if no image variants) ── */}
+      {!hasVariants && hasLegacyColors && (
         <div>
           <p className="text-xs font-bold tracking-widest uppercase text-neutral-500 mb-3">
             Couleur
@@ -93,7 +172,7 @@ export default function ProductClient({ product }: { product: Product }) {
         </div>
       )}
 
-      {/* Sizes */}
+      {/* ── Sizes ── */}
       {product.sizes && product.sizes.length > 0 && (
         <div>
           <p className="text-xs font-bold tracking-widest uppercase text-neutral-500 mb-3">Taille</p>
@@ -116,7 +195,7 @@ export default function ProductClient({ product }: { product: Product }) {
         </div>
       )}
 
-      {/* Quantity */}
+      {/* ── Quantity ── */}
       <div>
         <p className="text-xs font-bold tracking-widest uppercase text-neutral-500 mb-3">Quantité</p>
         <div className="flex items-center border-2 border-neutral-200 rounded-xl w-fit overflow-hidden">
@@ -140,7 +219,7 @@ export default function ProductClient({ product }: { product: Product }) {
         </div>
       </div>
 
-      {/* Buttons */}
+      {/* ── Action Buttons ── */}
       <div className="flex gap-3 mt-2">
         <button
           onClick={handleAdd}
@@ -155,15 +234,13 @@ export default function ProductClient({ product }: { product: Product }) {
         <button
           onClick={() => {
             handleAdd();
-            // Optional: trigger cart drawer open here if there is a global state, or redirect to checkout
-            // But since cart opens automatically when cart-updated is fired (if configured), we can just redirect or open.
-            // Let's redirect to checkout immediately for "Order Now"
             window.location.href = '/commander';
           }}
           className="flex-[1.5] flex items-center justify-center gap-2 py-4 rounded-2xl font-black text-sm tracking-wide transition-all duration-300 shadow-lg bg-[#082215] text-white hover:bg-[#0d3020] hover:shadow-xl hover:-translate-y-0.5"
         >
           Commander Maintenant
         </button>
+
         <button
           onClick={handleWishlist}
           className={`border-2 rounded-2xl px-4 py-4 transition-colors ${
