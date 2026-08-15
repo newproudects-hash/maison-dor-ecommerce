@@ -18,18 +18,15 @@ export default function ProductClient({ product, onVariantSelect }: ProductClien
   const hasVariants = product.colorVariants && product.colorVariants.length > 0;
   const hasLegacyColors = product.colors && product.colors.length > 0;
 
-  // Default selected color/variant
-  const [selectedVariant, setSelectedVariant] = useState<ColorVariant | undefined>(
-    hasVariants ? product.colorVariants![0] : undefined
-  );
-  const [selectedColor, setSelectedColor] = useState<string | undefined>(
-    !hasVariants && hasLegacyColors ? product.colors[0] : undefined
-  );
+  // Default selected color/variant - NOW UNDEFINED TO FORCE SELECTION
+  const [selectedVariant, setSelectedVariant] = useState<ColorVariant | undefined>(undefined);
+  const [selectedColor, setSelectedColor] = useState<string | undefined>(undefined);
   const [selectedSize, setSelectedSize] = useState<string | undefined>(
     product.sizes && product.sizes.length > 0 ? product.sizes[0] : undefined
   );
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [wishlisted, setWishlisted] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -58,10 +55,25 @@ export default function ProductClient({ product, onVariantSelect }: ProductClien
 
   const handleVariantClick = (variant: ColorVariant) => {
     setSelectedVariant(variant);
+    setError(null);
     onVariantSelect?.(variant.imageUrl);
   };
 
-  const handleAdd = () => {
+  const handleColorClick = (color: string) => {
+    setSelectedColor(color);
+    setError(null);
+  };
+
+  const handleAdd = (redirect = false) => {
+    if (hasVariants && !selectedVariant) {
+      setError("Veuillez choisir une couleur");
+      return;
+    }
+    if (!hasVariants && hasLegacyColors && !selectedColor) {
+      setError("Veuillez choisir une couleur");
+      return;
+    }
+
     const colorLabel = selectedVariant?.colorName || selectedColor;
     addToCart({
       productId: product.id,
@@ -87,6 +99,10 @@ export default function ProductClient({ product, onVariantSelect }: ProductClien
 
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(() => setAdded(false), 2000);
+
+    if (redirect) {
+      window.location.href = '/commander';
+    }
   };
 
   const handleWishlist = () => {
@@ -170,7 +186,7 @@ export default function ProductClient({ product, onVariantSelect }: ProductClien
             {product.colors.map((color: string) => (
               <button
                 key={color}
-                onClick={() => setSelectedColor(color)}
+                onClick={() => handleColorClick(color)}
                 className={`w-8 h-8 rounded-full border-2 transition-all ${
                   selectedColor === color ? 'border-neutral-900 scale-110 shadow-md' : 'border-neutral-200'
                 }`}
@@ -231,9 +247,11 @@ export default function ProductClient({ product, onVariantSelect }: ProductClien
       </div>
 
       {/* ── Action Buttons ── */}
-      <div className="flex gap-3 mt-2">
-        <button
-          onClick={handleAdd}
+      <div className="flex flex-col gap-3 mt-2">
+        {error && <p className="text-red-500 text-sm font-bold animate-pulse">{error}</p>}
+        <div className="flex gap-3">
+          <button
+            onClick={() => handleAdd(false)}
           className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-sm tracking-wide transition-all duration-300 shadow-sm border-2 ${
             added ? 'border-green-600 bg-green-50 text-green-700' : 'border-neutral-200 bg-white text-neutral-800 hover:border-neutral-900'
           }`}
@@ -243,10 +261,7 @@ export default function ProductClient({ product, onVariantSelect }: ProductClien
         </button>
 
         <button
-          onClick={() => {
-            handleAdd();
-            window.location.href = '/commander';
-          }}
+          onClick={() => handleAdd(true)}
           className="flex-[1.5] flex items-center justify-center gap-2 py-4 rounded-2xl font-black text-sm tracking-wide transition-all duration-300 shadow-lg bg-[#082215] text-white hover:bg-[#0d3020] hover:shadow-xl hover:-translate-y-0.5"
         >
           Commander Maintenant
@@ -263,6 +278,7 @@ export default function ProductClient({ product, onVariantSelect }: ProductClien
         >
           <Heart className={`w-5 h-5 ${wishlisted ? 'fill-red-500' : ''}`} />
         </button>
+        </div>
       </div>
     </div>
   );

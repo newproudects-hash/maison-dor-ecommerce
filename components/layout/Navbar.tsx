@@ -43,7 +43,7 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className={`fixed top-0 left-0 w-full z-30 px-4 md:px-8 py-3 flex items-center justify-between border-b transition-all duration-300 ${navClass}`}>
+      <nav className={`sticky top-0 left-0 w-full z-30 px-4 md:px-8 py-3 flex items-center justify-between border-b transition-all duration-300 ${navClass}`}>
         {/* Left: hamburger */}
         <button
           onClick={() => setSidebarOpen(true)}

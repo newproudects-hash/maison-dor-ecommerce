@@ -43,29 +43,32 @@ export default async function Home() {
 
   return (
     <main className="min-h-screen bg-white text-neutral-900 overflow-x-hidden font-sans relative">
-      <Navbar />
 
-      {/* Announcement Bar */}
+      {/* Announcement Bar - ABOVE everything */}
       {announcement?.enabled && announcement?.text && (
         <div
-          className="fixed top-0 left-0 w-full z-40 text-black text-center text-xs font-bold py-1.5 tracking-wide"
-          style={{ backgroundColor: announcement.bgColor || '#D4AF37', marginTop: 0 }}
+          className="w-full z-50 text-black text-center text-xs font-bold py-2 tracking-wide"
+          style={{ backgroundColor: announcement.bgColor || '#D4AF37' }}
         >
           {announcement.text}
         </div>
       )}
 
+      <Navbar />
+
       {/* 1. Hero Section */}
-      <section className="relative w-full bg-neutral-900 flex items-center justify-center overflow-hidden pt-[56px] md:pt-[60px]">
+      <section className="relative w-full bg-neutral-900 flex items-center justify-center overflow-hidden">
         {/* Mobile hero */}
         <Image
           src={heroMobileSrc}
           alt="Maison D'Or - Luxury is in the details"
           width={800}
           height={1000}
-          className="block md:hidden w-full h-auto object-contain"
+          className="block md:hidden w-full h-auto"
           referrerPolicy="no-referrer"
           priority
+          quality={100}
+          unoptimized={heroMobileSrc.startsWith('http')}
         />
         {/* Desktop hero */}
         <Image
@@ -73,9 +76,11 @@ export default async function Home() {
           alt="Maison D'Or - Luxury is in the details"
           width={1920}
           height={1080}
-          className="hidden md:block w-full h-auto object-contain"
+          className="hidden md:block w-full h-auto"
           referrerPolicy="no-referrer"
           priority
+          quality={100}
+          unoptimized={heroSrc.startsWith('http')}
         />
       </section>
 

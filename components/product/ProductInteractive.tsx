@@ -15,10 +15,17 @@ export default function ProductInteractive({ product }: { product: Product }) {
     setSelectedVariantImageUrl(imageUrl);
   };
 
+  // Combine main images and color variant images, removing duplicates
+  const baseImages = product.images && product.images.length > 0 ? product.images : [product.image];
+  const variantImages = (product.colorVariants || [])
+    .map(v => v.imageUrl)
+    .filter((url): url is string => !!url && !baseImages.includes(url));
+  const allGalleryImages = [...baseImages, ...variantImages];
+
   return (
     <>
       <ProductGallery 
-        images={product.images && product.images.length > 0 ? product.images : [product.image]} 
+        images={allGalleryImages} 
         alt={product.name}
         selectedVariantImage={selectedVariantImageUrl}
       />
