@@ -34,17 +34,17 @@ const drawerVariants = {
   hidden: { x: '100%' },
   visible: { 
     x: 0, 
-    transition: { type: 'spring', damping: 25, stiffness: 200, staggerChildren: 0.1, delayChildren: 0.1 } 
+    transition: { type: 'spring' as const, damping: 25, stiffness: 200, staggerChildren: 0.1, delayChildren: 0.1 } 
   },
   exit: { 
     x: '100%', 
-    transition: { type: 'spring', damping: 30, stiffness: 250 } 
+    transition: { type: 'spring' as const, damping: 30, stiffness: 250 } 
   }
 };
 
 const itemVariants = {
   hidden: { opacity: 0, y: 20, scale: 0.95 },
-  visible: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', damping: 20, stiffness: 200 } },
+  visible: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring' as const, damping: 20, stiffness: 200 } },
   exit: { opacity: 0, scale: 0.9, x: 50, transition: { duration: 0.2 } }
 };
 

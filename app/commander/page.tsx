@@ -328,7 +328,6 @@ export default function CommanderPage() {
                     <span>{total.toLocaleString('fr-DZ')} DA</span>
                   </div>
                 </div>
-                </div>
               </div>
 
               <div className="flex gap-3">
