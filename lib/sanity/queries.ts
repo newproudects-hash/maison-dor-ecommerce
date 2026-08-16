@@ -37,7 +37,7 @@ export async function getProducts({
     : `*[_type == "product" && inStock != false]`;
 
   // Use getOrFetch for caching the products list
-  const cacheKey = `v2:products:${categorySlug || 'all'}:p${page}:s${perPage}`;
+  const cacheKey = `v3:products:${categorySlug || 'all'}:p${page}:s${perPage}`;
   
   const result = await getOrFetch(
     cacheKey,
@@ -58,7 +58,7 @@ export async function getProducts({
       }
       return { products, total, pages: Math.ceil(total / perPage) };
     },
-    categorySlug ? 900 : 1800 // category pages: 15 min, all products: 30 min
+    60 // Cache for 60 seconds to reflect Sanity updates quickly
   );
 
   return result;
@@ -79,7 +79,7 @@ export async function getProduct(slug: string) {
   const rawSlug = slug;                        // as-is from URL: "MONTRES%20TOMI"
   const decodedSlug = decodeURIComponent(slug); // decoded:       "MONTRES TOMI"
 
-  const cacheKey = `v2:product:${rawSlug}`;
+  const cacheKey = `v3:product:${rawSlug}`;
   
   return getOrFetch(
     cacheKey,
@@ -107,7 +107,7 @@ export async function getProduct(slug: string) {
       );
       return byId || null;
     },
-    7200 // Cache for 2 hours
+    60 // Cache for 60 seconds
   );
 }
 
@@ -123,13 +123,13 @@ export async function getRelatedProducts(categoryId: string, currentId: string) 
 // ── All Categories ──
 export async function getCategories() {
   return getOrFetch(
-    'v2:categories:all',
+    'v3:categories:all',
     async () => sanityClient.fetch(
       `*[_type == "category"] | order(order asc) {
         _id, title, "slug": slug.current, image, heroImage
       }`
     ),
-    86400 // Cache for 24 hours
+    60 // Cache for 60 seconds
   );
 }
 
@@ -145,7 +145,7 @@ export async function getSiteSettings() {
 // ── Home Page Settings (Singleton) ──
 export async function getHomePageSettings() {
   return getOrFetch(
-    'v2:settings:home',
+    'v3:settings:home',
     async () => sanityClient.fetch(
       `*[_type == "homePage"][0] {
         heroImage,
@@ -154,6 +154,6 @@ export async function getHomePageSettings() {
         announcementBar
       }`
     ),
-    86400 // Cache for 24 hours
+    60 // Cache for 60 seconds
   );
 }

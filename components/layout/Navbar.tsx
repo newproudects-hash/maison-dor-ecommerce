@@ -63,23 +63,7 @@ export default function Navbar() {
   return (
     <>
       <nav className={`w-full z-40 px-4 md:px-8 py-3.5 flex items-center justify-between border-b transition-all duration-300 ${navBg}`}>
-        {/* Left: hamburger */}
-        <button
-          onClick={() => setSidebarOpen(true)}
-          className="flex items-center text-white/90 hover:text-white transition-colors p-1"
-          aria-label="القائمة"
-        >
-          <Menu strokeWidth={1.4} className="w-[22px] h-[22px] md:w-6 md:h-6" />
-        </button>
-
-        {/* Center: Logo */}
-        <Link href="/" className="absolute left-1/2 -translate-x-1/2">
-          <h1 className="text-[13px] md:text-base font-serif font-black tracking-[0.2em] uppercase text-white select-none">
-            MAISON D&apos;OR
-          </h1>
-        </Link>
-
-        {/* Right: Apple-style Cart */}
+        {/* Left visually (First in DOM due to RTL): Cart */}
         <button
           onClick={() => setCartOpen(true)}
           className="relative text-white/90 hover:text-white transition-colors p-1"
@@ -100,6 +84,22 @@ export default function Navbar() {
               </motion.span>
             )}
           </AnimatePresence>
+        </button>
+
+        {/* Center: Logo */}
+        <Link href="/" className="absolute left-1/2 -translate-x-1/2">
+          <h1 className="text-[13px] md:text-base font-serif font-black tracking-[0.2em] uppercase text-white select-none">
+            MAISON D&apos;OR
+          </h1>
+        </Link>
+
+        {/* Right visually (Last in DOM due to RTL): Hamburger */}
+        <button
+          onClick={() => setSidebarOpen(true)}
+          className="flex items-center text-white/90 hover:text-white transition-colors p-1"
+          aria-label="القائمة"
+        >
+          <Menu strokeWidth={1.4} className="w-[22px] h-[22px] md:w-6 md:h-6" />
         </button>
       </nav>
 

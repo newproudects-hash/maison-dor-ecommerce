@@ -251,19 +251,38 @@ export default function ProductDetailClient({ product, related }: Props) {
                   <span className="text-xs text-neutral-500 font-medium">{selectedColor}</span>
                 </div>
                 <div className="flex gap-2 flex-wrap">
-                  {product.colors.map((c) => (
-                    <button
-                      key={c}
-                      onClick={() => setSelectedColor(c)}
-                      className={`px-4 py-2 rounded-full text-xs font-bold border-2 transition-all ${
-                        selectedColor === c
-                          ? 'bg-neutral-900 text-white border-neutral-900 shadow-md'
-                          : 'border-neutral-200 text-neutral-600 hover:border-neutral-400'
-                      }`}
-                    >
-                      {c}
-                    </button>
-                  ))}
+                  {product.colors.map((c) => {
+                    const isHex = c.startsWith('#');
+                    return (
+                      <button
+                        key={c}
+                        onClick={() => setSelectedColor(c)}
+                        title={c}
+                        className={`relative rounded-full font-bold border-2 transition-all hover:scale-110 flex items-center justify-center ${
+                          isHex ? 'w-9 h-9 p-0 shadow-sm' : 'px-4 py-2 text-xs'
+                        } ${
+                          selectedColor === c
+                            ? isHex
+                              ? 'border-neutral-900 shadow-md ring-2 ring-neutral-900 ring-offset-2'
+                              : 'bg-neutral-900 text-white border-neutral-900 shadow-md'
+                            : isHex
+                              ? 'border-neutral-200'
+                              : 'border-neutral-200 text-neutral-600 hover:border-neutral-400'
+                        }`}
+                        style={isHex ? { backgroundColor: c } : undefined}
+                      >
+                        {isHex ? (
+                          selectedColor === c && (
+                            <span className="absolute inset-0 flex items-center justify-center">
+                              <Check className="w-4 h-4 text-white drop-shadow-md" />
+                            </span>
+                          )
+                        ) : (
+                          c
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -313,56 +332,70 @@ export default function ProductDetailClient({ product, related }: Props) {
               </div>
 
               {/* Add to Cart + Wishlist */}
-              <div className="flex gap-3">
-                <motion.button
-                  onClick={handleAddToCart}
-                  whileTap={{ scale: 0.97 }}
-                  disabled={!product.inStock}
-                  className={`flex-1 py-4 rounded-2xl font-black tracking-widest uppercase text-sm flex items-center justify-center gap-3 shadow-lg transition-all duration-300 ${
-                    added
-                      ? 'bg-emerald-500 text-white shadow-emerald-200'
-                      : product.inStock
-                        ? 'bg-neutral-900 text-white hover:bg-neutral-800 hover:shadow-xl hover:-translate-y-0.5'
-                        : 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
-                  }`}
-                >
-                  <AnimatePresence mode="wait">
-                    {added ? (
-                      <motion.span
-                        key="added"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="flex items-center gap-2"
-                      >
-                        <Check className="w-5 h-5" />
-                        تمت الإضافة!
-                      </motion.span>
-                    ) : (
-                      <motion.span
-                        key="add"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="flex items-center gap-2"
-                      >
-                        <ShoppingBag className="w-5 h-5" />
-                        {product.inStock ? 'أضف للسلة' : 'نفذ من المخزون'}
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
-                </motion.button>
+              <div className="flex flex-col gap-3">
+                <div className="flex gap-3">
+                  <motion.button
+                    onClick={() => handleAddToCart(false)}
+                    whileTap={{ scale: 0.97 }}
+                    disabled={!product.inStock}
+                    className={`flex-1 py-4 rounded-2xl font-bold tracking-wide text-sm flex items-center justify-center gap-2 shadow-sm transition-all duration-300 border-2 ${
+                      added
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-500'
+                        : product.inStock
+                          ? 'bg-white text-neutral-800 border-neutral-200 hover:border-neutral-900'
+                          : 'bg-neutral-100 text-neutral-400 border-neutral-200 cursor-not-allowed'
+                    }`}
+                  >
+                    <AnimatePresence mode="wait">
+                      {added ? (
+                        <motion.span
+                          key="added"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          className="flex items-center gap-2"
+                        >
+                          <Check className="w-4 h-4" />
+                          تمت الإضافة
+                        </motion.span>
+                      ) : (
+                        <motion.span
+                          key="add"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          className="flex items-center gap-2"
+                        >
+                          <ShoppingBag className="w-4 h-4" />
+                          {product.inStock ? 'إضافة للسلة' : 'نفذ من المخزون'}
+                        </motion.span>
+                      )}
+                    </AnimatePresence>
+                  </motion.button>
 
-                <button
-                  onClick={() => setWishlisted(w => !w)}
-                  className={`w-14 h-14 rounded-2xl border-2 flex items-center justify-center transition-all ${
-                    wishlisted
-                      ? 'bg-red-50 border-red-200 text-red-500'
-                      : 'border-neutral-200 text-neutral-400 hover:border-neutral-400 hover:text-neutral-600'
-                  }`}
-                >
-                  <Heart className={`w-5 h-5 ${wishlisted ? 'fill-red-500' : ''}`} />
-                </button>
+                  <button
+                    onClick={() => handleAddToCart(true)}
+                    disabled={!product.inStock}
+                    className={`flex-[1.5] py-4 rounded-2xl font-black tracking-wide text-sm flex items-center justify-center gap-2 shadow-lg transition-all duration-300 ${
+                      product.inStock
+                        ? 'bg-[#082215] text-white hover:bg-[#0d3020] hover:shadow-xl hover:-translate-y-0.5'
+                        : 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
+                    }`}
+                  >
+                    اطلب الآن
+                  </button>
+
+                  <button
+                    onClick={() => setWishlisted(w => !w)}
+                    className={`w-14 h-14 rounded-2xl border-2 flex items-center justify-center transition-all ${
+                      wishlisted
+                        ? 'bg-red-50 border-red-200 text-red-500'
+                        : 'border-neutral-200 text-neutral-400 hover:border-neutral-400 hover:text-neutral-600 hover:bg-red-50 hover:border-red-300'
+                    }`}
+                  >
+                    <Heart className={`w-5 h-5 ${wishlisted ? 'fill-red-500' : ''}`} />
+                  </button>
+                </div>
               </div>
             </div>
 
