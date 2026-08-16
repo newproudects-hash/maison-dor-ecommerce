@@ -40,27 +40,29 @@ export async function generateMetadata(
 
 export default async function CategoryPage({ params }: { params: Promise<{ category: string }> }) {
   const { category: rawCategory } = await params;
-  // Normalize to lowercase to match Sanity slugs
-  const category = rawCategory.toLowerCase();
+  // We want to compare case-insensitively, but pass the EXACT case to Sanity
+  const urlCategory = rawCategory.toLowerCase();
   
   let rawProductsData: { products: unknown[] } = { products: [] };
   let rawCategories: { slug: string; title: string | { ar?: string; fr?: string; en?: string }; image: unknown }[] = [];
 
   try {
-    [rawProductsData, rawCategories] = await Promise.all([
-      getProducts({ page: 1, perPage: 100, categorySlug: category }),
-      getCategories(),
-    ]);
+    rawCategories = await getCategories();
+    // Find exact category slug to avoid case-sensitivity bugs in Sanity queries
+    const exactCategory = rawCategories.find((c) => c.slug.toLowerCase() === urlCategory);
+    const sanitySlug = exactCategory ? exactCategory.slug : rawCategory;
+
+    rawProductsData = await getProducts({ page: 1, perPage: 100, categorySlug: sanitySlug });
   } catch (err) {
     console.warn('[Category] Sanity fetch failed:', err);
   }
 
-  const catInfo = rawCategories.find((c) => c.slug === category);
+  const catInfo = rawCategories.find((c) => c.slug.toLowerCase() === urlCategory);
   const products = (rawProductsData?.products || []).map(mapSanityProduct);
 
   const catTitle = catInfo?.title 
-    ? (typeof catInfo.title === 'string' ? catInfo.title : (catInfo.title.ar || catInfo.title.fr || catInfo.title.en || category))
-    : category;
+    ? (typeof catInfo.title === 'string' ? catInfo.title : (catInfo.title.ar || catInfo.title.fr || catInfo.title.en || urlCategory))
+    : urlCategory;
 
   return (
     <main className="min-h-screen bg-white text-neutral-900">
@@ -110,7 +112,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
               key={cat.slug}
               href={`/boutique/${cat.slug}`}
               className={`shrink-0 px-4 py-2 rounded-full text-xs font-bold tracking-wider uppercase transition-all ${
-                category === cat.slug
+                urlCategory === cat.slug.toLowerCase()
                   ? 'bg-neutral-900 text-white'
                   : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
               }`}

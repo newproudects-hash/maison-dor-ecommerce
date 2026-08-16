@@ -1,23 +1,58 @@
-﻿import Link from 'next/link';
-import { ShoppingBag } from 'lucide-react';
+import { notFound } from 'next/navigation';
+import type { Metadata } from 'next';
+import { getProduct, getRelatedProducts } from '@/lib/sanity/queries';
+import { mapSanityProduct } from '@/lib/sanity/mapper';
+import ProductDetailClient from './ProductDetailClient';
 
-export default function NotFound() {
-  return (
-    <main className="min-h-screen bg-white text-neutral-900 flex flex-col">
-      <div className="flex-1 flex flex-col items-center justify-center px-4 text-center">
-        <h1 className="text-8xl md:text-9xl font-serif font-black text-neutral-100 mb-6 drop-shadow-sm">404</h1>
-        <h2 className="text-2xl md:text-3xl font-bold mb-4">Page Introuvable</h2>
-        <p className="text-neutral-500 mb-10 max-w-md mx-auto leading-relaxed">
-          Il semble que la page que vous cherchez n'existe plus ou a été déplacée. Ne vous inquiétez pas, notre boutique est toujours ouverte.
-        </p>
-        <Link
-          href="/boutique"
-          className="inline-flex items-center gap-2 bg-[#082215] text-white px-8 py-4 rounded-2xl font-bold text-sm tracking-wide hover:bg-[#0d3020] transition-colors shadow-lg hover:shadow-xl"
-        >
-          <ShoppingBag className="w-4 h-4" />
-          Découvrir nos produits
-        </Link>
-      </div>
-    </main>
-  );
+export const revalidate = 3600;
+
+export async function generateMetadata(
+  { params }: { params: Promise<{ slug: string }> }
+): Promise<Metadata> {
+  const { slug } = await params;
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://lamaisondor.online';
+  try {
+    const raw = await getProduct(decodeURIComponent(slug));
+    if (!raw) return { title: 'Produit introuvable' };
+    const product = mapSanityProduct(raw);
+    return {
+      title: `${product.name} — MAISON D'OR`,
+      description: product.description || `Découvrez ${product.name} chez MAISON D'OR. Livraison rapide.`,
+      openGraph: {
+        title: `${product.name} | MAISON D'OR`,
+        description: product.description || '',
+        url: `${baseUrl}/produits/${slug}`,
+        images: [{ url: product.image }],
+      },
+    };
+  } catch {
+    return { title: "MAISON D'OR" };
+  }
+}
+
+export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const decodedSlug = decodeURIComponent(slug);
+
+  let raw: unknown = null;
+  try {
+    raw = await getProduct(decodedSlug);
+  } catch {
+    // fall through to notFound
+  }
+
+  if (!raw) return notFound();
+
+  const product = mapSanityProduct(raw);
+
+  // Get related products
+  let related: ReturnType<typeof mapSanityProduct>[] = [];
+  try {
+    const rawRelated = await getRelatedProducts(product.id, product.id);
+    related = Array.isArray(rawRelated) ? rawRelated.map(mapSanityProduct) : [];
+  } catch {
+    // silent fail - related products are optional
+  }
+
+  return <ProductDetailClient product={product} related={related} />;
 }

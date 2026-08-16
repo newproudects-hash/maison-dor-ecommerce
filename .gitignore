@@ -10,3 +10,6 @@ tsconfig.tsbuildinfo
 k6-bin/
 k6.zip
 .gitignore_k6
+
+# Private files
+ممنوع_الرفع_على_قيت_هاب.txt

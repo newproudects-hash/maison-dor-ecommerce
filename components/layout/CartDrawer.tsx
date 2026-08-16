@@ -31,13 +31,13 @@ const overlayVariants = {
 };
 
 const drawerVariants = {
-  hidden: { x: '100%' },
+  hidden: { x: '-100%' },
   visible: { 
     x: 0, 
     transition: { type: 'spring' as const, damping: 25, stiffness: 200, staggerChildren: 0.1, delayChildren: 0.1 } 
   },
   exit: { 
-    x: '100%', 
+    x: '-100%', 
     transition: { type: 'spring' as const, damping: 30, stiffness: 250 } 
   }
 };
@@ -91,9 +91,9 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
             dragConstraints={{ left: 0, right: 300 }}
             dragElastic={0.1}
             onDragEnd={(e, info) => {
-              if (info.offset.x > 100) onClose();
+              if (info.offset.x < -100) onClose();
             }}
-            className="fixed top-0 right-0 h-full w-full sm:w-[450px] bg-white z-50 flex flex-col shadow-2xl rounded-l-[2rem] overflow-hidden border-l border-white/20"
+            className="fixed top-0 left-0 h-full w-full sm:w-[450px] bg-white z-50 flex flex-col shadow-2xl rounded-r-[2rem] overflow-hidden border-r border-neutral-100"
           >
             {/* Header */}
             <motion.div 
