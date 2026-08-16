@@ -15,6 +15,8 @@ interface DeliveryPrice {
 }
 
 export default function ShippingDashboard() {
+  const adminPath = process.env.NEXT_PUBLIC_ADMIN_PATH || 'admin';
+  const studioPath = process.env.NEXT_PUBLIC_STUDIO_PATH || 'studio';
   const router = useRouter();
   const [prices, setPrices] = useState<DeliveryPrice[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,7 +49,7 @@ export default function ShippingDashboard() {
     setSaving(true);
     try {
       // Create a new API route for updating prices
-      const res = await fetch('/api/admin/delivery-prices', {
+      const res = await fetch(`/api/${adminPath}/delivery-prices`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -70,7 +72,7 @@ export default function ShippingDashboard() {
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
-    router.push('/admin/login');
+    router.push(`/${adminPath}/login`);
   };
 
   return (
@@ -87,9 +89,9 @@ export default function ShippingDashboard() {
 
         <nav className="flex-1 px-3 py-6 space-y-1">
           {[
-            { icon: LayoutDashboard, label: 'الطلبات', href: '/admin/dashboard', active: false },
-            { icon: Truck,           label: 'أسعار التوصيل', href: '/admin/dashboard/shipping', active: true },
-            { icon: Settings,        label: 'إدارة المحتوى (Sanity)', href: '/studio', active: false },
+            { icon: LayoutDashboard, label: 'الطلبات', href: `/${adminPath}/dashboard`, active: false },
+            { icon: Truck,           label: 'أسعار التوصيل', href: `/${adminPath}/dashboard/shipping`, active: true },
+            { icon: Settings,        label: 'إدارة المحتوى (Sanity)', href: `/${studioPath}`, active: false },
           ].map(({ icon: Icon, label, href, active }) => (
             <button
               key={label}

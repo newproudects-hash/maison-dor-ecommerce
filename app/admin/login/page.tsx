@@ -25,7 +25,8 @@ export default function AdminLoginPage() {
       });
       
       if (res.ok) {
-        router.push('/admin/dashboard');
+        const adminPath = process.env.NEXT_PUBLIC_ADMIN_PATH || 'admin';
+        router.push(`/${adminPath}/dashboard`);
       } else {
         const data = await res.json();
         setError(data.message || 'بيانات الدخول غير صحيحة');

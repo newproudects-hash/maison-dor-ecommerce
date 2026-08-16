@@ -39,6 +39,8 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }
 };
 
 export default function AdminDashboard() {
+  const adminPath = process.env.NEXT_PUBLIC_ADMIN_PATH || 'admin';
+  const studioPath = process.env.NEXT_PUBLIC_STUDIO_PATH || 'studio';
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,7 +54,7 @@ export default function AdminDashboard() {
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/admin/orders');
+      const res = await fetch(`/api/${adminPath}/orders`);
       if (res.ok) {
         const data = await res.json();
         setOrders(data.orders || []);
@@ -73,13 +75,13 @@ export default function AdminDashboard() {
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
-    router.push('/admin/login');
+    router.push(`/${adminPath}/login`);
   };
 
   const handleStatusChange = async (orderId: number, newStatus: string) => {
     setUpdatingId(orderId);
     try {
-      await fetch('/api/admin/orders', {
+      await fetch(`/api/${adminPath}/orders`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orderId, status: newStatus }),
@@ -146,9 +148,9 @@ export default function AdminDashboard() {
         {/* Nav */}
         <nav className="flex-1 px-3 py-6 space-y-1">
           {[
-            { icon: LayoutDashboard, label: 'الطلبات', href: '/admin/dashboard', active: true },
-            { icon: ShoppingBag,     label: 'أسعار التوصيل', href: '/admin/dashboard/shipping', active: false },
-            { icon: Settings,        label: 'إدارة المحتوى (Sanity)', href: '/studio', active: false },
+            { icon: LayoutDashboard, label: 'الطلبات', href: `/${adminPath}/dashboard`, active: true },
+            { icon: ShoppingBag,     label: 'أسعار التوصيل', href: `/${adminPath}/dashboard/shipping`, active: false },
+            { icon: Settings,        label: 'إدارة المحتوى (Sanity)', href: `/${studioPath}`, active: false },
           ].map(({ icon: Icon, label, href, active }) => (
             <button
               key={label}

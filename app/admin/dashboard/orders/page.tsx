@@ -20,7 +20,8 @@ async function updateOrderStatus(formData: FormData) {
   if (!orderId || !newStatus) return;
   const supabase = getServerSupabase();
   await supabase.from('orders').update({ status: newStatus }).eq('id', orderId);
-  revalidatePath('/admin/dashboard/orders');
+  const adminPath = process.env.NEXT_PUBLIC_ADMIN_PATH || 'admin';
+  revalidatePath(`/${adminPath}/dashboard/orders`);
 }
 
 export default async function AdminOrdersPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
@@ -69,7 +70,7 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
         {/* Header */}
         <header className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
-            <Link href="/admin/dashboard" className="p-2 border border-white/10 hover:bg-white/10 transition-colors">
+            <Link href={`/${process.env.NEXT_PUBLIC_ADMIN_PATH || 'admin'}/dashboard`} className="p-2 border border-white/10 hover:bg-white/10 transition-colors">
               <ArrowLeft className="w-4 h-4 text-white" />
             </Link>
             <div>

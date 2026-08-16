@@ -9,6 +9,56 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: false,
   },
 
+  async redirects() {
+    const adminPath = process.env.NEXT_PUBLIC_ADMIN_PATH || 'admin';
+    const studioPath = process.env.NEXT_PUBLIC_STUDIO_PATH || 'studio';
+    
+    const rules = [];
+    
+    // Block direct access to the original /admin if a secret path is set
+    if (adminPath !== 'admin') {
+      rules.push(
+        { source: '/admin', destination: '/404', permanent: false },
+        { source: '/admin/:path*', destination: '/404', permanent: false },
+        { source: '/api/admin/:path*', destination: '/404', permanent: false }
+      );
+    }
+    
+    // Block direct access to the original /studio if a secret path is set
+    if (studioPath !== 'studio') {
+      rules.push(
+        { source: '/studio', destination: '/404', permanent: false },
+        { source: '/studio/:path*', destination: '/404', permanent: false }
+      );
+    }
+    
+    return rules;
+  },
+
+  async rewrites() {
+    const adminPath = process.env.NEXT_PUBLIC_ADMIN_PATH || 'admin';
+    const studioPath = process.env.NEXT_PUBLIC_STUDIO_PATH || 'studio';
+    
+    const rules = [];
+    
+    if (adminPath !== 'admin') {
+      rules.push(
+        { source: `/${adminPath}`, destination: '/admin' },
+        { source: `/${adminPath}/:path*`, destination: '/admin/:path*' },
+        { source: `/api/${adminPath}/:path*`, destination: '/api/admin/:path*' }
+      );
+    }
+    
+    if (studioPath !== 'studio') {
+      rules.push(
+        { source: `/${studioPath}`, destination: '/studio' },
+        { source: `/${studioPath}/:path*`, destination: '/studio/:path*' }
+      );
+    }
+    
+    return rules;
+  },
+
   // ─── Remote Image Patterns ────────────────────────────────────────────────
   images: {
     remotePatterns: [
@@ -103,7 +153,7 @@ const nextConfig: NextConfig = {
         headers: [{ key: 'Cache-Control', value: 'no-store' }],
       },
       {
-        source: '/admin/:path*',
+        source: `/${process.env.NEXT_PUBLIC_ADMIN_PATH || 'admin'}/:path*`,
         headers: [
           { key: 'Cache-Control', value: 'no-store, private' },
           { key: 'X-Robots-Tag', value: 'noindex, nofollow' },

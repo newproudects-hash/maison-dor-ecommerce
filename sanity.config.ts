@@ -3,7 +3,7 @@ import { structureTool } from 'sanity/structure'
 import { schema } from './lib/sanity/schemas'
 
 export default defineConfig({
-  basePath: '/studio',
+  basePath: `/${process.env.NEXT_PUBLIC_STUDIO_PATH || 'studio'}`,
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || '4zyu7eeg',
   dataset: process.env.NEXT_PUBLIC_SANITY_DATASET || 'production',
   

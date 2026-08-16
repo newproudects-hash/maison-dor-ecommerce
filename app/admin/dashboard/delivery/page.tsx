@@ -27,8 +27,8 @@ async function updatePrice(formData: FormData) {
       is_active
     })
     .eq('id', id);
-
-  revalidatePath('/admin/dashboard/delivery');
+  const adminPath = process.env.NEXT_PUBLIC_ADMIN_PATH || 'admin';
+  revalidatePath(`/${adminPath}/dashboard/delivery`);
 }
 
 export default async function AdminDeliveryPage() {
@@ -44,7 +44,7 @@ export default async function AdminDeliveryPage() {
         
         {/* Header */}
         <header className="flex items-center gap-4 mb-8">
-          <Link href="/admin/dashboard" className="p-2 border border-white/10 hover:bg-white/10 transition-colors">
+          <Link href={`/${process.env.NEXT_PUBLIC_ADMIN_PATH || 'admin'}/dashboard`} className="p-2 border border-white/10 hover:bg-white/10 transition-colors">
             <ArrowLeft className="w-4 h-4 text-white" />
           </Link>
           <div>
