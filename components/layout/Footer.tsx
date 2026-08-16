@@ -28,12 +28,10 @@ export default function Footer() {
           MAISON D'OR
         </h2>
         
-        <div className="flex items-center gap-5 md:gap-6 mb-8">
-          <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="opacity-80 hover:opacity-100 hover:text-[#1877F2] transition-all hover:scale-110"><FacebookIcon /></a>
-          <a href="https://t.me" target="_blank" rel="noopener noreferrer" aria-label="Telegram" className="opacity-80 hover:opacity-100 hover:text-[#26A5E4] transition-all hover:scale-110"><TelegramIcon /></a>
-          <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer" aria-label="TikTok" className="opacity-80 hover:opacity-100 hover:text-white transition-all hover:scale-110"><TikTokIcon /></a>
-          <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="opacity-80 hover:opacity-100 hover:text-[#E1306C] transition-all hover:scale-110"><InstagramIcon /></a>
-          <a href="https://wa.me/213555123456" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp" className="opacity-80 hover:opacity-100 hover:text-[#25D366] transition-all hover:scale-110"><WhatsAppIcon /></a>
+        <div className="flex items-center gap-6 md:gap-8 mb-8">
+          <a href="https://chat.whatsapp.com/LoMHVJuVw3Y2lvsvC7Kg9l?s=hd&p=i&mlu=4&amv=0" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp" className="text-[#25D366] hover:brightness-110 transition-all hover:scale-110 drop-shadow-md"><WhatsAppIcon /></a>
+          <a href="https://t.me/hdkd017" target="_blank" rel="noopener noreferrer" aria-label="Telegram" className="text-[#26A5E4] hover:brightness-110 transition-all hover:scale-110 drop-shadow-md"><TelegramIcon /></a>
+          <a href="https://www.tiktok.com/@abdeldjalilrouibi?_r=1&_t=ZS-98wMVUKUMpI" target="_blank" rel="noopener noreferrer" aria-label="TikTok" className="text-white hover:brightness-110 transition-all hover:scale-110 drop-shadow-md"><TikTokIcon /></a>
         </div>
 
         <div className="flex flex-wrap justify-center gap-4 md:gap-8 text-[11px] md:text-sm font-medium text-neutral-300/80 mb-10">

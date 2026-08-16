@@ -56,9 +56,9 @@ export default function Navbar() {
   }, []);
 
   const isHome = pathname === '/';
-  const navBg = (scrolled || !isHome)
-    ? 'bg-neutral-900/95 backdrop-blur-sm border-neutral-800 shadow-md'
-    : 'bg-transparent border-transparent';
+  const navBg = scrolled
+    ? 'bg-transparent border-transparent'
+    : 'bg-black border-neutral-800 shadow-md';
 
   return (
     <>
