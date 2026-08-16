@@ -58,7 +58,7 @@ export default function Navbar() {
   const isHome = pathname === '/';
   const navBg = (scrolled || !isHome)
     ? 'bg-neutral-900/95 backdrop-blur-sm border-neutral-800 shadow-md'
-    : 'bg-black/20 backdrop-blur-md border-white/10';
+    : 'bg-transparent border-transparent';
 
   return (
     <>

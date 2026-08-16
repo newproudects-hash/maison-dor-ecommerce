@@ -20,7 +20,7 @@ export default function StickyHeader({
       {announcementEnabled && announcementText && (
         <div
           className="w-full text-black text-center text-xs font-bold py-2 tracking-wide"
-          style={{ backgroundColor: announcementBg || '#D4AF37' }}
+          style={{ backgroundColor: announcementBg || '#C9A84C' }}
         >
           {announcementText}
         </div>
