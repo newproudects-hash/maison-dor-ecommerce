@@ -31,13 +31,13 @@ const overlayVariants = {
 };
 
 const drawerVariants = {
-  hidden: { x: '-100%' },
+  hidden: { x: '100%' },
   visible: { 
     x: 0, 
     transition: { type: 'spring' as const, damping: 25, stiffness: 200, staggerChildren: 0.1, delayChildren: 0.1 } 
   },
   exit: { 
-    x: '-100%', 
+    x: '100%', 
     transition: { type: 'spring' as const, damping: 30, stiffness: 250 } 
   }
 };
@@ -87,13 +87,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
             initial="hidden"
             animate="visible"
             exit="exit"
-            drag="x"
-            dragConstraints={{ left: 0, right: 300 }}
-            dragElastic={0.1}
-            onDragEnd={(e, info) => {
-              if (info.offset.x < -100) onClose();
-            }}
-            className="fixed top-0 left-0 h-full w-full sm:w-[450px] bg-white z-50 flex flex-col shadow-2xl rounded-r-[2rem] overflow-hidden border-r border-neutral-100"
+            className="fixed top-0 right-0 h-full w-full sm:w-[450px] bg-white z-50 flex flex-col shadow-2xl rounded-l-[2rem] overflow-hidden border-l border-neutral-100"
           >
             {/* Header */}
             <motion.div 
@@ -173,9 +167,9 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                         
                         <button
                           onClick={() => removeFromCart(item.id)}
-                          className="absolute top-4 right-4 p-2 text-neutral-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors opacity-0 group-hover:opacity-100"
+                          className="absolute top-3 right-3 p-2 text-neutral-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors z-10"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-5 h-5" />
                         </button>
                       </motion.div>
                     ))}

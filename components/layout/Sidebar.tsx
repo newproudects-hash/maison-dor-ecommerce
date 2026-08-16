@@ -59,11 +59,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
           {/* Drawer */}
           <motion.aside
-            initial={{ x: '-100%' }}
+            initial={{ x: '100%' }}
             animate={{ x: 0 }}
-            exit={{ x: '-100%' }}
+            exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="fixed top-0 left-0 h-full w-[300px] z-50 flex flex-col overflow-hidden"
+            className="fixed top-0 right-0 h-full w-[300px] z-50 flex flex-col overflow-hidden"
             style={{ background: 'linear-gradient(160deg, #082215 0%, #0d3020 100%)' }}
           >
             {/* Header */}
