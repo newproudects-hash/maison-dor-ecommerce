@@ -57,12 +57,12 @@ export default function Navbar() {
 
   const isHome = pathname === '/';
   const navBg = scrolled
-    ? 'bg-transparent border-transparent'
-    : 'bg-black border-neutral-800 shadow-md';
+    ? 'bg-black/90 backdrop-blur-md border-neutral-800 shadow-lg'
+    : 'bg-black border-neutral-800 shadow-sm';
 
   return (
     <>
-      <nav className={`w-full z-40 px-4 md:px-8 py-3.5 flex items-center justify-between border-b transition-all duration-300 ${navBg}`}>
+      <nav className={`sticky top-0 w-full z-50 px-4 md:px-8 py-3.5 flex items-center justify-between border-b transition-all duration-300 ${navBg}`}>
         {/* Left visually (First in DOM due to RTL): Cart */}
         <button
           onClick={() => setCartOpen(true)}

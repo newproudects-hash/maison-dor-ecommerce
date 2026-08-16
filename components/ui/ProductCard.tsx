@@ -65,10 +65,10 @@ export default function ProductCard({ product }: { product: { id: string; name: 
         {/* FIX #68: Cart button with added feedback */}
         <button
           onClick={handleAdd}
-          className={`ml-1 rounded-full p-2 transition-all duration-300 ${
+          className={`ml-1 rounded-full p-2.5 md:p-3 shadow-lg transition-all duration-300 ${
             added
-              ? 'bg-green-500 text-white scale-110'
-              : 'opacity-70 hover:opacity-100 hover:scale-110 text-white bg-white/20 backdrop-blur-sm'
+              ? 'bg-green-500 text-white scale-110 shadow-green-500/30'
+              : 'bg-white text-black hover:scale-110 hover:bg-neutral-100'
           }`}
           aria-label="Ajouter au panier"
         >
