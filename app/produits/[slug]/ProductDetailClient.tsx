@@ -40,7 +40,7 @@ export default function ProductDetailClient({ product, related }: Props) {
     ? [activeColorVariant.imageUrl, ...images.filter(img => img !== activeColorVariant.imageUrl)]
     : images;
 
-  const handleAddToCart = useCallback(() => {
+  const handleAddToCart = useCallback((redirect = false) => {
     addToCart({
       productId: product.id,
       name: product.name,
@@ -54,6 +54,10 @@ export default function ProductDetailClient({ product, related }: Props) {
     });
     setAdded(true);
     setTimeout(() => setAdded(false), 2500);
+
+    if (redirect) {
+      window.location.href = '/commander';
+    }
   }, [product, selectedSize, selectedColor, quantity]);
 
   const handlePrevImage = () => setSelectedImageIdx((i) => (i - 1 + activeImages.length) % activeImages.length);
