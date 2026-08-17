@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { JWT } from 'google-auth-library';
 import { z } from 'zod';
-import { sendSecurityAlertToTelegram, sendOrderToTelegram } from '@/lib/utils/telegram';
+import { sendSecurityAlertToTelegram } from '@/lib/utils/telegram';
 import { WILAYAS, LIVRAISON_DOMICILE, LIVRAISON_BUREAU } from '@/lib/data/wilayas';
 import { getFromCache, setCache } from '@/lib/cache/redis';
 import { sanityClient } from '@/lib/sanity/client';
@@ -139,11 +139,7 @@ export async function POST(req: Request) {
     if (!result.success) {
       // Potential malicious input -> alert if highly malformed
       if (result.error.issues.length > 5) {
-         await sendSecurityAlertToTelegram(
-           'Malicious Request Payload (Orders API)', 
-           `IP ${ip} sent a highly malformed order request.\n\nErrors: ${JSON.stringify(result.error.issues)}`, 
-           ip
-         );
+         console.error(`[Security] IP ${ip} sent a highly malformed order request. Errors: ${JSON.stringify(result.error.issues)}`);
       }
       return NextResponse.json(
         { success: false, error: 'بيانات الطلب غير صالحة: ' + result.error.issues[0].message },
@@ -287,27 +283,7 @@ export async function POST(req: Request) {
       }
     }
 
-    // FIX #16: Send Telegram notification for every new order
-    await sendOrderToTelegram({
-      orderNumber,
-      firstName: safeFirstName,
-      lastName: safeLastName,
-      phone: safePhone,
-      wilayaName: safeWilaya,
-      wilayaCode: typeof wilayaCode === 'number' ? wilayaCode : parseInt(String(wilayaCode), 10),
-      deliveryType: deliveryType === 'domicile' ? 'home' : 'office',
-      deliveryPrice,
-      items: items.map(item => ({
-        title: item.productName,
-        price: item.price,
-        quantity: item.quantity,
-        color: item.color,
-        size: item.size,
-      })),
-      subtotal: recalcSubtotal,
-      total: recalcTotal,
-    });
-
+    // 7. Success! (Telegram removed as requested)
     return NextResponse.json({ success: true, orderNumber });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';

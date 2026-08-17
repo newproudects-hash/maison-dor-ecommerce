@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getFromCache, setCache } from '@/lib/cache/redis';
-import { escapeMarkdown, sendSecurityAlertToTelegram } from '@/lib/utils/telegram';
+import { getServerSupabase } from '@/lib/supabase/server';
 
 const contactSchema = z.object({
   name: z.string().min(2).max(100),
@@ -33,11 +33,7 @@ async function checkContactRateLimit(ip: string): Promise<boolean> {
     if (entry.count > 3) {
       if (!entry.blockedUntil) {
         entry.blockedUntil = now + (15 * 60 * 1000); // 15 mins block
-        await sendSecurityAlertToTelegram(
-          'Rate Limit Exceeded (Contact API)',
-          `IP ${ip} has exceeded the rate limit (3 req/min) and is blocked for 15 minutes.`,
-          ip
-        );
+        console.error(`[Security Alert] IP ${ip} has exceeded the rate limit for contact API and is blocked.`);
       }
       await setCache(redisKey, entry, 15 * 60);
       return false;
@@ -74,37 +70,26 @@ export async function POST(req: Request) {
 
     const { name, phone, subject, message } = result.data;
 
-    const TELEGRAM_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-    const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
-
-    // ✅ SECURITY FIX (VULN-013): Markdown Injection Prevention
-    const safeName = escapeMarkdown(name);
-    const safePhone = phone ? escapeMarkdown(phone) : 'غير محدد';
-    const safeSubject = escapeMarkdown(subject);
-    const safeMessage = escapeMarkdown(message);
-
-    if (TELEGRAM_TOKEN && TELEGRAM_CHAT_ID) {
-      const text = `
-📬 *رسالة جديدة من صفحة الاتصال*
-
-👤 *الاسم:* ${safeName}
-📞 *الهاتف:* ${safePhone}
-📋 *الموضوع:* ${safeSubject}
-
-💬 *الرسالة:*
-${safeMessage}
-
-⏰ ${new Date().toLocaleString('ar-DZ')}
-`;
-      await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: TELEGRAM_CHAT_ID,
-          text,
-          parse_mode: 'Markdown',
-        }),
-      });
+    // ✅ Save directly to Supabase instead of Telegram
+    try {
+      const supabase = getServerSupabase();
+      const { error: supabaseError } = await supabase.from('contact_messages').insert([{
+        name,
+        phone: phone || null,
+        subject,
+        message,
+        created_at: new Date().toISOString()
+      }]);
+      
+      if (supabaseError) {
+        console.error('[Contact API] Supabase insert error:', supabaseError.message);
+        // We still return success to the user so they don't know the backend failed, 
+        // or we can return an error. Returning 500 is better if it fails.
+        throw new Error('Failed to save message');
+      }
+    } catch (dbError) {
+      console.error('[Contact API] DB Error:', dbError);
+      return NextResponse.json({ success: false, error: 'حدث خطأ في السيرفر. يرجى المحاولة لاحقاً.' }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
