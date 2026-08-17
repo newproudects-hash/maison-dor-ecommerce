@@ -19,10 +19,7 @@ const supabase = supabaseUrl && supabaseServiceKey ? createClient(supabaseUrl, s
 // Skill: testing-api-authentication-weaknesses
 const patchSchema = z.object({
   orderId: z.union([z.string(), z.number()]),
-  status: z.enum(['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'], {
-    invalid_type_error: 'حالة الطلب غير صالحة',
-    required_error: 'حالة الطلب مطلوبة'
-  })
+  status: z.enum(['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'])
 });
 
 export async function GET(req: Request) {
