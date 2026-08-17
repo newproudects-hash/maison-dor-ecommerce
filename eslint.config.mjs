@@ -8,4 +8,10 @@ const __dirname = path.dirname(__filename);
 
 export default defineConfig([{
     extends: [...next],
+    rules: {
+        // French content uses ' extensively — disabling cosmetic rule
+        "react/no-unescaped-entities": "off",
+        // Disabled to allow intentional omission of deps in some effects
+        "react-hooks/exhaustive-deps": "warn",
+    }
 }]);

@@ -4,7 +4,6 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useEffect } from 'react';
 
 export default function ProductGallery({ images: initialImages, alt, selectedVariantImage }: { images: string[], alt: string, selectedVariantImage?: string }) {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -12,15 +11,13 @@ export default function ProductGallery({ images: initialImages, alt, selectedVar
   const displayImages = initialImages.length > 0 ? initialImages : ['/hero.jpg'];
   const hasVariantImage = selectedVariantImage && !displayImages.includes(selectedVariantImage);
 
-  // React to variant selection
-  useEffect(() => {
-    if (selectedVariantImage) {
-      const idx = displayImages.indexOf(selectedVariantImage);
-      if (idx !== -1) {
-        setCurrentIndex(idx);
-      }
+  // React to variant selection (Sync state during render instead of effect to avoid cascading renders)
+  if (selectedVariantImage) {
+    const idx = displayImages.indexOf(selectedVariantImage);
+    if (idx !== -1 && currentIndex !== idx) {
+      setCurrentIndex(idx);
     }
-  }, [selectedVariantImage, displayImages]);
+  }
 
   const next = () => setCurrentIndex((prev) => (prev + 1) % displayImages.length);
   const prev = () => setCurrentIndex((prev) => (prev - 1 + displayImages.length) % displayImages.length);

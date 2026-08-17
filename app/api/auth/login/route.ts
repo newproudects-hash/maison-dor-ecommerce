@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { sendSecurityAlertToTelegram } from '@/lib/utils/telegram';
 import { timingSafeEqual, createHash } from 'crypto';
 
 // Brute-force protection: track login attempts per IP
@@ -45,10 +44,8 @@ export async function POST(req: Request) {
       // Reset attempt count on success
       loginAttempts.delete(ip);
       
-      await sendSecurityAlertToTelegram(
-        'Admin Login Success',
-        `Successful login to the Admin Dashboard.\n\nEmail: ${email}`,
-        ip
+      console.log(
+        `[Audit] Admin Login Success: Successful login to the Admin Dashboard. Email: ${email} (IP: ${ip})`
       );
 
       const cookieStore = await cookies();
@@ -67,10 +64,8 @@ export async function POST(req: Request) {
     const newCount = (prev?.count || 0) + 1;
     if (newCount >= MAX_ATTEMPTS) {
       if (!prev || prev.blockedUntil === 0) {
-        await sendSecurityAlertToTelegram(
-          'Brute Force Admin Login Attempt',
-          `Multiple failed login attempts (>= ${MAX_ATTEMPTS}) detected for admin panel.\n\nAttempted Email: ${email}\nAction: IP Blocked for 15 minutes.`,
-          ip
+        console.error(
+          `[Security Alert] Brute Force Admin Login Attempt: Multiple failed login attempts (>= ${MAX_ATTEMPTS}) detected for admin panel. Attempted Email: ${email} Action: IP Blocked for 15 minutes. (IP: ${ip})`
         );
       }
       loginAttempts.set(ip, { count: newCount, blockedUntil: now + BLOCK_DURATION_MS });

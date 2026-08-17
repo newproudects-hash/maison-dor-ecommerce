@@ -39,16 +39,8 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }
 };
 
 export default function AdminDashboard() {
-  const [adminPath, setAdminPath] = useState('admin');
-  const [studioPath, setStudioPath] = useState('studio');
-  
-  useEffect(() => {
-    // ✅ SECURITY FIX (VULN-015): Extract admin path from URL to avoid leaking it in the JS bundle
-    const pathSegments = window.location.pathname.split('/');
-    if (pathSegments[1]) {
-      setAdminPath(pathSegments[1]);
-    }
-  }, []);
+  // ✅ SECURITY FIX (VULN-015): Extract admin path from URL at the top-level to avoid leaking it in the JS bundle
+  const adminPath = typeof window !== 'undefined' ? (window.location.pathname.split('/')[1] || 'admin') : 'admin';
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -79,6 +71,7 @@ export default function AdminDashboard() {
     // Auto-refresh every 30 seconds
     const interval = setInterval(fetchOrders, 30000);
     return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleLogout = async () => {

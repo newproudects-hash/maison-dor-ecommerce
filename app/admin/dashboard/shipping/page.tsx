@@ -15,16 +15,12 @@ interface DeliveryPrice {
 }
 
 export default function ShippingDashboard() {
-  const adminPath = process.env.NEXT_PUBLIC_ADMIN_PATH || 'admin';
-  const studioPath = process.env.NEXT_PUBLIC_STUDIO_PATH || 'studio';
+  const adminPath = typeof window !== 'undefined' ? (window.location.pathname.split('/')[1] || 'admin') : 'admin';
+  const studioPath = typeof window !== 'undefined' ? (window.location.pathname.split('/')[2] || 'studio') : 'studio';
   const router = useRouter();
   const [prices, setPrices] = useState<DeliveryPrice[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    fetchPrices();
-  }, []);
 
   const fetchPrices = async () => {
     try {
@@ -39,6 +35,11 @@ export default function ShippingDashboard() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchPrices();
+   
+  }, []);
 
   const handlePriceChange = (code: number, field: 'home_price' | 'office_price', value: string) => {
     const val = parseInt(value) || 0;

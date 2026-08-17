@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { getServerSupabase } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
-import { sendSecurityAlertToTelegram } from '@/lib/utils/telegram';
 
 export async function PATCH(req: Request) {
   try {
@@ -39,10 +38,9 @@ export async function PATCH(req: Request) {
     const ip = req.headers.get('cf-connecting-ip')
             || req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() 
             || 'unknown';
-    await sendSecurityAlertToTelegram(
-      'Audit: Delivery Price Changed',
-      `Admin changed delivery prices for Wilaya ${wilaya_code}.\n\nNew Home Price: ${home_price} DA\nNew Office Price: ${office_price} DA`,
-      ip
+    console.log(
+      `[Audit] Delivery Price Changed: Admin changed delivery prices for Wilaya ${wilaya_code}. ` +
+      `New Home Price: ${home_price} DA | New Office Price: ${office_price} DA (IP: ${ip})`
     );
 
     return NextResponse.json({ success: true });

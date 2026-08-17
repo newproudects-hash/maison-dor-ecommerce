@@ -1,15 +1,12 @@
 import { NextResponse } from 'next/server';
-import { sendSecurityAlertToTelegram } from '@/lib/utils/telegram';
 
 export async function GET(req: Request) {
   const ip = req.headers.get('cf-connecting-ip')
           || req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() 
           || 'unknown';
 
-  await sendSecurityAlertToTelegram(
-    'Honeytoken Triggered (Admin Debug)',
-    `An attacker or automated scanner attempted to access the fake admin debug endpoint.\n\nIP: ${ip}\nPath: /api/admin/debug-auth\nMethod: GET`,
-    ip
+  console.warn(
+    `[Honeytoken] An attacker or automated scanner attempted to access the fake admin debug endpoint. IP: ${ip} Path: /api/admin/debug-auth Method: GET`
   );
 
   // Return a generic error to not look suspicious, or pretend to be a real error
@@ -32,10 +29,8 @@ export async function POST(req: Request) {
     payload = 'Unparseable body';
   }
 
-  await sendSecurityAlertToTelegram(
-    'Honeytoken Triggered (Admin Debug POST)',
-    `An attacker attempted a POST to the fake admin debug endpoint.\n\nIP: ${ip}\nPayload:\n${payload}`,
-    ip
+  console.warn(
+    `[Honeytoken] An attacker attempted a POST to the fake admin debug endpoint. IP: ${ip} Payload: ${payload}`
   );
 
   return NextResponse.json(

@@ -3,7 +3,6 @@ import { createClient } from '@supabase/supabase-js';
 import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { JWT } from 'google-auth-library';
 import { z } from 'zod';
-import { sendSecurityAlertToTelegram } from '@/lib/utils/telegram';
 import { WILAYAS, LIVRAISON_DOMICILE, LIVRAISON_BUREAU } from '@/lib/data/wilayas';
 import { getFromCache, setCache } from '@/lib/cache/redis';
 import { sanityClient } from '@/lib/sanity/client';

@@ -15,7 +15,7 @@ export const sanityClient = createClient({
   token: process.env.SANITY_API_TOKEN,
 });
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 type SanityImageSource = any;
 
 // Image URL Builder

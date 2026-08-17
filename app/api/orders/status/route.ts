@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { JWT } from 'google-auth-library';
 import { cookies } from 'next/headers';
-import { sendSecurityAlertToTelegram } from '@/lib/utils/telegram';
 
 const GOOGLE_CLIENT_EMAIL = process.env.GOOGLE_CLIENT_EMAIL;
 const GOOGLE_PRIVATE_KEY = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n');
@@ -58,10 +57,8 @@ export async function PATCH(req: Request) {
     const ip = req.headers.get('cf-connecting-ip')
             || req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() 
             || 'unknown';
-    await sendSecurityAlertToTelegram(
-      'Audit: Order Status Changed',
-      `Admin changed status for order #${orderNumber} to "${statusAr}".`,
-      ip
+    console.log(
+      `[Audit] Order Status Changed: Admin changed status for order #${orderNumber} to "${statusAr}". (IP: ${ip})`
     );
 
     return NextResponse.json({ success: true, updated });
