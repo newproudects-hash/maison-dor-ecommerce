@@ -7,16 +7,16 @@ import { Heart, ShoppingBag, Check } from 'lucide-react';
 import { addToCart } from '@/lib/store/cartStore';
 
 export default function ProductCard({ product }: { product: { id: string; name: string; price: number; image: string; category: string; slug: string } }) {
-  const [wishlisted, setWishlisted] = React.useState(false);
-  // FIX #68: Show feedback after adding to cart
-  const [added, setAdded] = React.useState(false);
-
-  React.useEffect(() => {
+  // Read from localStorage at init time — avoids setState inside effect
+  const [wishlisted, setWishlisted] = React.useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
     try {
       const wishlist: string[] = JSON.parse(localStorage.getItem('maison_wishlist') || '[]');
-      setWishlisted(wishlist.includes(product.id));
-    } catch { /* ignore */ }
-  }, [product.id]);
+      return wishlist.includes(product.id);
+    } catch { return false; }
+  });
+  // Show feedback after adding to cart
+  const [added, setAdded] = React.useState(false);
 
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();

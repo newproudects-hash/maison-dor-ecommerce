@@ -27,7 +27,13 @@ export default function ProductClient({ product, onVariantSelect }: ProductClien
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [wishlisted, setWishlisted] = useState(false);
+  const [wishlisted, setWishlisted] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      const wishlist: string[] = JSON.parse(localStorage.getItem('maison_wishlist') || '[]');
+      return wishlist.includes(product.id);
+    } catch { return false; }
+  });
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Notify parent of initial variant image on mount
@@ -38,13 +44,6 @@ export default function ProductClient({ product, onVariantSelect }: ProductClien
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Load wishlist state from localStorage
-  useEffect(() => {
-    try {
-      const wishlist: string[] = JSON.parse(localStorage.getItem('maison_wishlist') || '[]');
-      setWishlisted(wishlist.includes(product.id));
-    } catch { /* ignore */ }
-  }, [product.id]);
 
   // Cleanup timeout on unmount
   useEffect(() => {

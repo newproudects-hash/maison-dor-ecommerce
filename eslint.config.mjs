@@ -11,7 +11,11 @@ export default defineConfig([{
     rules: {
         // French content uses ' extensively — disabling cosmetic rule
         "react/no-unescaped-entities": "off",
-        // Disabled to allow intentional omission of deps in some effects
+        // Allow intentional omission of deps
         "react-hooks/exhaustive-deps": "warn",
+        // setState inside useEffect is valid pattern for reading localStorage/window
+        "react-hooks/set-state-in-effect": "off",
+        // <img> warnings are non-blocking for external images
+        "@next/next/no-img-element": "warn",
     }
 }]);

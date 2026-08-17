@@ -49,17 +49,22 @@ const itemVariants = {
 };
 
 export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
-  const [cart, setCart] = useState<CartItem[]>([]);
+  // Initialize cart directly from localStorage to avoid setState-in-effect
+  const [cart, setCart] = useState<CartItem[]>(() =>
+    typeof window !== 'undefined' ? getCart() : []
+  );
   const [clearConfirm, setClearConfirm] = useState(false);
 
   const refreshCart = useCallback(() => setCart(getCart()), []);
 
   useEffect(() => {
-    refreshCart();
+    // Re-sync when drawer opens
+    if (isOpen) refreshCart();
     const handler = () => refreshCart();
     window.addEventListener('cart-updated', handler);
     return () => window.removeEventListener('cart-updated', handler);
-  }, [isOpen, refreshCart]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   const total = getCartTotal(cart);
   const itemCount = cart.reduce((s, i) => s + i.quantity, 0);

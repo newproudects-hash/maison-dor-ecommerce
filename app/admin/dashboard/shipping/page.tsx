@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { LogOut, LayoutDashboard, Settings, ShoppingBag, Truck, Save } from 'lucide-react';
 
@@ -22,7 +22,7 @@ export default function ShippingDashboard() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const fetchPrices = async () => {
+  const fetchPrices = useCallback(async () => {
     try {
       const res = await fetch('/api/delivery-prices');
       if (res.ok) {
@@ -34,12 +34,11 @@ export default function ShippingDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchPrices();
-   
-  }, []);
+  }, [fetchPrices]);
 
   const handlePriceChange = (code: number, field: 'home_price' | 'office_price', value: string) => {
     const val = parseInt(value) || 0;
