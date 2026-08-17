@@ -20,7 +20,8 @@ const supabase = supabaseUrl && supabaseServiceKey ? createClient(supabaseUrl, s
 const patchSchema = z.object({
   orderId: z.union([z.string(), z.number()]),
   status: z.enum(['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'], {
-    errorMap: () => ({ message: 'حالة الطلب غير صالحة' })
+    invalid_type_error: 'حالة الطلب غير صالحة',
+    required_error: 'حالة الطلب مطلوبة'
   })
 });
 
