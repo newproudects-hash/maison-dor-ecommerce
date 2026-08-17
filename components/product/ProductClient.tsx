@@ -134,37 +134,43 @@ export default function ProductClient({ product, onVariantSelect }: ProductClien
             {product.colorVariants!.map((variant, i) => {
               const isSelected = selectedVariant?.colorName === variant.colorName;
               return (
-                <button
-                  key={i}
-                  onClick={() => handleVariantClick(variant)}
-                  aria-label={`Couleur ${variant.colorName}`}
-                  aria-pressed={isSelected}
-                  className={`relative w-16 h-16 rounded-xl overflow-hidden border-2 transition-all duration-200 ${
-                    isSelected
-                      ? 'border-neutral-900 scale-105 shadow-lg ring-2 ring-neutral-900 ring-offset-1'
-                      : 'border-neutral-200 hover:border-neutral-500 hover:shadow-md'
-                  }`}
-                >
-                  {variant.imageUrl ? (
-                    <Image
-                      src={variant.imageUrl}
-                      alt={variant.colorName}
-                      fill
-                      className="object-cover"
-                      referrerPolicy="no-referrer"
-                    />
-                  ) : (
-                    <div
-                      className="w-full h-full"
-                      style={{ backgroundColor: variant.colorHex || '#ccc' }}
-                    />
-                  )}
-                  {isSelected && (
-                    <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-                      <Check className="w-5 h-5 text-white drop-shadow" />
-                    </div>
-                  )}
-                </button>
+                <div key={i} className="flex flex-col items-center gap-1.5">
+                  <button
+                    onClick={() => handleVariantClick(variant)}
+                    aria-label={`Couleur ${variant.colorName}`}
+                    aria-pressed={isSelected}
+                    className={`relative w-16 h-16 rounded-xl overflow-hidden border-2 transition-all duration-200 ${
+                      isSelected
+                        ? 'border-neutral-900 scale-105 shadow-lg ring-2 ring-neutral-900 ring-offset-1'
+                        : 'border-neutral-200 hover:border-neutral-500 hover:shadow-md'
+                    }`}
+                  >
+                    {variant.imageUrl ? (
+                      <Image
+                        src={variant.imageUrl}
+                        alt={variant.colorName}
+                        fill
+                        className="object-cover"
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      <div
+                        className="w-full h-full"
+                        style={{ backgroundColor: variant.colorHex || '#ccc' }}
+                      />
+                    )}
+                    {isSelected && (
+                      <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                        <Check className="w-5 h-5 text-white drop-shadow" />
+                      </div>
+                    )}
+                  </button>
+                  <span className={`text-[10px] font-semibold text-center leading-tight max-w-[64px] truncate ${
+                    isSelected ? 'text-neutral-900' : 'text-neutral-500'
+                  }`}>
+                    {variant.colorName}
+                  </span>
+                </div>
               );
             })}
           </div>

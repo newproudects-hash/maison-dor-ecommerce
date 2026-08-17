@@ -5,6 +5,7 @@ import { JWT } from 'google-auth-library';
 import { z } from 'zod';
 import { sendSecurityAlertToTelegram, sendOrderToTelegram } from '@/lib/utils/telegram';
 import { WILAYAS } from '@/lib/data/wilayas';
+import { getFromCache, setCache } from '@/lib/cache/redis';
 
 // Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -16,41 +17,61 @@ const GOOGLE_CLIENT_EMAIL = process.env.GOOGLE_CLIENT_EMAIL;
 const GOOGLE_PRIVATE_KEY = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n');
 const GOOGLE_SHEET_ID = process.env.GOOGLE_SHEET_ID;
 
-// ─── Rate Limiting (in-memory, per IP) ────────────
-const rateLimitMap = new Map<string, { count: number; resetTime: number; blockedUntil?: number }>();
+// ─── Rate Limiting (Redis-backed with in-memory fallback) ──────
+const rateLimitMapFallback = new Map<string, { count: number; resetTime: number; blockedUntil?: number }>();
+
 async function checkRateLimit(ip: string): Promise<boolean> {
   const now = Date.now();
-  const entry = rateLimitMap.get(ip);
-  
-  if (!entry) {
-    rateLimitMap.set(ip, { count: 1, resetTime: now + 60_000 });
-    return true;
-  }
+  const redisKey = `rl:orders:${ip}`;
 
-  // If currently blocked
-  if (entry.blockedUntil && now < entry.blockedUntil) {
-    return false;
-  }
+  try {
+    // Try Redis-based rate limiting first
+    type RlEntry = { count: number; resetTime: number; blockedUntil?: number };
+    const cached = await getFromCache<RlEntry>(redisKey);
 
-  if (now > entry.resetTime) {
-    rateLimitMap.set(ip, { count: 1, resetTime: now + 60_000 });
-    return true;
-  }
-  
-  entry.count++;
-  if (entry.count > 5) {
-    if (!entry.blockedUntil) {
-      // First time blocking: block for 15 minutes
-      entry.blockedUntil = now + (15 * 60 * 1000);
-      await sendSecurityAlertToTelegram(
-        'Rate Limit Exceeded (Orders API)', 
-        `IP ${ip} has exceeded the rate limit (5 req/min) and is blocked for 15 minutes.`, 
-        ip
-      );
+    const entry = cached || { count: 0, resetTime: now + 60_000 };
+
+    if (entry.blockedUntil && now < entry.blockedUntil) return false;
+
+    if (now > entry.resetTime) {
+      await setCache(redisKey, { count: 1, resetTime: now + 60_000 }, 120);
+      return true;
     }
-    return false;
+
+    entry.count++;
+    if (entry.count > 5) {
+      if (!entry.blockedUntil) {
+        entry.blockedUntil = now + (15 * 60 * 1000);
+        await sendSecurityAlertToTelegram(
+          'Rate Limit Exceeded (Orders API)',
+          `IP ${ip} has exceeded the rate limit (5 req/min) and is blocked for 15 minutes.`,
+          ip
+        );
+      }
+      await setCache(redisKey, entry, 15 * 60);
+      return false;
+    }
+    await setCache(redisKey, entry, 120);
+    return true;
+  } catch {
+    // Fallback to in-memory if Redis unavailable
+    const entry = rateLimitMapFallback.get(ip);
+    if (!entry) {
+      rateLimitMapFallback.set(ip, { count: 1, resetTime: now + 60_000 });
+      return true;
+    }
+    if (entry.blockedUntil && now < entry.blockedUntil) return false;
+    if (now > entry.resetTime) {
+      rateLimitMapFallback.set(ip, { count: 1, resetTime: now + 60_000 });
+      return true;
+    }
+    entry.count++;
+    if (entry.count > 5) {
+      if (!entry.blockedUntil) entry.blockedUntil = now + (15 * 60 * 1000);
+      return false;
+    }
+    return true;
   }
-  return true;
 }
 
 // ─── Duplicate Order Protection (in-memory) ───────

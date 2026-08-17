@@ -85,8 +85,22 @@ const nextConfig: NextConfig = {
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'origin-when-cross-origin' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
-          // Note: CSP is basic here to avoid breaking inline scripts from Sanity/Next.js, 
-          // but strict enough to prevent external unauthorized resources.
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://connect.facebook.net https://www.googletagmanager.com https://www.google-analytics.com https://snap.licdn.com https://sc-static.net https://*.tiktok.com https://analytics.tiktok.com",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+              "font-src 'self' https://fonts.gstatic.com",
+              "img-src 'self' data: blob: https://cdn.sanity.io https://res.cloudinary.com https://images.unsplash.com https://upload.wikimedia.org https://img.icons8.com https://*.fbcdn.net https://*.facebook.com",
+              "connect-src 'self' https://*.sanity.io https://*.upstash.io https://*.supabase.co https://api.telegram.org https://www.google-analytics.com https://analytics.google.com https://*.facebook.com",
+              "frame-src 'self'",
+              "media-src 'self'",
+              "object-src 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+            ].join('; '),
+          },
         ],
       },
       // ─── صفحات المنتجات: كاش 4 ساعات في Cloudflare ─────────────────────

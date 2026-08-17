@@ -223,25 +223,41 @@ export default function ProductDetailClient({ product, related }: Props) {
                   <span className="text-sm font-bold text-neutral-700">اللون</span>
                   <span className="text-xs text-neutral-500 font-medium">{selectedColor}</span>
                 </div>
-                <div className="flex gap-2 flex-wrap">
+                <div className="flex gap-3 flex-wrap">
                   {product.colorVariants.map((v) => (
-                    <button
-                      key={v.colorName}
-                      onClick={() => { setSelectedColor(v.colorName); setSelectedImageIdx(0); }}
-                      title={v.colorName}
-                      className={`relative w-9 h-9 rounded-full border-2 transition-all hover:scale-110 shadow-sm ${
-                        selectedColor === v.colorName
-                          ? 'border-neutral-900 scale-110 shadow-md ring-2 ring-neutral-900 ring-offset-2'
-                          : 'border-neutral-200'
-                      }`}
-                      style={{ backgroundColor: v.colorHex || '#999' }}
-                    >
-                      {selectedColor === v.colorName && (
-                        <span className="absolute inset-0 flex items-center justify-center">
-                          <Check className="w-4 h-4 text-white drop-shadow-md" />
-                        </span>
-                      )}
-                    </button>
+                    <div key={v.colorName} className="flex flex-col items-center gap-1.5">
+                      <button
+                        onClick={() => { setSelectedColor(v.colorName); setSelectedImageIdx(0); }}
+                        title={v.colorName}
+                        className={`relative overflow-hidden border-2 transition-all hover:scale-110 shadow-sm ${
+                          v.imageUrl ? 'w-14 h-14 rounded-xl' : 'w-9 h-9 rounded-full'
+                        } ${
+                          selectedColor === v.colorName
+                            ? 'border-neutral-900 scale-110 shadow-md ring-2 ring-neutral-900 ring-offset-2'
+                            : 'border-neutral-200'
+                        }`}
+                        style={!v.imageUrl ? { backgroundColor: v.colorHex || '#999' } : undefined}
+                      >
+                        {v.imageUrl && (
+                          <img
+                            src={v.imageUrl}
+                            alt={v.colorName}
+                            className="w-full h-full object-cover"
+                            referrerPolicy="no-referrer"
+                          />
+                        )}
+                        {selectedColor === v.colorName && (
+                          <span className="absolute inset-0 flex items-center justify-center bg-black/20">
+                            <Check className="w-4 h-4 text-white drop-shadow-md" />
+                          </span>
+                        )}
+                      </button>
+                      <span className={`text-[10px] font-semibold text-center leading-tight max-w-[56px] truncate ${
+                        selectedColor === v.colorName ? 'text-neutral-900' : 'text-neutral-500'
+                      }`}>
+                        {v.colorName}
+                      </span>
+                    </div>
                   ))}
                 </div>
               </div>
