@@ -39,8 +39,16 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }
 };
 
 export default function AdminDashboard() {
-  const adminPath = process.env.NEXT_PUBLIC_ADMIN_PATH || 'admin';
-  const studioPath = process.env.NEXT_PUBLIC_STUDIO_PATH || 'studio';
+  const [adminPath, setAdminPath] = useState('admin');
+  const [studioPath, setStudioPath] = useState('studio');
+  
+  useEffect(() => {
+    // ✅ SECURITY FIX (VULN-015): Extract admin path from URL to avoid leaking it in the JS bundle
+    const pathSegments = window.location.pathname.split('/');
+    if (pathSegments[1]) {
+      setAdminPath(pathSegments[1]);
+    }
+  }, []);
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);

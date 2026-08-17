@@ -2,16 +2,20 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // ✅ SECURITY FIX (VULN-009): DevSecOps Security Scanning
+  // Skill: implementing-devsecops-security-scanning
+  // MITRE ATT&CK: T1027 Obfuscated Files
+  // Builds will now correctly fail on ESLint/TypeScript errors to ensure code quality and security.
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false,
   },
   typescript: {
     ignoreBuildErrors: false,
   },
 
   async redirects() {
-    const adminPath = process.env.NEXT_PUBLIC_ADMIN_PATH || 'admin';
-    const studioPath = process.env.NEXT_PUBLIC_STUDIO_PATH || 'studio';
+    const adminPath = process.env.ADMIN_PATH || 'admin';
+    const studioPath = process.env.STUDIO_PATH || 'studio';
     
     const rules = [];
     

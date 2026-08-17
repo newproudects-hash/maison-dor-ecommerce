@@ -25,7 +25,9 @@ export default function AdminLoginPage() {
       });
       
       if (res.ok) {
-        const adminPath = process.env.NEXT_PUBLIC_ADMIN_PATH || 'admin';
+        // ✅ SECURITY FIX (VULN-015): Extract admin path dynamically instead of leaking via NEXT_PUBLIC_
+        const pathSegments = window.location.pathname.split('/');
+        const adminPath = pathSegments[1] || 'admin';
         router.push(`/${adminPath}/dashboard`);
       } else {
         const data = await res.json();

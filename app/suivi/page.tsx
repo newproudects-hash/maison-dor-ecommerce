@@ -1,26 +1,30 @@
-﻿'use client';
+'use client';
 
 import { useState } from 'react';
-import { Search, Package, Clock, CheckCircle, Truck, XCircle } from 'lucide-react';
+import { Search, Package, Clock, CheckCircle, Truck, XCircle, Phone } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 export default function SuiviPage() {
   const [orderId, setOrderId] = useState('');
+  const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<{ status: string; created_at: string; total: number } | null>(null);
 
   const handleTrack = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!orderId.trim()) return;
+    if (!orderId.trim() || !phone.trim()) return;
     
     setLoading(true);
     setError('');
     setResult(null);
 
     try {
-      const res = await fetch(`/api/orders/track?orderId=${encodeURIComponent(orderId)}`);
+      // ✅ SECURITY: Send both orderId + phone — server requires both (Anti-IDOR)
+      const res = await fetch(
+        `/api/orders/track?orderId=${encodeURIComponent(orderId)}&phone=${encodeURIComponent(phone)}`
+      );
       const data = await res.json();
       
       if (!res.ok || !data.success) {
@@ -51,25 +55,40 @@ export default function SuiviPage() {
       
       <div className="max-w-2xl mx-auto px-4 pt-32 pb-20">
         <div className="text-center mb-10">
-          <h1 className="text-3xl font-serif font-black uppercase tracking-wide mb-3">Suivre ma commande</h1>
-          <p className="text-neutral-500 text-sm">Entrez votre numéro de commande (ex: MDO-12345-678)</p>
+          <h1 className="text-3xl font-serif font-black uppercase tracking-wide mb-3">تتبع طلبي</h1>
+          <p className="text-neutral-500 text-sm">أدخل رقم الطلب ورقم هاتفك للتحقق من حالة طلبك</p>
         </div>
 
         <div className="bg-white p-6 md:p-10 rounded-3xl shadow-sm border border-neutral-100">
-          <form onSubmit={handleTrack} className="flex flex-col sm:flex-row gap-3">
+          <form onSubmit={handleTrack} className="flex flex-col gap-3">
             <input
               type="text"
               value={orderId}
               onChange={(e) => setOrderId(e.target.value)}
-              placeholder="Numéro de commande"
-              className="flex-1 px-5 py-4 bg-neutral-50 border border-neutral-200 rounded-2xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-all font-medium text-center sm:text-left"
+              placeholder="رقم الطلب (مثال: MDO-AB12CD)"
+              required
+              className="w-full px-5 py-4 bg-neutral-50 border border-neutral-200 rounded-2xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-all font-medium text-center"
             />
+            {/* ✅ SECURITY: Phone required for Anti-IDOR protection */}
+            <div className="relative">
+              <Phone className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="رقم الهاتف المستخدم في الطلب"
+                required
+                pattern="^0[567]\d{8}$"
+                autoComplete="tel"
+                className="w-full pl-5 pr-12 py-4 bg-neutral-50 border border-neutral-200 rounded-2xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-all font-medium text-center"
+              />
+            </div>
             <button
               type="submit"
-              disabled={loading}
-              className="bg-neutral-900 text-white px-8 py-4 rounded-2xl font-bold hover:bg-black transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
+              disabled={loading || !orderId.trim() || !phone.trim()}
+              className="w-full bg-neutral-900 text-white px-8 py-4 rounded-2xl font-bold hover:bg-black transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
             >
-              {loading ? 'Recherche...' : <><Search className="w-4 h-4" /> Suivre</>}
+              {loading ? 'جاري البحث...' : <><Search className="w-4 h-4" /> تتبع الطلب</>}
             </button>
           </form>
 

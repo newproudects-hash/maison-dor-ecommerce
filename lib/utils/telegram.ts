@@ -22,6 +22,12 @@ export interface OrderData {
   total: number;
 }
 
+// ✅ SECURITY FIX (VULN-011): Escape Markdown to prevent injection and Telegram API crashes (400 Bad Request)
+export function escapeMarkdown(text: string): string {
+  if (!text) return '';
+  return text.replace(/([_*\[\]()~`>#+\-=|{}.!])/g, '\\$1');
+}
+
 export async function sendOrderToTelegram(order: OrderData): Promise<boolean> {
   const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
   const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
@@ -38,17 +44,25 @@ export async function sendOrderToTelegram(order: OrderData): Promise<boolean> {
   const itemsList = order.items
     .map(item => {
       const details = [item.color, item.size].filter(Boolean).join(' | ');
-      return `• ${item.title}${details ? ` (${details})` : ''} ×${item.quantity} — ${item.price.toLocaleString('fr-DZ')} DA`;
+      // ✅ Sanitize product title and details
+      const safeTitle = escapeMarkdown(item.title);
+      const safeDetails = escapeMarkdown(details);
+      return `• ${safeTitle}${safeDetails ? ` (${safeDetails})` : ''} ×${item.quantity} — ${item.price.toLocaleString('fr-DZ')} DA`;
     })
     .join('\n');
+
+  // ✅ Sanitize all user-controlled inputs
+  const safeFirstName = escapeMarkdown(order.firstName);
+  const safeLastName = escapeMarkdown(order.lastName);
+  const safeWilaya = escapeMarkdown(order.wilayaName);
 
   const message = `
 🛍️ *طلب جديد — MAISON D'OR*
 ━━━━━━━━━━━━━━━━━━━━
 📋 *رقم الطلب:* \`${order.orderNumber}\`
-👤 *الاسم:* ${order.firstName} ${order.lastName}
+👤 *الاسم:* ${safeFirstName} ${safeLastName}
 📞 *الهاتف:* \`${order.phone}\`
-📍 *الولاية:* ${order.wilayaName} (${order.wilayaCode})
+📍 *الولاية:* ${safeWilaya} (${order.wilayaCode})
 ${deliveryLabel}
 
 📦 *المنتجات:*
@@ -96,15 +110,20 @@ export async function sendSecurityAlertToTelegram(title: string, details: string
     return false;
   }
 
+  // ✅ Sanitize inputs
+  const safeTitle = escapeMarkdown(title);
+  const safeDetails = escapeMarkdown(details);
+  const safeIp = escapeMarkdown(ip);
+
   const message = `
 🚨 *إنذار أمني — MAISON D'OR*
 ━━━━━━━━━━━━━━━━━━━━
-⚠️ *الحدث:* ${title}
-🌐 *IP:* \`${ip}\`
+⚠️ *الحدث:* ${safeTitle}
+🌐 *IP:* \`${safeIp}\`
 ⏰ *الوقت:* ${new Date().toLocaleString('fr-DZ')}
 
 📄 *التفاصيل:*
-${details}
+${safeDetails}
 ━━━━━━━━━━━━━━━━━━━━
   `.trim();
 

@@ -66,10 +66,15 @@ export async function getProducts({
 
 // ── Placement Based Queries ──
 export async function getProductsByPlacement(placementVal: string, limit = 6) {
-  return sanityClient.fetch(
-    `*[_type == "product" && $placementVal in placement && inStock != false]
-     | order(_createdAt desc) [0...$limit] { ${PRODUCT_FIELDS} }`,
-    { placementVal, limit }
+  const cacheKey = `v3:placement:${placementVal}:${limit}`;
+  return getOrFetch(
+    cacheKey,
+    async () => sanityClient.fetch(
+      `*[_type == "product" && $placementVal in placement && inStock != false]
+       | order(_createdAt desc) [0...$limit] { ${PRODUCT_FIELDS} }`,
+      { placementVal, limit }
+    ),
+    60 // Cache for 60 seconds
   );
 }
 
@@ -113,10 +118,15 @@ export async function getProduct(slug: string) {
 
 // ── Related Products ──
 export async function getRelatedProducts(categoryId: string, currentId: string) {
-  return sanityClient.fetch(
-    `*[_type == "product" && category._ref == $categoryId && _id != $currentId && inStock != false]
-     | order(_createdAt desc) [0...4] { ${PRODUCT_FIELDS} }`,
-    { categoryId, currentId }
+  const cacheKey = `v3:related:${categoryId}:${currentId}`;
+  return getOrFetch(
+    cacheKey,
+    async () => sanityClient.fetch(
+      `*[_type == "product" && category._ref == $categoryId && _id != $currentId && inStock != false]
+       | order(_createdAt desc) [0...4] { ${PRODUCT_FIELDS} }`,
+      { categoryId, currentId }
+    ),
+    60 // Cache for 60 seconds
   );
 }
 
@@ -135,10 +145,14 @@ export async function getCategories() {
 
 // ── Site Settings ──
 export async function getSiteSettings() {
-  return sanityClient.fetch(
-    `*[_type == "settings"][0] {
-      heroImage, boutiqueHeroImage, marqueeText, socialLinks
-    }`
+  return getOrFetch(
+    'v3:settings:site',
+    async () => sanityClient.fetch(
+      `*[_type == "settings"][0] {
+        heroImage, boutiqueHeroImage, marqueeText, socialLinks
+      }`
+    ),
+    120 // Site settings rarely change, cache for 120s
   );
 }
 

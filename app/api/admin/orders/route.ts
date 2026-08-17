@@ -1,10 +1,30 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
+import { z } from 'zod';
 
+// ✅ SECURITY FIX (VULN-005): Remove Anon Key Fallback (Fail Hard)
+// Skill: securing-serverless-functions (Anthropic Cybersecurity Skills)
+// MITRE ATT&CK: T1078.004 Valid Cloud Accounts | OWASP: A01:2021 Broken Access Control
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !supabaseServiceKey) {
+  console.error('[CRITICAL] SUPABASE_SERVICE_ROLE_KEY is not configured! Failing hard.');
+}
+
+const supabase = supabaseUrl && supabaseServiceKey ? createClient(supabaseUrl, supabaseServiceKey) : null;
+
+// ✅ SECURITY FIX (VULN-006): Strict validation for status updates
+// Skill: testing-api-authentication-weaknesses
+const patchSchema = z.object({
+  orderId: z.union([z.string(), z.number()], {
+    errorMap: () => ({ message: 'معرف الطلب غير صالح' })
+  }),
+  status: z.enum(['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'], {
+    errorMap: () => ({ message: 'حالة الطلب غير صالحة' })
+  })
+});
 
 export async function GET(req: Request) {
   try {
@@ -47,7 +67,18 @@ export async function PATCH(req: Request) {
     }
 
     const body = await req.json();
-    const { orderId, status } = body;
+    
+    // ✅ SECURITY FIX (VULN-006): Validate payload with Zod
+    const result = patchSchema.safeParse(body);
+    
+    if (!result.success) {
+      return NextResponse.json(
+        { error: 'بيانات غير صالحة: ' + result.error.issues[0].message },
+        { status: 400 }
+      );
+    }
+    
+    const { orderId, status } = result.data; // ✅ Validated and safe
 
     const { data, error } = await supabase
       .from('orders')

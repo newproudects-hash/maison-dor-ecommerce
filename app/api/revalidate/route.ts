@@ -18,12 +18,31 @@ import { purgeCloudflareByTags, purgeCloudflareByUrls } from '@/lib/cache/cloudf
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://www.maisondor.dz';
 
-// التحقق من هوية الطلب (أنه قادم من Sanity وليس من هاكر)
+import * as crypto from 'crypto';
+
+// ✅ SECURITY FIX (VULN-014): Timing Attack & Fail-Open Prevention
+// Skill: testing-api-authentication-weaknesses (Anthropic Cybersecurity Skills)
 function isValidRequest(req: Request): boolean {
-  const secret = req.headers.get('x-webhook-secret');
+  const secret = req.headers.get('x-webhook-secret') || '';
   const expectedSecret = process.env.SANITY_WEBHOOK_SECRET;
-  if (!expectedSecret) return true; // إذا لم يُضبط السر، نقبل الطلب (بيئة تطوير)
-  return secret === expectedSecret;
+  
+  // 1. Fail-Closed: If expectedSecret is not configured, deny all requests.
+  if (!expectedSecret) {
+    console.error('[Revalidate API] SANITY_WEBHOOK_SECRET is not configured. Denying all requests.');
+    return false;
+  }
+
+  // 2. Timing-Attack Safe Comparison
+  if (secret.length !== expectedSecret.length) return false;
+  
+  try {
+    return crypto.timingSafeEqual(
+      Buffer.from(secret),
+      Buffer.from(expectedSecret)
+    );
+  } catch (e) {
+    return false;
+  }
 }
 
 export async function POST(req: Request) {
