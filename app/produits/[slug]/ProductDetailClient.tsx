@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -25,6 +25,19 @@ export default function ProductDetailClient({ product, related }: Props) {
   const [selectedSize, setSelectedSize] = useState<string | undefined>(
     product.sizes?.[0]
   );
+
+  useEffect(() => {
+    // Facebook Pixel tracking for ViewContent
+    if (typeof window !== 'undefined' && (window as any).fbq) {
+      (window as any).fbq('track', 'ViewContent', {
+        content_ids: [product.id],
+        content_name: product.name,
+        content_type: 'product',
+        value: product.price,
+        currency: 'DZD'
+      });
+    }
+  }, [product]);
   const [added, setAdded] = useState(false);
   const [wishlisted, setWishlisted] = useState(false);
   const [zoomOpen, setZoomOpen] = useState(false);

@@ -1,6 +1,6 @@
-﻿'use client';
+'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -16,6 +16,26 @@ export default function CommanderPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [cart] = useState<CartItem[]>(getCart);
+
+  useEffect(() => {
+    // Redirect if empty
+    if (cart.length === 0) {
+      router.push('/boutique');
+      return;
+    }
+    
+    // Facebook Pixel tracking for InitiateCheckout
+    if (typeof window !== 'undefined' && (window as any).fbq) {
+      (window as any).fbq('track', 'InitiateCheckout', {
+        content_ids: cart.map(item => item.productId),
+        content_type: 'product',
+        value: getCartTotal(cart),
+        currency: 'DZD',
+        num_items: cart.length
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [form, setForm] = useState({
     prenom: '', nom: '', phone: '', wilaya: '', adresse: '',
@@ -78,6 +98,17 @@ export default function CommanderPage() {
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Erreur réseau');
+      
+      // Facebook Pixel tracking for Purchase
+      if (typeof window !== 'undefined' && (window as any).fbq) {
+        (window as any).fbq('track', 'Purchase', {
+          content_ids: cart.map(item => item.productId),
+          content_type: 'product',
+          value: total,
+          currency: 'DZD',
+          num_items: cart.length
+        });
+      }
       
       clearCart();
       router.push(`/merci?orderId=${orderNumber}`);
