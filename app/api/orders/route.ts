@@ -46,10 +46,9 @@ async function checkRateLimit(ip: string): Promise<boolean> {
     if (entry.count > 5) {
       if (!entry.blockedUntil) {
         entry.blockedUntil = now + (15 * 60 * 1000);
-        await sendSecurityAlertToTelegram(
-          'Rate Limit Exceeded (Orders API)',
-          `IP ${ip} has exceeded the rate limit (5 req/min) and is blocked for 15 minutes.`,
-          ip
+        console.error(
+          '[SECURITY ALERT] Rate Limit Exceeded (Orders API) - ' +
+          `IP ${ip} has exceeded the rate limit (5 req/min) and is blocked for 15 minutes.`
         );
       }
       await setCache(redisKey, entry, 15 * 60);
