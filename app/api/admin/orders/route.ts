@@ -18,9 +18,7 @@ const supabase = supabaseUrl && supabaseServiceKey ? createClient(supabaseUrl, s
 // ✅ SECURITY FIX (VULN-006): Strict validation for status updates
 // Skill: testing-api-authentication-weaknesses
 const patchSchema = z.object({
-  orderId: z.union([z.string(), z.number()], {
-    errorMap: () => ({ message: 'معرف الطلب غير صالح' })
-  }),
+  orderId: z.union([z.string(), z.number()]),
   status: z.enum(['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'], {
     errorMap: () => ({ message: 'حالة الطلب غير صالحة' })
   })
