@@ -45,11 +45,12 @@ export default function ShippingDashboard() {
     setPrices(prev => prev.map(p => p.wilaya_code === code ? { ...p, [field]: val } : p));
   };
 
+  const [saveStatus, setSaveStatus] = useState<Record<number, 'saved' | 'error' | null>>({});
+
   const handleSave = async (price: DeliveryPrice) => {
     setSaving(true);
     try {
-      // Create a new API route for updating prices
-      const res = await fetch(`/api/${adminPath}/delivery-prices`, {
+      const res = await fetch(`/api/admin/delivery-prices`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -59,12 +60,17 @@ export default function ShippingDashboard() {
         }),
       });
       if (res.ok) {
-        alert('تم حفظ السعر بنجاح');
+        setSaveStatus(prev => ({ ...prev, [price.wilaya_code]: 'saved' }));
+        setTimeout(() => setSaveStatus(prev => ({ ...prev, [price.wilaya_code]: null })), 2000);
       } else {
-        alert('حدث خطأ أثناء الحفظ');
+        const err = await res.json().catch(() => ({}));
+        console.error('Save error:', err);
+        setSaveStatus(prev => ({ ...prev, [price.wilaya_code]: 'error' }));
+        setTimeout(() => setSaveStatus(prev => ({ ...prev, [price.wilaya_code]: null })), 2500);
       }
     } catch (e) {
       console.error(e);
+      setSaveStatus(prev => ({ ...prev, [price.wilaya_code]: 'error' }));
     } finally {
       setSaving(false);
     }
@@ -169,9 +175,18 @@ export default function ShippingDashboard() {
                         <button 
                           onClick={() => handleSave(price)}
                           disabled={saving}
-                          className="p-2 bg-amber-500/20 text-amber-500 rounded-lg hover:bg-amber-500/30 transition-colors"
+                          className={`px-3 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                            saveStatus[price.wilaya_code] === 'saved'
+                              ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                              : saveStatus[price.wilaya_code] === 'error'
+                              ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                              : 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 border border-amber-500/20'
+                          }`}
                         >
                           <Save className="w-4 h-4" />
+                          <span>
+                            {saveStatus[price.wilaya_code] === 'saved' ? '✓ تم' : saveStatus[price.wilaya_code] === 'error' ? '✗ خطأ' : 'حفظ'}
+                          </span>
                         </button>
                       </td>
                     </tr>

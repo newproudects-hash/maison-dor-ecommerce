@@ -110,7 +110,14 @@ export async function getProduct(slug: string) {
         `*[_type == "product" && _id == $slug][0] { ${PRODUCT_FIELDS} }`,
         { slug: rawSlug }
       );
-      return byId || null;
+      if (byId) return byId;
+
+      // 4. Last resort: search by title (handles slugs with Arabic or special chars)
+      const byTitle = await sanityClient.fetch(
+        `*[_type == "product" && (title.ar match $q || title.fr match $q || title.en match $q)][0] { ${PRODUCT_FIELDS} }`,
+        { q: decodedSlug }
+      );
+      return byTitle || null;
     },
     60 // Cache for 60 seconds
   );

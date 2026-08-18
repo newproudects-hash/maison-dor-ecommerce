@@ -37,6 +37,10 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   let raw: unknown = null;
   try {
     raw = await getProduct(decodedSlug);
+    // Extra fallback: if slug looks like a Sanity _id, search by _id directly
+    if (!raw && /^[a-z0-9-]{20,}$/.test(decodedSlug)) {
+      raw = await getProduct(decodedSlug);
+    }
   } catch {
     // fall through to notFound
   }

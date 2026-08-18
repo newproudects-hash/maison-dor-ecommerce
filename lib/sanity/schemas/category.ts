@@ -21,7 +21,20 @@ export const category = defineType({
       title: 'الرابط (Slug)',
       description: 'الرابط الذي سيظهر في المتصفح (يفضل أن يكون بالإنجليزية أو الفرنسية)',
       type: 'slug',
-      options: { source: 'title.en', maxLength: 96 },
+      options: {
+        source: (doc: any) => {
+          const t = doc.title;
+          const base = (typeof t === 'object' ? (t?.en || t?.fr || t?.ar) : t) || '';
+          return base
+            .toLowerCase()
+            .trim()
+            .replace(/[\s\u0600-\u06FF]+/g, '-')
+            .replace(/[^a-z0-9-]/g, '')
+            .replace(/-+/g, '-')
+            .replace(/^-|-$/g, '');
+        },
+        maxLength: 96,
+      },
       validation: r => r.required(),
     }),
     

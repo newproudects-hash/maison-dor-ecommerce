@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getServerSupabase } from '@/lib/supabase/server';
 
-export const revalidate = 86400; // 24 hours (Prices don't change frequently)
+export const dynamic = 'force-dynamic'; // Always fetch fresh prices from Supabase
+export const revalidate = 0;
 
 export async function GET() {
   try {

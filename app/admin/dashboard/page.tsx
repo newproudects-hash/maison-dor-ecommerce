@@ -152,7 +152,7 @@ export default function AdminDashboard() {
           {[
             { icon: LayoutDashboard, label: 'الطلبات', href: `/${adminPath}/dashboard`, active: true },
             { icon: ShoppingBag,     label: 'أسعار التوصيل', href: `/${adminPath}/dashboard/shipping`, active: false },
-            { icon: Settings,        label: 'إدارة المحتوى (Sanity)', href: `/${studioPath}`, active: false },
+            { icon: Settings,        label: 'إدارة المحتوى (Sanity)', href: typeof window !== 'undefined' ? `${window.location.origin}/${studioPath}` : `/${studioPath}`, active: false },
           ].map(({ icon: Icon, label, href, active }) => (
             <button
               key={label}

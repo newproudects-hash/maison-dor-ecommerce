@@ -36,10 +36,18 @@ export default async function Home() {
     // Sanity fetch failed entirely, sections will be empty
   }
 
-  const homeProducts = (rawHome || []).map(mapSanityProduct);
-  const newArrivals = (rawNewArrivals || []).map(mapSanityProduct);
-  const bestSellers = (rawBestSellers || []).map(mapSanityProduct);
-  const featuredProducts = (rawFeatured || []).map(mapSanityProduct);
+  // Deduplicate products across sections — a product shouldn't appear twice on the same page
+  const seenIds = new Set<string>();
+  const dedup = (items: SanityProductRaw[]) => (items || []).map(mapSanityProduct).filter(p => {
+    if (seenIds.has(p.id)) return false;
+    seenIds.add(p.id);
+    return true;
+  });
+
+  const homeProducts    = dedup(rawHome);
+  const newArrivals     = dedup(rawNewArrivals);
+  const bestSellers     = dedup(rawBestSellers);
+  const featuredProducts = dedup(rawFeatured);
 
   // Hero image: prefer Sanity, fallback to local /hero.jpg
   const heroSrc = homeSettings?.heroImage ? (getImageUrl(homeSettings.heroImage) || '/hero.jpg') : '/hero.jpg';

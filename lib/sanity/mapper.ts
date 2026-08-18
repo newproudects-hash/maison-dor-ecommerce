@@ -26,7 +26,16 @@ export function mapSanityProduct(input: unknown): Product {
     return '';
   };
 
+  const rawSlug = String(p.slug || '');
   const images: AnyObj[] = Array.isArray(p.images) ? p.images : [];
+  // If slug is empty, create one from the title as fallback to prevent 404
+  const fallbackSlug = rawSlug || getName(p.title)
+    .toLowerCase()
+    .replace(/[\s\u0600-\u06FF]+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    || String(p._id || '');
 
   return {
     id: String(p._id || ''),
@@ -36,7 +45,7 @@ export function mapSanityProduct(input: unknown): Product {
     image: images.length > 0 ? (getImageUrl(images[0]) || '/hero.jpg') : '/hero.jpg',
     images: images.length > 0 ? images.map((img) => getImageUrl(img) || '/hero.jpg') : ['/hero.jpg'],
     category: String((p.category as AnyObj)?.slug || 'sacs'),
-    slug: String(p.slug || ''),
+    slug: fallbackSlug,
     description: getDesc(p.description),
     colors: Array.isArray(p.colors) ? (p.colors as string[]) : [],
     colorVariants: Array.isArray(p.colorVariants) ? p.colorVariants.map((v: unknown) => {
