@@ -153,8 +153,17 @@ export async function POST(req: Request) {
 
     // ✅ SECURITY FIX (VULN-001): Server calculates delivery price — client value IGNORED
     // Skill: testing-for-business-logic-vulnerabilities
-    const serverDeliveryPrice = deliveryType === 'domicile' ? LIVRAISON_DOMICILE : LIVRAISON_BUREAU;
-
+    let serverDeliveryPrice = deliveryType === 'domicile' ? LIVRAISON_DOMICILE : LIVRAISON_BUREAU;
+    if (supabase) {
+      const { data: priceData } = await supabase
+        .from('delivery_prices')
+        .select('home_price, office_price')
+        .eq('wilaya_code', parseInt(wilayaCode.toString()))
+        .single();
+      if (priceData) {
+        serverDeliveryPrice = deliveryType === 'domicile' ? priceData.home_price : priceData.office_price;
+      }
+    }
     // ✅ SECURITY FIX (VULN-002): Verify stock + fetch real prices from Sanity
     // Client-submitted prices are completely ignored. Server fetches the real ones.
     const productIds = items.map(i => i.productId);

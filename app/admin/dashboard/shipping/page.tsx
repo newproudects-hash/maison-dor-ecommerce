@@ -16,7 +16,7 @@ interface DeliveryPrice {
 
 export default function ShippingDashboard() {
   const adminPath = typeof window !== 'undefined' ? (window.location.pathname.split('/')[1] || 'admin') : 'admin';
-  const studioPath = typeof window !== 'undefined' ? (window.location.pathname.split('/')[2] || 'studio') : 'studio';
+  const studioPath = process.env.NEXT_PUBLIC_STUDIO_PATH || 'studio';
   const router = useRouter();
   const [prices, setPrices] = useState<DeliveryPrice[]>([]);
   const [loading, setLoading] = useState(true);

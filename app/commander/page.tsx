@@ -45,10 +45,24 @@ export default function CommanderPage() {
   const [phoneError, setPhoneError] = useState<string | null>(null);
   // FIX #64: Replace alert() with inline error
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [deliveryPrices, setDeliveryPrices] = useState<any[]>([]);
 
+  useEffect(() => {
+    fetch('/api/delivery-prices')
+      .then(res => res.json())
+      .then(data => setDeliveryPrices(data))
+      .catch(console.error);
+  }, []);
 
   const subtotal = getCartTotal(cart);
-  const shipping = delivery === 'domicile' ? LIVRAISON_DOMICILE : LIVRAISON_BUREAU;
+  
+  // Calculate dynamic shipping
+  const selectedWilayaCode = form.wilaya ? parseInt(form.wilaya.split(' - ')[0]) : null;
+  const currentPriceInfo = deliveryPrices.find(p => p.wilaya_code === selectedWilayaCode);
+  const dynamicHome = currentPriceInfo?.home_price ?? LIVRAISON_DOMICILE;
+  const dynamicOffice = currentPriceInfo?.office_price ?? LIVRAISON_BUREAU;
+  
+  const shipping = delivery === 'domicile' ? dynamicHome : dynamicOffice;
   const total = subtotal + shipping;
 
   const validatePhone = (phone: string) => {

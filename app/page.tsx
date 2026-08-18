@@ -10,28 +10,36 @@ import type { SanityProductRaw, Category } from '@/types';
 export const revalidate = 60;
 
 export default async function Home() {
+  let rawHome: SanityProductRaw[] = [];
   let rawNewArrivals: SanityProductRaw[] = [];
   let rawBestSellers: SanityProductRaw[] = [];
+  let rawFeatured: SanityProductRaw[] = [];
   let rawCategories: Category[] = [];
   let homeSettings: Record<string, unknown> | null = null;
 
   try {
     const settled = await Promise.allSettled([
+      getProductsByPlacement('home', 8),
       getProductsByPlacement('new_arrivals', 6),
       getProductsByPlacement('best_sellers', 6),
+      getProductsByPlacement('featured', 6),
       getCategories(),
       getHomePageSettings(),
     ]);
-    rawNewArrivals  = settled[0].status === 'fulfilled' ? settled[0].value as SanityProductRaw[] : [];
-    rawBestSellers  = settled[1].status === 'fulfilled' ? settled[1].value as SanityProductRaw[] : [];
-    rawCategories   = settled[2].status === 'fulfilled' ? settled[2].value as Category[] : [];
-    homeSettings    = settled[3].status === 'fulfilled' ? settled[3].value as Record<string, unknown> : null;
+    rawHome         = settled[0].status === 'fulfilled' ? settled[0].value as SanityProductRaw[] : [];
+    rawNewArrivals  = settled[1].status === 'fulfilled' ? settled[1].value as SanityProductRaw[] : [];
+    rawBestSellers  = settled[2].status === 'fulfilled' ? settled[2].value as SanityProductRaw[] : [];
+    rawFeatured     = settled[3].status === 'fulfilled' ? settled[3].value as SanityProductRaw[] : [];
+    rawCategories   = settled[4].status === 'fulfilled' ? settled[4].value as Category[] : [];
+    homeSettings    = settled[5].status === 'fulfilled' ? settled[5].value as Record<string, unknown> : null;
   } catch {
     // Sanity fetch failed entirely, sections will be empty
   }
 
+  const homeProducts = (rawHome || []).map(mapSanityProduct);
   const newArrivals = (rawNewArrivals || []).map(mapSanityProduct);
   const bestSellers = (rawBestSellers || []).map(mapSanityProduct);
+  const featuredProducts = (rawFeatured || []).map(mapSanityProduct);
 
   // Hero image: prefer Sanity, fallback to local /hero.jpg
   const heroSrc = homeSettings?.heroImage ? (getImageUrl(homeSettings.heroImage) || '/hero.jpg') : '/hero.jpg';
@@ -74,6 +82,20 @@ export default async function Home() {
 
       {/* 2. Thin Marquee */}
       <Marquee text={homeSettings?.marqueeText as string | undefined} />
+
+      {/* 2.5 Home (الرئيسية) */}
+      {homeProducts.length > 0 && (
+        <section className="pt-12 pb-4 md:pt-16 md:pb-8 px-4 md:px-8 bg-white">
+          <div className="text-center mb-8 md:mb-10">
+            <h2 className="text-xl md:text-3xl font-serif font-black text-neutral-900 tracking-wide uppercase">تشكيلة الرئيسية</h2>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-6 max-w-7xl mx-auto">
+            {homeProducts.map((product) => (
+              <ProductCard key={product.id + 'home'} product={product} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* 3. New Arrivals */}
       {newArrivals.length > 0 && (
