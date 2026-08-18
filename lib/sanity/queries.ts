@@ -26,18 +26,24 @@ export async function getProducts({
   page = 1,
   perPage = 24,
   categorySlug,
+  categoryId,
 }: {
   page?: number;
   perPage?: number;
   categorySlug?: string;
+  categoryId?: string;
 }) {
   const offset = (page - 1) * perPage;
-  const filter = categorySlug
-    ? `*[_type == "product" && category->slug.current == $categorySlug && inStock != false]`
-    : `*[_type == "product" && inStock != false]`;
+  
+  let filter = `*[_type == "product" && inStock != false]`;
+  if (categoryId) {
+    filter = `*[_type == "product" && category._ref == $categoryId && inStock != false]`;
+  } else if (categorySlug) {
+    filter = `*[_type == "product" && category->slug.current == $categorySlug && inStock != false]`;
+  }
 
   // Use getOrFetch for caching the products list
-  const cacheKey = `v3:products:${categorySlug || 'all'}:p${page}:s${perPage}`;
+  const cacheKey = `v3:products:${categoryId || categorySlug || 'all'}:p${page}:s${perPage}`;
   
   const result = await getOrFetch(
     cacheKey,
@@ -45,11 +51,11 @@ export async function getProducts({
       const [products, total] = await Promise.all([
         sanityClient.fetch(
           `${filter} | order(_createdAt desc) [${offset}...${offset + perPage}] { ${PRODUCT_FIELDS} }`,
-          { categorySlug }
+          { categorySlug, categoryId }
         ),
         sanityClient.fetch(
           `count(${filter})`,
-          { categorySlug }
+          { categorySlug, categoryId }
         ),
       ]);
       // Don't cache empty results - might be a query bug or slug mismatch

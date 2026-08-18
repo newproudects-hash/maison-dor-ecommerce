@@ -48,11 +48,19 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
 
   try {
     rawCategories = await getCategories();
-    // Find exact category slug to avoid case-sensitivity bugs in Sanity queries
+    // Find exact category by slug (case-insensitive)
     const exactCategory = rawCategories.find((c) => c.slug.toLowerCase() === urlCategory);
+    
+    // Pass both the sanitySlug and the categoryId to be safe
     const sanitySlug = exactCategory ? exactCategory.slug : rawCategory;
+    const categoryId = exactCategory ? exactCategory._id : undefined;
 
-    rawProductsData = await getProducts({ page: 1, perPage: 100, categorySlug: sanitySlug });
+    rawProductsData = await getProducts({ 
+      page: 1, 
+      perPage: 100, 
+      categorySlug: sanitySlug,
+      categoryId 
+    });
   } catch (err) {
     console.warn('[Category] Sanity fetch failed:', err);
   }

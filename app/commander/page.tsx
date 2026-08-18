@@ -150,7 +150,7 @@ export default function CommanderPage() {
     <main className="min-h-screen bg-neutral-50 text-neutral-900">
 
       <div className="pt-20 pb-16 px-4 max-w-2xl mx-auto">
-        <h1 className="text-2xl font-serif font-black tracking-wide text-center mb-8">Finaliser la commande</h1>
+        <h1 className="text-2xl font-serif font-black tracking-wide text-center mb-8">إتمام الطلب</h1>
 
         {/* Step Indicator */}
         <div className="flex items-center justify-center gap-0 mb-10">
@@ -169,7 +169,7 @@ export default function CommanderPage() {
         </div>
 
         <div className="flex justify-center gap-8 mb-8">
-          {['Informations', 'Livraison', 'Confirmation'].map((label, i) => (
+          {['المعلومات', 'التوصيل', 'التأكيد'].map((label, i) => (
             <span key={label} className={`text-xs font-bold tracking-wider uppercase ${step === i + 1 ? 'text-[#082215]' : 'text-neutral-400'}`}>
               {label}
             </span>
@@ -182,33 +182,33 @@ export default function CommanderPage() {
           {step === 1 && (
             <motion.div key="step1" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} className="space-y-4">
               <div className="bg-white rounded-2xl p-6 shadow-sm space-y-4">
-                <h2 className="font-serif font-black text-lg">Vos informations</h2>
+                <h2 className="font-serif font-black text-lg">معلوماتك الشخصية</h2>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-bold text-neutral-500 uppercase tracking-wide block mb-1.5">Prénom</label>
+                    <label className="text-xs font-bold text-neutral-500 uppercase tracking-wide block mb-1.5">الاسم</label>
                     <input
                       type="text"
                       value={form.prenom}
                       onChange={(e) => setForm({ ...form, prenom: e.target.value })}
-                      placeholder="Votre prénom"
+                      placeholder="الاسم الأول"
                       className="w-full border-2 border-neutral-200 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#082215] transition-colors"
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-neutral-500 uppercase tracking-wide block mb-1.5">Nom</label>
+                    <label className="text-xs font-bold text-neutral-500 uppercase tracking-wide block mb-1.5">اللقب</label>
                     <input
                       type="text"
                       value={form.nom}
                       onChange={(e) => setForm({ ...form, nom: e.target.value })}
-                      placeholder="Votre nom"
+                      placeholder="اسم العائلة"
                       className="w-full border-2 border-neutral-200 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#082215] transition-colors"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-neutral-500 uppercase tracking-wide block mb-1.5">Numéro de téléphone</label>
+                  <label className="text-xs font-bold text-neutral-500 uppercase tracking-wide block mb-1.5">رقم الهاتف</label>
                   <input
                     type="tel"
                     value={form.phone}
@@ -227,13 +227,13 @@ export default function CommanderPage() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-neutral-500 uppercase tracking-wide block mb-1.5">Wilaya</label>
+                  <label className="text-xs font-bold text-neutral-500 uppercase tracking-wide block mb-1.5">الولاية</label>
                   <select
                     value={form.wilaya}
                     onChange={(e) => setForm({ ...form, wilaya: e.target.value })}
                     className="w-full border-2 border-neutral-200 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#082215] transition-colors bg-white appearance-none"
                   >
-                    <option value="">Sélectionner votre wilaya...</option>
+                    <option value="">اختر الولاية...</option>
                     {WILAYAS.map((w) => (
                       <option key={w} value={w}>{w}</option>
                     ))}
@@ -241,11 +241,11 @@ export default function CommanderPage() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-neutral-500 uppercase tracking-wide block mb-1.5">Détails de l'adresse</label>
+                  <label className="text-xs font-bold text-neutral-500 uppercase tracking-wide block mb-1.5">تفاصيل العنوان</label>
                   <textarea
                     value={form.adresse}
                     onChange={(e) => setForm({ ...form, adresse: e.target.value })}
-                    placeholder="Numéro de bâtiment, rue..."
+                    placeholder="رقم العمارة، الشارع..."
                     rows={3}
                     maxLength={200} /* FIX #27: Max length for address */
                     className="w-full border-2 border-neutral-200 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#082215] transition-colors resize-none"
@@ -258,7 +258,7 @@ export default function CommanderPage() {
                 disabled={!isStep1Valid}
                 className="w-full bg-[#082215] text-white py-4 rounded-2xl font-bold text-sm tracking-wide flex items-center justify-center gap-2 hover:bg-[#0d3020] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                Continuer <ChevronRight className="w-4 h-4" />
+                المتابعة <ChevronRight className="w-4 h-4" />
               </button>
             </motion.div>
           )}
@@ -267,7 +267,7 @@ export default function CommanderPage() {
           {step === 2 && (
             <motion.div key="step2" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} className="space-y-4">
               <div className="bg-white rounded-2xl p-6 shadow-sm space-y-4">
-                <h2 className="font-serif font-black text-lg">Mode de livraison</h2>
+                <h2 className="font-serif font-black text-lg">طريقة التوصيل</h2>
 
                 <label className={`flex items-center gap-4 p-4 rounded-2xl border-2 cursor-pointer transition-all ${delivery === 'domicile' ? 'border-[#082215] bg-[#082215]/5' : 'border-neutral-200 hover:border-neutral-300'}`}>
                   <input type="radio" name="delivery" value="domicile" checked={delivery === 'domicile'} onChange={() => setDelivery('domicile')} className="hidden" />
@@ -276,8 +276,8 @@ export default function CommanderPage() {
                   </div>
                   <Home className={`w-6 h-6 ${delivery === 'domicile' ? 'text-[#082215]' : 'text-neutral-400'}`} />
                   <div className="flex-1">
-                    <p className="font-bold text-sm">Livraison à domicile</p>
-                    <p className="text-neutral-400 text-xs mt-0.5">Livré directement chez vous en 2–5 jours</p>
+                    <p className="font-bold text-sm">توصيل للمنزل</p>
+                    <p className="text-neutral-400 text-xs mt-0.5">التوصيل مباشرة إلى باب منزلك في 2–5 أيام</p>
                   </div>
                   <span className="font-black text-sm text-[#082215]">+{LIVRAISON_DOMICILE} DA</span>
                 </label>
@@ -289,8 +289,8 @@ export default function CommanderPage() {
                   </div>
                   <Building2 className={`w-6 h-6 ${delivery === 'bureau' ? 'text-[#082215]' : 'text-neutral-400'}`} />
                   <div className="flex-1">
-                    <p className="font-bold text-sm">Retrait en bureau (Stop Desk)</p>
-                    <p className="text-neutral-400 text-xs mt-0.5">À retirer au bureau de livraison le plus proche</p>
+                    <p className="font-bold text-sm">استلام من المكتب (Stop Desk)</p>
+                    <p className="text-neutral-400 text-xs mt-0.5">استلام الطرد من أقرب مكتب توصيل في ولايتك</p>
                   </div>
                   <span className="font-black text-sm text-[#082215]">+{LIVRAISON_BUREAU} DA</span>
                 </label>
@@ -298,10 +298,10 @@ export default function CommanderPage() {
 
               <div className="flex gap-3">
                 <button onClick={() => setStep(1)} className="flex items-center gap-1.5 border-2 border-neutral-200 text-neutral-600 px-5 py-4 rounded-2xl font-bold text-sm hover:border-neutral-400 transition-colors">
-                  <ChevronLeft className="w-4 h-4" /> Retour
+                  <ChevronLeft className="w-4 h-4" /> رجوع
                 </button>
                 <button onClick={() => setStep(3)} className="flex-1 bg-[#082215] text-white py-4 rounded-2xl font-bold text-sm tracking-wide flex items-center justify-center gap-2 hover:bg-[#0d3020] transition-colors">
-                  Continuer <ChevronRight className="w-4 h-4" />
+                  المتابعة <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
             </motion.div>
@@ -311,23 +311,23 @@ export default function CommanderPage() {
           {step === 3 && (
             <motion.div key="step3" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} className="space-y-4">
               <div className="bg-white rounded-2xl p-6 shadow-sm space-y-5">
-                <h2 className="font-serif font-black text-lg">Résumé de votre commande</h2>
+                <h2 className="font-serif font-black text-lg">ملخص الطلب</h2>
 
                 {/* Customer Info Summary */}
                 <div className="bg-neutral-50 rounded-xl p-4 space-y-1">
-                  <p className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-2">Client</p>
+                  <p className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-2">الزبون</p>
                   <p className="text-sm font-semibold text-neutral-800">{form.prenom} {form.nom}</p>
                   <p className="text-sm text-neutral-500">{form.phone}</p>
                   <p className="text-sm text-neutral-500">{form.wilaya}</p>
                   {form.adresse && <p className="text-sm text-neutral-500">{form.adresse}</p>}
                   <p className="text-sm text-neutral-500 mt-1">
-                    {delivery === 'domicile' ? '🏠 Livraison à domicile' : '🏢 Stop Desk'}
+                    {delivery === 'domicile' ? '🏠 توصيل للمنزل' : '🏢 استلام من المكتب'}
                   </p>
                 </div>
 
                 {/* Cart Items */}
                 <div className="space-y-3">
-                  <p className="text-xs font-bold text-neutral-500 uppercase tracking-wider">Articles</p>
+                  <p className="text-xs font-bold text-neutral-500 uppercase tracking-wider">المنتجات</p>
                   {cart.map((item) => (
                     <div key={item.id} className="flex items-center gap-3">
                       <div className="relative w-12 h-14 rounded-lg overflow-hidden bg-neutral-100 shrink-0">
@@ -336,10 +336,10 @@ export default function CommanderPage() {
                       <div className="flex-1">
                         <p className="text-sm font-semibold text-neutral-800 leading-tight">{item.name}</p>
                         <div className="flex gap-2 text-[10px] text-neutral-500 mt-0.5">
-                          {item.size && <span>Taille: {item.size}</span>}
+                          {item.size && <span>المقاس: {item.size}</span>}
                             {item.color && (
                               <span className="flex items-center gap-1">
-                                Couleur:
+                                اللون:
                                 {/* FIX #29: Smart color display */}
                                 {/^#[0-9A-Fa-f]{3,6}$/.test(item.color)
                                   ? <span className="w-2 h-2 rounded-full border border-neutral-200 inline-block" style={{ backgroundColor: item.color }} />
@@ -358,15 +358,15 @@ export default function CommanderPage() {
                 {/* Totals */}
                 <div className="space-y-2 border-t border-neutral-100 pt-4">
                   <div className="flex justify-between text-sm text-neutral-500">
-                    <span>Sous-total</span>
+                    <span>المجموع الفرعي</span>
                     <span className="font-semibold text-neutral-800">{subtotal.toLocaleString('fr-DZ')} DA</span>
                   </div>
                   <div className="flex justify-between text-sm text-neutral-500">
-                    <span>Livraison ({delivery === 'domicile' ? 'Domicile' : 'Stop Desk'})</span>
+                    <span>التوصيل ({delivery === 'domicile' ? 'المنزل' : 'المكتب'})</span>
                     <span className="font-semibold text-neutral-800">{shipping} DA</span>
                   </div>
                   <div className="flex justify-between text-base font-black text-neutral-900 pt-2 border-t border-neutral-100">
-                    <span>Total</span>
+                    <span>المجموع الكلي</span>
                     <span>{total.toLocaleString('fr-DZ')} DA</span>
                   </div>
                 </div>
@@ -374,7 +374,7 @@ export default function CommanderPage() {
 
               <div className="flex gap-3">
                 <button onClick={() => setStep(2)} className="flex items-center gap-1.5 border-2 border-neutral-200 text-neutral-600 px-5 py-4 rounded-2xl font-bold text-sm hover:border-neutral-400 transition-colors">
-                  <ChevronLeft className="w-4 h-4" /> Retour
+                  <ChevronLeft className="w-4 h-4" /> رجوع
                 </button>
                 <div className="flex-1 flex flex-col gap-2">
                   {/* FIX #64: Inline error instead of alert() */}
@@ -386,7 +386,7 @@ export default function CommanderPage() {
                     disabled={isSubmitting} 
                     className="w-full bg-[#082215] text-white py-4 rounded-2xl font-bold text-sm tracking-wide flex items-center justify-center gap-2 hover:bg-[#0d3020] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isSubmitting ? <span className="animate-pulse">Traitement...</span> : <><Check className="w-4 h-4" /> Confirmer la commande</>}
+                    {isSubmitting ? <span className="animate-pulse">جاري المعالجة...</span> : <><Check className="w-4 h-4" /> تأكيد الطلب</>}
                   </button>
                 </div>
               </div>
