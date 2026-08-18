@@ -80,13 +80,13 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               {/* Home */}
               <Link href="/" onClick={onClose} className="flex items-center gap-3 px-4 py-3 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-all group">
                 <Home className="w-5 h-5 opacity-70 group-hover:opacity-100" />
-                <span className="font-semibold tracking-wide text-sm">Accueil</span>
+                <span className="font-semibold tracking-wide text-sm">الرئيسية</span>
               </Link>
 
               {/* Store */}
               <Link href="/boutique" onClick={onClose} className="flex items-center gap-3 px-4 py-3 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-all group">
                 <Store className="w-5 h-5 opacity-70 group-hover:opacity-100" />
-                <span className="font-semibold tracking-wide text-sm">Boutique</span>
+                <span className="font-semibold tracking-wide text-sm">المتجر</span>
               </Link>
 
               {/* Category Accordion */}
@@ -97,7 +97,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 >
                   <div className="flex items-center gap-3">
                     <Grid3x3 className="w-5 h-5 opacity-70" />
-                    <span className="font-semibold tracking-wide text-sm">Catégories</span>
+                    <span className="font-semibold tracking-wide text-sm">الأقسام</span>
                   </div>
                   <motion.div animate={{ rotate: categoryOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
                     <ChevronDown className="w-4 h-4 opacity-60" />
@@ -115,7 +115,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                     >
                       <div className="pl-4 pr-2 pb-2 space-y-1">
                         {categories.length === 0 ? (
-                          <p className="text-white/30 text-xs px-4 py-2">Chargement...</p>
+                          <p className="text-white/30 text-xs px-4 py-2">جاري التحميل...</p>
                         ) : (
                           categories.map((cat) => (
                             <Link
@@ -144,7 +144,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                   <div className="flex items-center gap-3">
                     <Globe className="w-5 h-5 opacity-70" />
                     <span className="font-semibold tracking-wide text-sm">
-                      {LANGUAGES.find(l => l.code === activeLang)?.flag} Langue
+                      {LANGUAGES.find(l => l.code === activeLang)?.flag} اللغة
                     </span>
                   </div>
                   <motion.div animate={{ rotate: langOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
