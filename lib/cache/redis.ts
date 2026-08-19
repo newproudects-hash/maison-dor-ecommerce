@@ -131,7 +131,15 @@ export async function getOrFetch<T>(
   // 3. أنشئ طلباً جديداً، احفظه كـ "معلق"
   const promise = fetcher()
     .then(async (data) => {
-      if (data !== null && data !== undefined) {
+      // Don't cache empty results or data flagged as non-cacheable
+      const shouldSkipCache =
+        data === null ||
+        data === undefined ||
+        (data as Record<string, unknown>)?._nocache === true ||
+        (Array.isArray(data) && data.length === 0) ||
+        (typeof data === 'object' && !Array.isArray(data) && (data as Record<string, unknown>).products !== undefined && Array.isArray((data as Record<string, unknown>).products) && ((data as Record<string, unknown>).products as unknown[]).length === 0);
+
+      if (!shouldSkipCache) {
         await setCache(key, data, ttlSeconds);
       }
       pendingFetches.delete(key);

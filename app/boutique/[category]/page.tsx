@@ -7,7 +7,7 @@ import { getProducts, getCategories } from '@/lib/sanity/queries';
 import { mapSanityProduct } from '@/lib/sanity/mapper';
 import { getImageUrl } from '@/lib/sanity/client';
 
-export const revalidate = 60;
+export const dynamic = 'force-dynamic'; // always fresh, never cache category pages
 
 // Dynamic SEO metadata per category
 export async function generateMetadata(
@@ -40,19 +40,20 @@ export async function generateMetadata(
 
 export default async function CategoryPage({ params }: { params: Promise<{ category: string }> }) {
   const { category: rawCategory } = await params;
-  // We want to compare case-insensitively, but pass the EXACT case to Sanity
-  const urlCategory = rawCategory.toLowerCase();
+  // We want to compare case-insensitively, decode URI components, and remove accidental trailing spaces
+  const decodedCategory = decodeURIComponent(rawCategory);
+  const urlCategory = decodedCategory.toLowerCase().trim();
   
   let rawProductsData: { products: unknown[] } = { products: [] };
   let rawCategories: { _id: string; slug: string; title: string | { ar?: string; fr?: string; en?: string }; image: unknown }[] = [];
 
   try {
     rawCategories = await getCategories();
-    // Find exact category by slug (case-insensitive)
-    const exactCategory = rawCategories.find((c) => c.slug.toLowerCase() === urlCategory);
+    // Find exact category by slug (case-insensitive and trimmed)
+    const exactCategory = rawCategories.find((c) => (c.slug || '').toLowerCase().trim() === urlCategory);
     
     // Pass both the sanitySlug and the categoryId to be safe
-    const sanitySlug = exactCategory ? exactCategory.slug : rawCategory;
+    const sanitySlug = exactCategory ? exactCategory.slug : decodedCategory;
     const categoryId = exactCategory ? exactCategory._id : undefined;
 
     rawProductsData = await getProducts({ 
