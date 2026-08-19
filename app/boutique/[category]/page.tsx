@@ -44,7 +44,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
   const urlCategory = rawCategory.toLowerCase();
   
   let rawProductsData: { products: unknown[] } = { products: [] };
-  let rawCategories: { slug: string; title: string | { ar?: string; fr?: string; en?: string }; image: unknown }[] = [];
+  let rawCategories: { _id: string; slug: string; title: string | { ar?: string; fr?: string; en?: string }; image: unknown }[] = [];
 
   try {
     rawCategories = await getCategories();
