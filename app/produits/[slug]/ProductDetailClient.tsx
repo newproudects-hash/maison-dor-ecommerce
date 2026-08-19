@@ -90,7 +90,9 @@ export default function ProductDetailClient({ product, related }: Props) {
           <ChevronLeft className="w-3 h-3 rotate-180" />
           <Link href="/boutique" className="hover:text-neutral-700 transition-colors">المتجر</Link>
           <ChevronLeft className="w-3 h-3 rotate-180" />
-          <Link href={`/boutique/${product.category}`} className="hover:text-neutral-700 transition-colors capitalize">{product.category}</Link>
+          <Link href={`/boutique/${product.category}`} className="hover:text-neutral-700 transition-colors capitalize">
+            {product.category.replace(/_/g, ' ').replace(/\s+/g, ' ').trim()}
+          </Link>
           <ChevronLeft className="w-3 h-3 rotate-180" />
           <span className="text-neutral-700 font-semibold truncate max-w-[150px]">{product.name}</span>
         </nav>

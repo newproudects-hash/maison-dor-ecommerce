@@ -66,12 +66,14 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
     console.warn('[Category] Sanity fetch failed:', err);
   }
 
-  const catInfo = rawCategories.find((c) => c.slug.toLowerCase() === urlCategory);
+  const catInfo = rawCategories.find((c) => (c.slug || '').toLowerCase().trim() === urlCategory);
   const products = (rawProductsData?.products || []).map(mapSanityProduct);
 
-  const catTitle = catInfo?.title 
-    ? (typeof catInfo.title === 'string' ? catInfo.title : (catInfo.title.ar || catInfo.title.fr || catInfo.title.en || urlCategory))
-    : urlCategory;
+  const catTitle = catInfo?.title
+    ? (typeof catInfo.title === 'string'
+        ? catInfo.title
+        : (catInfo.title.ar || catInfo.title.fr || catInfo.title.en || ''))
+    : urlCategory.replace(/_/g, ' ').replace(/-/g, ' ').trim();
 
   return (
     <main className="min-h-screen bg-white text-neutral-900">
