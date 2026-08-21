@@ -6,7 +6,8 @@ import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, ChevronLeft, Check, Home, Building2, ShoppingBag } from 'lucide-react';
 import { getCart, clearCart, getCartTotal, CartItem } from '@/lib/store/cartStore';
-import { WILAYAS, LIVRAISON_DOMICILE, LIVRAISON_BUREAU } from '@/lib/data/wilayas';
+import { WILAYAS, wilayaLabel, parseWilayaCode, LIVRAISON_DOMICILE, LIVRAISON_BUREAU } from '@/lib/data/wilayas';
+import { getCommunesByWilaya } from '@/lib/data/communes';
 import { useRouter } from 'next/navigation';
 import { generateOrderNumber } from '@/lib/utils/orderNumber';
 
@@ -38,8 +39,10 @@ export default function CommanderPage() {
   }, []);
 
   const [form, setForm] = useState({
-    prenom: '', nom: '', phone: '', wilaya: '', adresse: '',
+    prenom: '', nom: '', phone: '', wilaya: '', commune: '', adresse: '',
   });
+  const selectedWilayaObj = WILAYAS.find(w => wilayaLabel(w) === form.wilaya) || null;
+  const communeOptions = selectedWilayaObj ? getCommunesByWilaya(selectedWilayaObj.code) : [];
   const [delivery, setDelivery] = useState<DeliveryType>('domicile');
   // FIX #14: Frontend phone validation
   const [phoneError, setPhoneError] = useState<string | null>(null);
@@ -57,7 +60,7 @@ export default function CommanderPage() {
   const subtotal = getCartTotal(cart);
   
   // Calculate dynamic shipping
-  const selectedWilayaCode = form.wilaya ? parseInt(form.wilaya.split(' - ')[0]) : null;
+  const selectedWilayaCode = form.wilaya ? parseWilayaCode(form.wilaya) : null;
   const currentPriceInfo = deliveryPrices.find(p => p.wilaya_code === selectedWilayaCode);
   const dynamicHome = currentPriceInfo?.home_price ?? LIVRAISON_DOMICILE;
   const dynamicOffice = currentPriceInfo?.office_price ?? LIVRAISON_BUREAU;
@@ -79,7 +82,7 @@ export default function CommanderPage() {
     setSubmitError(null);
     try {
       const orderNumber = generateOrderNumber();
-      const wilayaCode = WILAYAS.findIndex(w => w === form.wilaya) + 1;
+      const wilayaCode = parseWilayaCode(form.wilaya);
       
       const res = await fetch('/api/orders', {
         method: 'POST',
@@ -90,7 +93,8 @@ export default function CommanderPage() {
           firstName: form.prenom,
           lastName: form.nom,
           phone: form.phone,
-          wilayaName: form.wilaya,
+          wilayaName: selectedWilayaObj ? selectedWilayaObj.name_ar : form.wilaya,
+          commune: form.commune,
           wilayaCode: wilayaCode.toString().padStart(2, '0'),
           deliveryType: delivery,
           deliveryPrice: shipping,
@@ -230,15 +234,33 @@ export default function CommanderPage() {
                   <label className="text-xs font-bold text-neutral-500 uppercase tracking-wide block mb-1.5">الولاية</label>
                   <select
                     value={form.wilaya}
-                    onChange={(e) => setForm({ ...form, wilaya: e.target.value })}
-                    className="w-full border-2 border-neutral-200 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#082215] transition-colors bg-white appearance-none"
+                    onChange={(e) => setForm({ ...form, wilaya: e.target.value, commune: '' })}
+                    className="w-full border-2 border-neutral-200 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#082215] transition-colors bg-white"
                   >
                     <option value="">اختر الولاية...</option>
                     {WILAYAS.map((w) => (
-                      <option key={w} value={w}>{w}</option>
+                      <option key={w.code} value={wilayaLabel(w)}>
+                        {String(w.code).padStart(2,'0')} - {w.name_ar}
+                      </option>
                     ))}
                   </select>
                 </div>
+
+                {form.wilaya && communeOptions.length > 0 && (
+                  <div>
+                    <label className="text-xs font-bold text-neutral-500 uppercase tracking-wide block mb-1.5">البلدية</label>
+                    <select
+                      value={form.commune}
+                      onChange={(e) => setForm({ ...form, commune: e.target.value })}
+                      className="w-full border-2 border-neutral-200 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#082215] transition-colors bg-white"
+                    >
+                      <option value="">اختر البلدية (اختياري)...</option>
+                      {communeOptions.map((c) => (
+                        <option key={c.code_commune} value={c.name_ar}>{c.name_ar}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
                 <div>
                   <label className="text-xs font-bold text-neutral-500 uppercase tracking-wide block mb-1.5">تفاصيل العنوان</label>

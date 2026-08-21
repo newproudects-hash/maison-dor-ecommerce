@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu } from 'lucide-react';
@@ -36,12 +36,22 @@ export default function Navbar() {
   const [cartOpen, setCartOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const [scrolled, setScrolled] = useState(false);
+  const [cartBounce, setCartBounce] = useState(false);
+  const prevCountRef = useRef(0);
   const pathname = usePathname();
 
   useEffect(() => {
     const update = () => {
       const cart = getCart();
-      setCartCount(cart.reduce((s, i) => s + i.quantity, 0));
+      const newCount = cart.reduce((s, i) => s + i.quantity, 0);
+      setCartCount(newCount);
+
+      // Trigger bounce animation whenever count increases
+      if (newCount > prevCountRef.current) {
+        setCartBounce(true);
+        setTimeout(() => setCartBounce(false), 800);
+      }
+      prevCountRef.current = newCount;
     };
     update();
     window.addEventListener('cart-updated', update);
@@ -64,11 +74,25 @@ export default function Navbar() {
     <>
       <nav className={`sticky top-0 w-full z-50 px-4 md:px-8 py-3.5 flex items-center justify-between border-b transition-all duration-300 ${navBg}`}>
         {/* Left visually (First in DOM due to RTL): Cart */}
-        <button
+        <motion.button
           onClick={() => setCartOpen(true)}
           className="relative text-white/90 hover:text-white transition-colors p-1"
           aria-label="السلة"
+          animate={cartBounce ? {
+            scale: [1, 1.35, 0.9, 1.15, 1],
+            rotate: [0, -12, 10, -6, 0],
+          } : { scale: 1, rotate: 0 }}
+          transition={{ duration: 0.6, ease: 'easeInOut' }}
         >
+          {/* Glow ring on bounce */}
+          {cartBounce && (
+            <motion.span
+              initial={{ scale: 0.5, opacity: 0.8 }}
+              animate={{ scale: 2.2, opacity: 0 }}
+              transition={{ duration: 0.7, ease: 'easeOut' }}
+              className="absolute inset-0 rounded-full bg-[#C9A84C]/60 pointer-events-none"
+            />
+          )}
           <AppleBagIcon className="w-[22px] h-[22px] md:w-6 md:h-6" />
           <AnimatePresence>
             {cartCount > 0 && (
@@ -84,7 +108,7 @@ export default function Navbar() {
               </motion.span>
             )}
           </AnimatePresence>
-        </button>
+        </motion.button>
 
         {/* Center: Logo */}
         <Link href="/" className="absolute left-1/2 -translate-x-1/2">

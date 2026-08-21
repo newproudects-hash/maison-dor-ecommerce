@@ -97,7 +97,8 @@ const orderSchema = z.object({
   firstName: z.string().min(2, 'الاسم الأول قصير جداً').max(50),
   lastName: z.string().min(2, 'اسم العائلة قصير جداً').max(50),
   phone: z.string().regex(/^0[567]\d{8}$/, 'رقم الهاتف غير صحيح'),
-  wilayaName: z.string().refine((w) => WILAYAS.includes(w), { message: 'الولاية غير صالحة' }),
+  wilayaName: z.string().refine((w) => WILAYAS.some(wil => wil.name_ar === w || wil.name_fr === w || `${String(wil.code).padStart(2,'0')} - ${wil.name_ar}` === w), { message: 'الولاية غير صالحة' }),
+  commune: z.string().optional(),
   wilayaCode: z.string().or(z.number()),
   deliveryType: z.enum(['domicile', 'bureau']),
   // ❌ deliveryPrice: REMOVED — server calculates from LIVRAISON_DOMICILE/BUREAU constants
@@ -148,7 +149,7 @@ export async function POST(req: Request) {
     const {
       orderNumber, firstName, lastName, phone,
       wilayaName, wilayaCode, deliveryType,
-      address, items
+      commune, address, items
     } = result.data;
 
     // ✅ SECURITY FIX (VULN-001): Server calculates delivery price — client value IGNORED
@@ -225,6 +226,7 @@ export async function POST(req: Request) {
     const safePhone = phone.replace(/[^\d]/g, '').trim();
     const safeAddress = address ? sanitize(address) : null;
     const safeWilaya = sanitize(wilayaName);
+    const safeCommune = commune ? sanitize(commune) : null;
 
     // 5. Save to Supabase — FIX #15: treat as critical failure
     let supabaseId: string | null = null;
@@ -236,6 +238,7 @@ export async function POST(req: Request) {
         customer_name: `${safeFirstName} ${safeLastName}`,
         phone: safePhone,
         wilaya: safeWilaya,
+        commune: safeCommune,
         wilaya_code: wilayaCode,
         delivery_type: deliveryType,
         delivery_price: serverDeliveryPrice,
