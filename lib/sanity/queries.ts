@@ -88,37 +88,34 @@ export async function getProductsByPlacement(placementVal: string, limit = 6) {
 export async function getProduct(slug: string) {
   // slug from URL: might be "MONTRES%20TOMI" or "montres-tomi"
   const rawSlug = slug;                        // as-is from URL: "MONTRES%20TOMI"
-  const decodedSlug = decodeURIComponent(slug); // decoded:       "MONTRES TOMI"
+  const decodedSlug = decodeURIComponent(slug);
+  const dashedSlug = decodedSlug.replace(/\s+/g, '-');
+  const spacedSlug = decodedSlug.replace(/-/g, ' ');
 
   const cacheKey = `v3:product:${rawSlug}`;
   
   return getOrFetch(
     cacheKey,
     async () => {
-      // 1. Search by raw slug (handles case where Sanity stored "%20" literally)
-      const byRaw = await sanityClient.fetch(
-        `*[_type == "product" && slug.current == $slug][0] { ${PRODUCT_FIELDS} }`,
-        { slug: rawSlug }
-      );
-      if (byRaw) return byRaw;
+      // 1. Search by various slug formats (case-insensitive) or _id
+      const query = `*[_type == "product" && (
+        lower(slug.current) == lower($rawSlug) ||
+        lower(slug.current) == lower($decodedSlug) ||
+        lower(slug.current) == lower($dashedSlug) ||
+        lower(slug.current) == lower($spacedSlug) ||
+        _id == $rawSlug
+      )][0] { ${PRODUCT_FIELDS} }`;
 
-      // 2. Search by decoded slug (handles normal slugs with spaces)
-      if (decodedSlug !== rawSlug) {
-        const byDecoded = await sanityClient.fetch(
-          `*[_type == "product" && slug.current == $slug][0] { ${PRODUCT_FIELDS} }`,
-          { slug: decodedSlug }
-        );
-        if (byDecoded) return byDecoded;
-      }
+      const match = await sanityClient.fetch(query, {
+        rawSlug,
+        decodedSlug,
+        dashedSlug,
+        spacedSlug
+      });
 
-      // 3. Fallback: search by _id
-      const byId = await sanityClient.fetch(
-        `*[_type == "product" && _id == $slug][0] { ${PRODUCT_FIELDS} }`,
-        { slug: rawSlug }
-      );
-      if (byId) return byId;
+      if (match) return match;
 
-      // 4. Last resort: search by title (handles slugs with Arabic or special chars)
+      // 2. Last resort: search by title (handles slugs with Arabic or special chars)
       const byTitle = await sanityClient.fetch(
         `*[_type == "product" && (title.ar match $q || title.fr match $q || title.en match $q)][0] { ${PRODUCT_FIELDS} }`,
         { q: decodedSlug }
