@@ -5,6 +5,7 @@ import BackToTop from '@/components/layout/BackToTop';
 import StickyHeader from '@/components/layout/StickyHeader';
 import Pixels from '@/components/analytics/Pixels';
 import { getHomePageSettings } from '@/lib/sanity/queries';
+import { getPixelConfig } from '@/lib/cache/pixel';
 import './globals.css';
 
 const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-playfair', display: 'swap' });
@@ -51,10 +52,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const announcement = homeSettings?.announcementBar as
     { enabled?: boolean; text?: string; bgColor?: string } | undefined;
 
+  const pixelConfig = await getPixelConfig();
+
   return (
     <html lang="ar" dir="rtl">
       <body className={`${playfair.variable} ${jakarta.variable} font-sans antialiased flex flex-col min-h-screen`}>
-        <Pixels />
+        <Pixels pixelConfig={pixelConfig} />
         {/* Sticky header (announcement bar + navbar) on ALL pages */}
         <StickyHeader
           announcementEnabled={announcement?.enabled}

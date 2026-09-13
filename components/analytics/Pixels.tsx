@@ -5,29 +5,57 @@ import Script from 'next/script';
 const FB_PIXEL_ID = process.env.NEXT_PUBLIC_FB_PIXEL_ID;
 const TIKTOK_PIXEL_ID = process.env.NEXT_PUBLIC_TIKTOK_PIXEL_ID;
 
-export default function Pixels() {
+interface PixelConfig {
+  pixelId: string;
+  adAccountName?: string | null;
+  accessToken?: string | null;
+  testEventCode?: string | null;
+  conversionEvent: string;
+  testMode: boolean;
+  enabled: boolean;
+}
+
+export default function Pixels({ pixelConfig }: { pixelConfig?: PixelConfig | null }) {
+  const fbPixel = pixelConfig?.enabled ? (pixelConfig?.pixelId || FB_PIXEL_ID) : null;
+  const isEnabled = pixelConfig ? pixelConfig.enabled : true;
+
+  if (!isEnabled) return null;
+
   return (
     <>
+      {/* Global Config for Helpers */}
+      <Script id="store-pixel-config" strategy="beforeInteractive">
+        {`window.STORE_PIXEL_CONFIG = ${JSON.stringify(pixelConfig || {})};`}
+      </Script>
+
       {/* Facebook Pixel */}
-      {FB_PIXEL_ID && (
-        <Script
-          id="fb-pixel"
-          strategy="afterInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `
-              !function(f,b,e,v,n,t,s)
-              {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-              n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-              if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-              n.queue=[];t=b.createElement(e);t.async=!0;
-              t.src=v;s=b.getElementsByTagName(e)[0];
-              s.parentNode.insertBefore(t,s)}(window, document,'script',
-              'https://connect.facebook.net/en_US/fbevents.js');
-              fbq('init', '${FB_PIXEL_ID}');
-              fbq('track', 'PageView');
-            `,
-          }}
-        />
+      {fbPixel && (
+        <>
+          <Script
+            id="fb-pixel"
+            strategy="afterInteractive"
+            dangerouslySetInnerHTML={{
+              __html: `
+                !function(f,b,e,v,n,t,s)
+                {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+                n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+                if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+                n.queue=[];t=b.createElement(e);t.async=!0;
+                t.src=v;s=b.getElementsByTagName(e)[0];
+                s.parentNode.insertBefore(t,s)}(window, document,'script',
+                'https://connect.facebook.net/en_US/fbevents.js');
+                fbq('init', '${fbPixel}');
+                fbq('track', 'PageView');
+              `,
+            }}
+          />
+          <noscript>
+            <img height="1" width="1" style={{ display: 'none' }}
+              src={`https://www.facebook.com/tr?id=${fbPixel}&ev=PageView&noscript=1`}
+              alt=""
+            />
+          </noscript>
+        </>
       )}
 
       {/* TikTok Pixel */}
@@ -51,12 +79,25 @@ export default function Pixels() {
 }
 
 // Analytics Helpers
-export const trackEvent = (eventName: string, data: any = {}) => {
+export const trackEvent = (eventName: string, data: any = {}, options?: { eventID?: string }) => {
   if (typeof window === 'undefined') return;
+  
+  const config = (window as any).STORE_PIXEL_CONFIG || {};
+  if (config.enabled === false) return;
+
+  // Map Purchase to configured event (e.g. Lead, Purchase_Confirmed)
+  let fbEventName = eventName;
+  if (eventName === 'Purchase' && config.conversionEvent) {
+    fbEventName = config.conversionEvent;
+  }
   
   // Facebook
   if ((window as any).fbq) {
-    (window as any).fbq('track', eventName, data);
+    if (options?.eventID) {
+      (window as any).fbq('track', fbEventName, data, { eventID: options.eventID });
+    } else {
+      (window as any).fbq('track', fbEventName, data);
+    }
   }
   
   // TikTok

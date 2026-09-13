@@ -24,7 +24,7 @@ function MerciContent() {
             transaction_id: orderId,
             value: data.order.total,
             currency: 'DZD',
-          });
+          }, { eventID: orderId });
         }
       })
       .catch(() => {});

@@ -51,11 +51,13 @@ export async function getProducts({
       const [products, total] = await Promise.all([
         sanityClient.fetch(
           `${filter} | order(_createdAt desc) [${offset}...${offset + perPage}] { ${PRODUCT_FIELDS} }`,
-          { categorySlug, categoryId }
+          { categorySlug, categoryId },
+          { next: { tags: ['products', 'products-list'] } }
         ),
         sanityClient.fetch(
           `count(${filter})`,
-          { categorySlug, categoryId }
+          { categorySlug, categoryId },
+          { next: { tags: ['products', 'products-list'] } }
         ),
       ]);
       // Don't cache empty results - might be a query bug or slug mismatch
@@ -78,7 +80,8 @@ export async function getProductsByPlacement(placementVal: string, limit = 6) {
     async () => sanityClient.fetch(
       `*[_type == "product" && $placementVal in placement && inStock != false]
        | order(_createdAt desc) [0...$limit] { ${PRODUCT_FIELDS} }`,
-      { placementVal, limit }
+      { placementVal, limit },
+      { next: { tags: ['products', 'products-list'] } }
     ),
     60 // Cache for 60 seconds
   );
@@ -111,14 +114,15 @@ export async function getProduct(slug: string) {
         decodedSlug,
         dashedSlug,
         spacedSlug
-      });
+      }, { next: { tags: ['products', `product-${rawSlug}`, `product-${decodedSlug}`] } });
 
       if (match) return match;
 
       // 2. Last resort: search by title (handles slugs with Arabic or special chars)
       const byTitle = await sanityClient.fetch(
         `*[_type == "product" && (title.ar match $q || title.fr match $q || title.en match $q)][0] { ${PRODUCT_FIELDS} }`,
-        { q: decodedSlug }
+        { q: decodedSlug },
+        { next: { tags: ['products', `product-${decodedSlug}`] } }
       );
       return byTitle || null;
     },
@@ -134,7 +138,8 @@ export async function getRelatedProducts(categoryId: string, currentId: string) 
     async () => sanityClient.fetch(
       `*[_type == "product" && category._ref == $categoryId && _id != $currentId && inStock != false]
        | order(_createdAt desc) [0...4] { ${PRODUCT_FIELDS} }`,
-      { categoryId, currentId }
+      { categoryId, currentId },
+      { next: { tags: ['products', 'products-list'] } }
     ),
     60 // Cache for 60 seconds
   );
@@ -147,7 +152,9 @@ export async function getCategories() {
     async () => sanityClient.fetch(
       `*[_type == "category"] | order(order asc) {
         _id, title, "slug": slug.current, image, heroImage
-      }`
+      }`,
+      {},
+      { next: { tags: ['categories'] } }
     ),
     60 // Cache for 60 seconds
   );
@@ -160,7 +167,9 @@ export async function getSiteSettings() {
     async () => sanityClient.fetch(
       `*[_type == "settings"][0] {
         heroImage, boutiqueHeroImage, marqueeText, socialLinks
-      }`
+      }`,
+      {},
+      { next: { tags: ['home-settings'] } }
     ),
     120 // Site settings rarely change, cache for 120s
   );
@@ -176,7 +185,9 @@ export async function getHomePageSettings() {
         heroImageMobile,
         marqueeText,
         announcementBar
-      }`
+      }`,
+      {},
+      { next: { tags: ['home-settings'] } }
     ),
     60 // Cache for 60 seconds
   );

@@ -69,8 +69,13 @@ export async function POST(req: Request) {
   // ─── منتج تم تحديثه ─────────────────────────────────────────────────────
   if (docType === 'product') {
     if (slug) {
-      nextTags.push(`product-${slug}`);
-      redisCacheKeys.push(`product:${slug}`, `related:${slug}`);
+      nextTags.push(`product-${slug}`, 'products', 'products-list');
+      redisCacheKeys.push(
+        `product:${slug}`, 
+        `related:${slug}`,
+        'v3:products:all:p1:s100', // Boutique page
+        'v3:products:all:p1:s24'   // Other pages
+      );
       cloudflareUrls.push(`${APP_URL}/produits/${slug}`);
     }
     // أعد تحميل صفحة البوتيك لأن قائمة المنتجات تغيرت
@@ -83,8 +88,8 @@ export async function POST(req: Request) {
 
   // ─── قسم (category) تم تحديثه ───────────────────────────────────────────
   if (docType === 'category') {
-    nextTags.push('categories');
-    redisCacheKeys.push('categories');
+    nextTags.push('categories', 'products');
+    redisCacheKeys.push('v3:categories:all', 'categories');
     revalidatePath('/boutique');
     revalidatePath('/');
     cloudflareUrls.push(`${APP_URL}/boutique`, `${APP_URL}/`);

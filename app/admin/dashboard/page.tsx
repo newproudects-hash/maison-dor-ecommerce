@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
   LogOut, Package, TrendingUp, CheckCircle, Clock,
-  RefreshCw, Filter, Eye, LayoutDashboard, Settings, ShoppingBag
+  RefreshCw, Filter, Eye, LayoutDashboard, Settings, ShoppingBag, BarChart2
 } from 'lucide-react';
 
 interface Order {
@@ -152,6 +152,7 @@ export default function AdminDashboard() {
           {[
             { icon: LayoutDashboard, label: 'الطلبات', href: `/${adminPath}/dashboard`, active: true },
             { icon: ShoppingBag,     label: 'أسعار التوصيل', href: `/${adminPath}/dashboard/shipping`, active: false },
+            { icon: BarChart2,       label: 'إعدادات التتبع', href: `/${adminPath}/dashboard/tracking`, active: false },
             { icon: Settings,        label: 'إدارة المحتوى (Sanity)', href: typeof window !== 'undefined' ? `${window.location.origin}/${studioPath}` : `/${studioPath}`, active: false },
           ].map(({ icon: Icon, label, href, active }) => (
             <button
