@@ -79,7 +79,7 @@ export async function POST(req: Request) {
       cloudflareUrls.push(`${APP_URL}/produits/${slug}`);
     }
     // أعد تحميل صفحة البوتيك لأن قائمة المنتجات تغيرت
-    nextTags.push('products-list');
+    if (!slug) nextTags.push('products', 'products-list');
     revalidatePath('/boutique');
     revalidatePath('/');
     cloudflareUrls.push(`${APP_URL}/boutique`, `${APP_URL}/`);
