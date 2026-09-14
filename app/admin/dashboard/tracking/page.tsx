@@ -110,7 +110,7 @@ export default function TrackingSettingsPage() {
   }
 
   return (
-    <div className="max-w-4xl font-sans" dir="rtl">
+    <div className="w-full max-w-4xl mx-auto font-sans" dir="rtl">
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-black tracking-wide text-white flex items-center gap-2">

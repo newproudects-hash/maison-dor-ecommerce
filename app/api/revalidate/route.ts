@@ -71,8 +71,8 @@ export async function POST(req: Request) {
     if (slug) {
       nextTags.push(`product-${slug}`, 'products', 'products-list');
       redisCacheKeys.push(
-        `product:${slug}`, 
-        `related:${slug}`,
+        `v3:product:${slug}`, 
+        `v3:related:${slug}`, // Note: this might not fully match the related queries format but handles the prefix
         'v3:products:all:p1:s100', // Boutique page
         'v3:products:all:p1:s24'   // Other pages
       );
