@@ -117,9 +117,10 @@ export default function CommanderPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Erreur réseau');
       
-      // Facebook Pixel tracking for Purchase
-      if (typeof window !== 'undefined' && (window as any).fbq) {
-        (window as any).fbq('track', 'Purchase', {
+      // Facebook Pixel tracking for Purchase using global helper (respects mappings)
+      if (typeof window !== 'undefined') {
+        const { trackEvent } = await import('@/components/analytics/Pixels');
+        trackEvent('Purchase', {
           content_ids: cart.map(item => item.productId),
           content_type: 'product',
           value: total,
@@ -129,7 +130,7 @@ export default function CommanderPage() {
       }
       
       clearCart();
-      router.push(`/merci?orderId=${orderNumber}`);
+      router.push(`/merci?orderId=${orderNumber}&phone=${form.phone}`);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Erreur inconnue';
       console.error('[Commander] Submit error:', msg);

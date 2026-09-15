@@ -10,13 +10,14 @@ import { trackEvent } from '@/components/analytics/Pixels';
 function MerciContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get('orderId');
+  const phone = searchParams.get('phone');
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Purchase Pixel & Order Fetch
   useEffect(() => {
-    if (!orderId) return;
-    fetch(`/api/orders/track?orderId=${encodeURIComponent(orderId)}`)
+    if (!orderId || !phone) return;
+    fetch(`/api/orders/track?orderId=${encodeURIComponent(orderId)}&phone=${encodeURIComponent(phone)}`)
       .then(res => res.json())
       .then(data => {
         if (data.success && data.order) {
