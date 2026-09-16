@@ -34,7 +34,7 @@ export async function GET(req: Request) {
     // ✅ CRITICAL: Must match BOTH order_number AND phone — prevents IDOR enumeration
     const { data: order, error } = await supabase
       .from('orders')
-      .select('status, created_at, total') // ✅ customer_name removed — no PII exposure
+      .select('status, created_at, total, items') // items added for pixel content_ids
       .eq('order_number', orderNumber)
       .eq('phone', cleanPhone)            // ✅ This single line closes the IDOR vulnerability
       .single();

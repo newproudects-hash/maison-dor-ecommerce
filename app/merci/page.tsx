@@ -17,19 +17,72 @@ function MerciContent() {
   // Purchase Pixel & Order Fetch
   useEffect(() => {
     if (!orderId || !phone) return;
+
     fetch(`/api/orders/track?orderId=${encodeURIComponent(orderId)}&phone=${encodeURIComponent(phone)}`)
       .then(res => res.json())
       .then(data => {
-        if (data.success && data.order) {
-          trackEvent('Purchase', {
-            transaction_id: orderId,
-            value: data.order.total,
+        if (!data.success || !data.order) return;
+
+        const order = data.order;
+        const contentIds = (order.items || []).map((item: any) => item.productId).filter(Boolean);
+        const numItems = (order.items || []).reduce((sum: number, item: any) => sum + (item.quantity || 1), 0);
+
+        // ── 1. CAPI (Server-Side) — fires regardless of AdBlockers / iOS / fbq timing ──
+        fetch('/api/pixel/purchase', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderId,
+            phone,
+            value: order.total,
             currency: 'DZD',
-          }, { eventID: orderId });
-        }
+            contentIds,
+            numItems,
+          }),
+        }).catch(() => {}); // non-blocking, fire and forget
+
+        // ── 2. Client-Side Pixel — wait for fbq to be ready (retry up to 3s) ──
+        const fireClientPixel = () => {
+          const config = (window as any).STORE_PIXEL_CONFIG || {};
+          if (config.enabled === false) return;
+
+          if ((window as any).fbq) {
+            trackEvent('Purchase', {
+              transaction_id: orderId,
+              value: order.total,
+              currency: 'DZD',
+              content_ids: contentIds,
+              content_type: 'product',
+              num_items: numItems,
+            }, { eventID: orderId }); // eventID = deduplication with CAPI
+          } else {
+            // fbq not loaded yet — retry every 300ms for up to 3 seconds
+            let attempts = 0;
+            const interval = setInterval(() => {
+              attempts++;
+              if ((window as any).fbq) {
+                clearInterval(interval);
+                trackEvent('Purchase', {
+                  transaction_id: orderId,
+                  value: order.total,
+                  currency: 'DZD',
+                  content_ids: contentIds,
+                  content_type: 'product',
+                  num_items: numItems,
+                }, { eventID: orderId });
+              } else if (attempts >= 10) {
+                clearInterval(interval); // give up after 3s — CAPI already covered it
+              }
+            }, 300);
+          }
+        };
+
+        fireClientPixel();
       })
       .catch(() => {});
   }, [orderId]);
+
+
 
   // FIX #51: Sound effect (must handle DOMException cleanly if autoplay is blocked)
   useEffect(() => {

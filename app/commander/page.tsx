@@ -117,18 +117,8 @@ export default function CommanderPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Erreur réseau');
       
-      // Facebook Pixel tracking for Purchase using global helper (respects mappings)
-      if (typeof window !== 'undefined') {
-        const { trackEvent } = await import('@/components/analytics/Pixels');
-        trackEvent('Purchase', {
-          content_ids: cart.map(item => item.productId),
-          content_type: 'product',
-          value: total,
-          currency: 'DZD',
-          num_items: cart.length
-        });
-      }
-      
+      // NOTE: Purchase pixel event is fired in /merci page (after order verified from DB)
+      // Do NOT fire it here to avoid duplicate events in Facebook Ads Manager
       clearCart();
       router.push(`/merci?orderId=${orderNumber}&phone=${form.phone}`);
     } catch (e: unknown) {
