@@ -93,10 +93,19 @@ export const trackEvent = (eventName: string, data: any = {}, options?: { eventI
   
   // Facebook
   if ((window as any).fbq) {
+    const standardEvents = [
+      'AddPaymentInfo', 'AddToCart', 'AddToWishlist', 'CompleteRegistration', 
+      'Contact', 'CustomizeProduct', 'Donate', 'FindLocation', 
+      'InitiateCheckout', 'Lead', 'Purchase', 'Schedule', 'Search', 
+      'StartTrial', 'SubmitApplication', 'Subscribe', 'ViewContent'
+    ];
+    const isStandard = standardEvents.includes(fbEventName);
+    const method = isStandard ? 'track' : 'trackCustom';
+
     if (options?.eventID) {
-      (window as any).fbq('track', fbEventName, data, { eventID: options.eventID });
+      (window as any).fbq(method, fbEventName, data, { eventID: options.eventID });
     } else {
-      (window as any).fbq('track', fbEventName, data);
+      (window as any).fbq(method, fbEventName, data);
     }
   }
   

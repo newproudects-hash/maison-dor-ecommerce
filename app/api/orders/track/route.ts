@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAnonSupabase } from '@/lib/supabase/server';
+import { getServerSupabase } from '@/lib/supabase/server';
 
 // ✅ SECURITY FIX (VULN-003): Anti-IDOR — requires both orderId + phone
 // Skill: exploiting-idor-vulnerabilities (Anthropic Cybersecurity Skills)
@@ -29,7 +29,7 @@ export async function GET(req: Request) {
       );
     }
 
-    const supabase = getAnonSupabase();
+    const supabase = getServerSupabase();
 
     // ✅ CRITICAL: Must match BOTH order_number AND phone — prevents IDOR enumeration
     const { data: order, error } = await supabase
