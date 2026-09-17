@@ -97,7 +97,6 @@ export default function ShippingDashboard() {
           {[
             { icon: Truck,           label: 'أسعار التوصيل', href: `/${adminPath}/dashboard/shipping`, active: true },
             { icon: Settings,        label: 'إدارة المحتوى (Sanity)', href: `/${studioPath}`, active: false },
-            { icon: BarChart2,       label: 'الإعلانات والتتبع', href: `/${adminPath}/dashboard/tracking`, active: false },
           ].map(({ icon: Icon, label, href, active }) => (
             <button
               key={label}
