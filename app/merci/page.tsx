@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useRef } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ShoppingBag, CheckCircle, Loader2 } from 'lucide-react';
@@ -11,6 +11,7 @@ function MerciContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get('orderId');
   const phone = searchParams.get('phone');
+  const [scriptPayload, setScriptPayload] = useState<any>(null);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -33,40 +34,8 @@ function MerciContent() {
         }),
       }).catch(() => {}); // non-blocking
 
-      // ── 2. Client-Side Pixel ──
       const fireClientPixel = () => {
-        const config = (window as any).STORE_PIXEL_CONFIG || {};
-        if (config.enabled === false) return;
-
-        if ((window as any).fbq) {
-          trackEvent('Purchase', {
-            transaction_id: payload.orderId,
-            value: payload.total,
-            currency: payload.currency,
-            content_ids: payload.contentIds,
-            content_type: 'product',
-            num_items: payload.numItems,
-          }, { eventID: payload.orderId }); 
-        } else {
-          // fbq not loaded yet — retry every 300ms
-          let attempts = 0;
-          const interval = setInterval(() => {
-            attempts++;
-            if ((window as any).fbq) {
-              clearInterval(interval);
-              trackEvent('Purchase', {
-                transaction_id: payload.orderId,
-                value: payload.total,
-                currency: payload.currency,
-                content_ids: payload.contentIds,
-                content_type: 'product',
-                num_items: payload.numItems,
-              }, { eventID: payload.orderId });
-            } else if (attempts >= 10) {
-              clearInterval(interval);
-            }
-          }, 300);
-        }
+        // Now using a raw <script> tag for client-side pixel to ensure it fires reliably
       };
 
       fireClientPixel();
@@ -79,7 +48,8 @@ function MerciContent() {
       try {
         const orderData = JSON.parse(storedPurchase);
         
-        // Fire pixels immediately
+        setScriptPayload(orderData);
+        // Fire pixels immediately (CAPI)
         firePixels(orderData);
         
         // Clear it so it doesn't fire again on refresh
@@ -98,14 +68,17 @@ function MerciContent() {
           const contentIds = (order.items || []).map((item: any) => item.productId).filter(Boolean);
           const numItems = (order.items || []).reduce((sum: number, item: any) => sum + (item.quantity || 1), 0);
           
-          firePixels({
+          const payloadData = {
             orderId,
             phone,
             total: order.total,
             currency: 'DZD',
             contentIds,
             numItems
-          });
+          };
+          
+          setScriptPayload(payloadData);
+          firePixels(payloadData);
         })
         .catch(() => {});
     }
@@ -227,12 +200,64 @@ function MerciContent() {
   }
 
   return (
-    <main className="min-h-screen bg-white flex flex-col items-center justify-center px-4 text-center relative overflow-hidden">
-      {/* Confetti canvas */}
-      <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none z-50" />
+    <>
+      {scriptPayload && (
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                function fire() {
+                  if (typeof fbq !== 'function') return;
+                  var eventId = ${JSON.stringify(scriptPayload.orderId)};
+                  if (!eventId) return;
+                  var total = ${JSON.stringify(scriptPayload.total)};
+                  var config = window.STORE_PIXEL_CONFIG || {};
+                  var eventName = config.conversionEvent || 'Purchase';
+                  
+                  var data = {
+                    value: total,
+                    currency: 'DZD',
+                    content_ids: ${JSON.stringify(scriptPayload.contentIds || [])},
+                    content_type: 'product',
+                    num_items: ${JSON.stringify(scriptPayload.numItems || 1)}
+                  };
+                  var options = { eventID: eventId };
+                  if (config.testMode && config.testEventCode) {
+                    options.test_event_code = config.testEventCode;
+                  }
+                  
+                  fbq('track', eventName, data, options);
+                  
+                  if (typeof ttq === 'function') {
+                    ttq.track(eventName, data);
+                  }
+                }
+                
+                if (typeof fbq !== 'function') {
+                  var attempts = 0;
+                  var interval = setInterval(function() {
+                    attempts++;
+                    if (typeof fbq === 'function') {
+                      clearInterval(interval);
+                      fire();
+                    } else if (attempts >= 10) {
+                      clearInterval(interval);
+                    }
+                  }, 300);
+                } else {
+                  fire();
+                }
+              })();
+            `
+          }}
+        />
+      )}
+      <main className="min-h-screen bg-white flex flex-col items-center justify-center px-4 text-center relative overflow-hidden">
+        {/* Confetti canvas */}
+        <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none z-50" />
 
-      {/* Background glow */}
-      <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at center, rgba(8,34,21,0.05) 0%, transparent 70%)' }} />
+        {/* Background glow */}
+        <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at center, rgba(8,34,21,0.05) 0%, transparent 70%)' }} />
 
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
@@ -306,6 +331,7 @@ function MerciContent() {
         </motion.div>
       </motion.div>
     </main>
+    </>
   );
 }
 

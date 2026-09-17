@@ -102,8 +102,12 @@ export const trackEvent = (eventName: string, data: any = {}, options?: { eventI
     const isStandard = standardEvents.includes(fbEventName);
     const method = isStandard ? 'track' : 'trackCustom';
 
-    if (options?.eventID) {
-      (window as any).fbq(method, fbEventName, data, { eventID: options.eventID });
+    const fbOptions: Record<string, unknown> = {};
+    if (options?.eventID) fbOptions.eventID = options.eventID;
+    if (config.testMode && config.testEventCode) fbOptions.test_event_code = config.testEventCode;
+
+    if (Object.keys(fbOptions).length > 0) {
+      (window as any).fbq(method, fbEventName, data, fbOptions);
     } else {
       (window as any).fbq(method, fbEventName, data);
     }
