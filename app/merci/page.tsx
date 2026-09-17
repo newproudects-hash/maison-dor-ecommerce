@@ -35,7 +35,49 @@ function MerciContent() {
       }).catch(() => {}); // non-blocking
 
       const fireClientPixel = () => {
-        // Now using a raw <script> tag for client-side pixel to ensure it fires reliably
+        const fire = () => {
+          if (typeof window === 'undefined') return;
+          const fbq = (window as any).fbq;
+          if (typeof fbq !== 'function') return;
+
+          const config = (window as any).STORE_PIXEL_CONFIG || {};
+          const eventName = config.conversionEvent || 'Purchase';
+          
+          const data = {
+            value: payload.total,
+            currency: payload.currency,
+            content_ids: payload.contentIds,
+            content_type: 'product',
+            num_items: payload.numItems,
+          };
+          
+          const options: any = { eventID: payload.orderId };
+          if (config.testMode && config.testEventCode) {
+            options.test_event_code = config.testEventCode;
+          }
+          
+          fbq('track', eventName, data, options);
+          
+          const ttq = (window as any).ttq;
+          if (typeof ttq === 'function') {
+            ttq.track(eventName, data);
+          }
+        };
+
+        if (typeof (window as any).fbq !== 'function') {
+          let attempts = 0;
+          const interval = setInterval(() => {
+            attempts++;
+            if (typeof (window as any).fbq === 'function') {
+              clearInterval(interval);
+              fire();
+            } else if (attempts >= 10) {
+              clearInterval(interval);
+            }
+          }, 300);
+        } else {
+          fire();
+        }
       };
 
       fireClientPixel();
@@ -200,64 +242,12 @@ function MerciContent() {
   }
 
   return (
-    <>
-      {scriptPayload && (
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                function fire() {
-                  if (typeof fbq !== 'function') return;
-                  var eventId = ${JSON.stringify(scriptPayload.orderId)};
-                  if (!eventId) return;
-                  var total = ${JSON.stringify(scriptPayload.total)};
-                  var config = window.STORE_PIXEL_CONFIG || {};
-                  var eventName = config.conversionEvent || 'Purchase';
-                  
-                  var data = {
-                    value: total,
-                    currency: 'DZD',
-                    content_ids: ${JSON.stringify(scriptPayload.contentIds || [])},
-                    content_type: 'product',
-                    num_items: ${JSON.stringify(scriptPayload.numItems || 1)}
-                  };
-                  var options = { eventID: eventId };
-                  if (config.testMode && config.testEventCode) {
-                    options.test_event_code = config.testEventCode;
-                  }
-                  
-                  fbq('track', eventName, data, options);
-                  
-                  if (typeof ttq === 'function') {
-                    ttq.track(eventName, data);
-                  }
-                }
-                
-                if (typeof fbq !== 'function') {
-                  var attempts = 0;
-                  var interval = setInterval(function() {
-                    attempts++;
-                    if (typeof fbq === 'function') {
-                      clearInterval(interval);
-                      fire();
-                    } else if (attempts >= 10) {
-                      clearInterval(interval);
-                    }
-                  }, 300);
-                } else {
-                  fire();
-                }
-              })();
-            `
-          }}
-        />
-      )}
-      <main className="min-h-screen bg-white flex flex-col items-center justify-center px-4 text-center relative overflow-hidden">
-        {/* Confetti canvas */}
-        <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none z-50" />
+    <main className="min-h-screen bg-white flex flex-col items-center justify-center px-4 text-center relative overflow-hidden">
+      {/* Confetti canvas */}
+      <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none z-50" />
 
-        {/* Background glow */}
-        <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at center, rgba(8,34,21,0.05) 0%, transparent 70%)' }} />
+      {/* Background glow */}
+      <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at center, rgba(8,34,21,0.05) 0%, transparent 70%)' }} />
 
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
@@ -331,7 +321,6 @@ function MerciContent() {
         </motion.div>
       </motion.div>
     </main>
-    </>
   );
 }
 
