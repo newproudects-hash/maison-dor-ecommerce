@@ -49,9 +49,8 @@ function MerciContent() {
         };
         
         const options: any = { eventID: payload.orderId };
-        if (config.testMode && config.testEventCode) {
-          options.test_event_code = config.testEventCode;
-        }
+        // FIX: NEVER manually set test_event_code for client-side fbq.
+        // It overrides the automatic browser session detection. If the stored code is stale, it hides the event!
         
         (window as any).fbq('track', 'Purchase', data, options);
         console.log('[Pixel] Purchase Client Fired', data, options);

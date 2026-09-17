@@ -101,7 +101,7 @@ export const trackEvent = (eventName: string, data: any = {}, options?: { eventI
 
     const fbOptions: Record<string, unknown> = {};
     if (options?.eventID) fbOptions.eventID = options.eventID;
-    if (config.testMode && config.testEventCode) fbOptions.test_event_code = config.testEventCode;
+    // Removed manual test_event_code for client-side events as it interferes with browser auto-routing
 
     if (Object.keys(fbOptions).length > 0) {
       (window as any).fbq(method, fbEventName, data, fbOptions);
