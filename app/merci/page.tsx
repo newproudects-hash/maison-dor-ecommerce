@@ -31,6 +31,8 @@ function MerciContent() {
           currency: payload.currency,
           contentIds: payload.contentIds,
           numItems: payload.numItems,
+          userAgent: navigator.userAgent,
+          sourceUrl: window.location.href,
         }),
       }).catch(() => {}); // non-blocking
 

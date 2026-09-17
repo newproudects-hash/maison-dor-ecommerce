@@ -5,6 +5,11 @@ import crypto from 'crypto';
 // ─── Meta Conversions API (CAPI) — Server-Side Purchase Event ────────────────
 // Fires Purchase from the SERVER directly to Meta Graph API.
 // This is NOT affected by AdBlockers, iOS ITP, or fbq load timing issues.
+// Required fields per Meta docs:
+// - event_name, event_time, action_source
+// - event_source_url (required for website events)
+// - client_user_agent (required for website events)
+// - client_ip_address (optional but highly recommended)
 
 function hashValue(value: string): string {
   return crypto.createHash('sha256').update(value.trim().toLowerCase()).digest('hex');
@@ -13,10 +18,10 @@ function hashValue(value: string): string {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { orderId, phone, value, currency, contentIds, numItems } = body;
+    const { orderId, phone, value, currency, contentIds, numItems, userAgent, sourceUrl } = body;
 
     if (!orderId || !phone || !value) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+      return NextResponse.json({ error: 'Missing required fields: orderId, phone, value' }, { status: 400 });
     }
 
     // Load pixel config from Redis (same source as admin dashboard)
@@ -30,37 +35,45 @@ export async function POST(req: Request) {
       return NextResponse.json({ skipped: true, reason: 'Pixel ID or access token not configured' });
     }
 
-    // Send standard Purchase event to Meta CAPI
-    const eventName = 'Purchase';
+    // Get client IP from request headers (Vercel/Next.js forwarded headers)
+    const forwarded = req.headers.get('x-forwarded-for');
+    const clientIp = forwarded ? forwarded.split(',')[0].trim() : '127.0.0.1';
+    const clientUserAgent = userAgent || req.headers.get('user-agent') || '';
+    const eventSourceUrl = sourceUrl || 'https://lamaisondor.online/merci';
 
-    // Build CAPI payload
+    // Build CAPI payload with ALL required fields
     const eventTime = Math.floor(Date.now() / 1000);
     const cleanPhone = phone.replace(/\D/g, '');
 
-    const payload = {
-      data: [
-        {
-          event_name: eventName,
-          event_time: eventTime,
-          event_id: orderId, // deduplication with client-side pixel
-          action_source: 'website',
-          user_data: {
-            ph: [hashValue(cleanPhone)], // SHA-256 hashed phone
-          },
-          custom_data: {
-            currency: currency || 'DZD',
-            value: Number(value),
-            content_ids: contentIds || [],
-            content_type: 'product',
-            num_items: numItems || 1,
-            order_id: orderId,
-          },
-        },
-      ],
-      ...(config.testMode && config.testEventCode
-        ? { test_event_code: config.testEventCode }
-        : {}),
+    const eventData: Record<string, unknown> = {
+      event_name: 'Purchase',
+      event_time: eventTime,
+      event_id: orderId,          // for deduplication with client-side fbq
+      action_source: 'website',
+      event_source_url: eventSourceUrl,
+      user_data: {
+        ph: [hashValue(cleanPhone)],
+        client_ip_address: clientIp,
+        client_user_agent: clientUserAgent,
+      },
+      custom_data: {
+        currency: currency || 'DZD',
+        value: Number(value),
+        content_ids: contentIds || [],
+        content_type: 'product',
+        num_items: numItems || 1,
+        order_id: orderId,
+      },
     };
+
+    const payload: Record<string, unknown> = {
+      data: [eventData],
+    };
+
+    // Add test_event_code ONLY when testMode is on — placed at top level of payload
+    if (config.testMode && config.testEventCode) {
+      payload.test_event_code = config.testEventCode;
+    }
 
     // Send to Meta Graph API
     const capiUrl = `https://graph.facebook.com/v19.0/${config.pixelId}/events?access_token=${config.accessToken}`;
@@ -71,14 +84,14 @@ export async function POST(req: Request) {
       body: JSON.stringify(payload),
     });
 
-    const capiData = await capiRes.json();
+    const capiData = await capiRes.json() as { events_received?: number; error?: unknown };
 
     if (!capiRes.ok) {
-      console.error('[CAPI] Meta API error:', capiData);
+      console.error('[CAPI] Meta API error:', JSON.stringify(capiData));
       return NextResponse.json({ error: 'Meta CAPI error', details: capiData }, { status: 502 });
     }
 
-    console.log(`[CAPI] Purchase event sent for order ${orderId}:`, capiData);
+    console.log(`[CAPI] ✅ Purchase event sent for order ${orderId}. events_received=${capiData.events_received}`);
     return NextResponse.json({ success: true, events_received: capiData.events_received });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Unknown error';

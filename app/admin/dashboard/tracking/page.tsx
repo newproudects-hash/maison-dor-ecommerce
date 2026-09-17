@@ -28,6 +28,8 @@ export default function TrackingSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [testingCapi, setTestingCapi] = useState(false);
+  const [capiTestResult, setCapiTestResult] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
   // Use dynamic base path to support customized admin paths
@@ -105,6 +107,33 @@ export default function TrackingSettingsPage() {
     }
   }
 
+  async function handleTestCapi() {
+    setTestingCapi(true);
+    setCapiTestResult(null);
+    try {
+      const res = await fetch('/api/pixel/purchase', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: 'TEST-' + Date.now(),
+          phone: '0555000000',
+          value: 1000,
+          currency: 'DZD',
+          contentIds: ['test-product'],
+          numItems: 1,
+          userAgent: navigator.userAgent,
+          sourceUrl: window.location.origin + '/merci',
+        }),
+      });
+      const data = await res.json();
+      setCapiTestResult(JSON.stringify(data, null, 2));
+    } catch (e: any) {
+      setCapiTestResult('خطأ: ' + e.message);
+    } finally {
+      setTestingCapi(false);
+    }
+  }
+
   if (loading) {
     return <div className="p-8 text-slate-400">جاري التحميل...</div>;
   }
@@ -139,9 +168,33 @@ export default function TrackingSettingsPage() {
       )}
       {success && (
         <div className="mb-6 p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-sm font-bold">
-          تم حفظ الإعدادات بنجاح
+          ✅ تم حفظ الإعدادات بنجاح
         </div>
       )}
+
+      {/* CAPI Test Section */}
+      <div className="rounded-2xl p-5 mb-6 space-y-4" style={{ background: '#0f172a', border: '1px solid rgba(201,168,76,0.2)' }}>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-bold text-[#C9A84C]">🧪 اختبار CAPI مباشر</p>
+            <p className="text-xs text-slate-400 mt-0.5">اضغط لإرسال حدث Purchase تجريبي لفيسبوك وشاهد الرد الفوري</p>
+          </div>
+          <button
+            type="button"
+            onClick={handleTestCapi}
+            disabled={testingCapi}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all disabled:opacity-50 border border-[#C9A84C] text-[#C9A84C] hover:bg-[#C9A84C]/10"
+          >
+            {testingCapi ? <Loader2 className="w-3 h-3 animate-spin" /> : '▶️'}
+            {testingCapi ? 'جاري الاختبار...' : 'اختبر الآن'}
+          </button>
+        </div>
+        {capiTestResult && (
+          <pre className="text-xs font-mono text-slate-300 bg-slate-900 rounded-lg p-3 overflow-x-auto whitespace-pre-wrap break-all">
+            {capiTestResult}
+          </pre>
+        )}
+      </div>
 
       <div className="rounded-2xl p-6 space-y-8" style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.06)' }}>
         
