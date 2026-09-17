@@ -36,53 +36,36 @@ function MerciContent() {
         }),
       }).catch(() => {}); // non-blocking
 
-      const fireClientPixel = () => {
-        const fire = () => {
-          if (typeof window === 'undefined') return;
-          const fbq = (window as any).fbq;
-          if (typeof fbq !== 'function') return;
-
-          const config = (window as any).STORE_PIXEL_CONFIG || {};
-          const eventName = 'Purchase';
-          
-          const data = {
-            value: payload.total,
-            currency: payload.currency,
-            content_ids: payload.contentIds,
-            content_type: 'product',
-            num_items: payload.numItems,
-          };
-          
-          const options: any = { eventID: payload.orderId };
-          if (config.testMode && config.testEventCode) {
-            options.test_event_code = config.testEventCode;
-          }
-          
-          fbq('track', eventName, data, options);
-          
-          const ttq = (window as any).ttq;
-          if (typeof ttq === 'function') {
-            ttq.track(eventName, data);
-          }
+      // ── 2. Client-Side (Browser) ──
+      if (typeof window !== 'undefined' && (window as any).fbq) {
+        const config = (window as any).STORE_PIXEL_CONFIG || {};
+        
+        const data = {
+          value: payload.total,
+          currency: payload.currency || 'DZD',
+          content_ids: payload.contentIds || [],
+          content_type: 'product',
+          num_items: payload.numItems || 1,
         };
-
-        if (typeof (window as any).fbq !== 'function') {
-          let attempts = 0;
-          const interval = setInterval(() => {
-            attempts++;
-            if (typeof (window as any).fbq === 'function') {
-              clearInterval(interval);
-              fire();
-            } else if (attempts >= 10) {
-              clearInterval(interval);
-            }
-          }, 300);
-        } else {
-          fire();
+        
+        const options: any = { eventID: payload.orderId };
+        if (config.testMode && config.testEventCode) {
+          options.test_event_code = config.testEventCode;
         }
-      };
-
-      fireClientPixel();
+        
+        (window as any).fbq('track', 'Purchase', data, options);
+        console.log('[Pixel] Purchase Client Fired', data, options);
+      }
+      
+      if (typeof window !== 'undefined' && (window as any).ttq) {
+        (window as any).ttq.track('Purchase', {
+          value: payload.total,
+          currency: payload.currency || 'DZD',
+          content_ids: payload.contentIds || [],
+          content_type: 'product',
+          num_items: payload.numItems || 1,
+        });
+      }
     }
 
     // Try to get order details from sessionStorage for instant pixel firing
