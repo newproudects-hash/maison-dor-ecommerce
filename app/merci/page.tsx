@@ -18,69 +18,98 @@ function MerciContent() {
   useEffect(() => {
     if (!orderId || !phone) return;
 
-    fetch(`/api/orders/track?orderId=${encodeURIComponent(orderId)}&phone=${encodeURIComponent(phone)}`)
-      .then(res => res.json())
-      .then(data => {
-        if (!data.success || !data.order) return;
+    function firePixels(payload: any) {
+      // ── 1. CAPI (Server-Side) ──
+      fetch('/api/pixel/purchase', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: payload.orderId,
+          phone: payload.phone,
+          value: payload.total,
+          currency: payload.currency,
+          contentIds: payload.contentIds,
+          numItems: payload.numItems,
+        }),
+      }).catch(() => {}); // non-blocking
 
-        const order = data.order;
-        const contentIds = (order.items || []).map((item: any) => item.productId).filter(Boolean);
-        const numItems = (order.items || []).reduce((sum: number, item: any) => sum + (item.quantity || 1), 0);
+      // ── 2. Client-Side Pixel ──
+      const fireClientPixel = () => {
+        const config = (window as any).STORE_PIXEL_CONFIG || {};
+        if (config.enabled === false) return;
 
-        // ── 1. CAPI (Server-Side) — fires regardless of AdBlockers / iOS / fbq timing ──
-        fetch('/api/pixel/purchase', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+        if ((window as any).fbq) {
+          trackEvent('Purchase', {
+            transaction_id: payload.orderId,
+            value: payload.total,
+            currency: payload.currency,
+            content_ids: payload.contentIds,
+            content_type: 'product',
+            num_items: payload.numItems,
+          }, { eventID: payload.orderId }); 
+        } else {
+          // fbq not loaded yet — retry every 300ms
+          let attempts = 0;
+          const interval = setInterval(() => {
+            attempts++;
+            if ((window as any).fbq) {
+              clearInterval(interval);
+              trackEvent('Purchase', {
+                transaction_id: payload.orderId,
+                value: payload.total,
+                currency: payload.currency,
+                content_ids: payload.contentIds,
+                content_type: 'product',
+                num_items: payload.numItems,
+              }, { eventID: payload.orderId });
+            } else if (attempts >= 10) {
+              clearInterval(interval);
+            }
+          }, 300);
+        }
+      };
+
+      fireClientPixel();
+    }
+
+    // Try to get order details from sessionStorage for instant pixel firing
+    const storedPurchase = sessionStorage.getItem('pending_purchase');
+    
+    if (storedPurchase) {
+      try {
+        const orderData = JSON.parse(storedPurchase);
+        
+        // Fire pixels immediately
+        firePixels(orderData);
+        
+        // Clear it so it doesn't fire again on refresh
+        sessionStorage.removeItem('pending_purchase');
+      } catch(e) {
+        console.error("Error parsing stored purchase", e);
+      }
+    } else {
+      // Fallback: try fetching from DB if sessionStorage is missing
+      fetch(`/api/orders/track?orderId=${encodeURIComponent(orderId)}&phone=${encodeURIComponent(phone)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (!data.success || !data.order) return;
+          
+          const order = data.order;
+          const contentIds = (order.items || []).map((item: any) => item.productId).filter(Boolean);
+          const numItems = (order.items || []).reduce((sum: number, item: any) => sum + (item.quantity || 1), 0);
+          
+          firePixels({
             orderId,
             phone,
-            value: order.total,
+            total: order.total,
             currency: 'DZD',
             contentIds,
-            numItems,
-          }),
-        }).catch(() => {}); // non-blocking, fire and forget
-
-        // ── 2. Client-Side Pixel — wait for fbq to be ready (retry up to 3s) ──
-        const fireClientPixel = () => {
-          const config = (window as any).STORE_PIXEL_CONFIG || {};
-          if (config.enabled === false) return;
-
-          if ((window as any).fbq) {
-            trackEvent('Purchase', {
-              transaction_id: orderId,
-              value: order.total,
-              currency: 'DZD',
-              content_ids: contentIds,
-              content_type: 'product',
-              num_items: numItems,
-            }, { eventID: orderId }); // eventID = deduplication with CAPI
-          } else {
-            // fbq not loaded yet — retry every 300ms for up to 3 seconds
-            let attempts = 0;
-            const interval = setInterval(() => {
-              attempts++;
-              if ((window as any).fbq) {
-                clearInterval(interval);
-                trackEvent('Purchase', {
-                  transaction_id: orderId,
-                  value: order.total,
-                  currency: 'DZD',
-                  content_ids: contentIds,
-                  content_type: 'product',
-                  num_items: numItems,
-                }, { eventID: orderId });
-              } else if (attempts >= 10) {
-                clearInterval(interval); // give up after 3s — CAPI already covered it
-              }
-            }, 300);
-          }
-        };
-
-        fireClientPixel();
-      })
-      .catch(() => {});
-  }, [orderId]);
+            numItems
+          });
+        })
+        .catch(() => {});
+    }
+  }, [orderId, phone]);
 
 
 

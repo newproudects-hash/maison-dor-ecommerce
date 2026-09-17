@@ -117,8 +117,16 @@ export default function CommanderPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Erreur réseau');
       
-      // NOTE: Purchase pixel event is fired in /merci page (after order verified from DB)
-      // Do NOT fire it here to avoid duplicate events in Facebook Ads Manager
+      // Save pixel data to sessionStorage before redirecting for instant firing
+      sessionStorage.setItem('pending_purchase', JSON.stringify({
+        orderId: orderNumber,
+        phone: form.phone,
+        total: total,
+        currency: 'DZD',
+        contentIds: cart.map(item => item.productId).filter(Boolean),
+        numItems: cart.reduce((sum, item) => sum + (item.quantity || 1), 0),
+      }));
+
       clearCart();
       router.push(`/merci?orderId=${orderNumber}&phone=${form.phone}`);
     } catch (e: unknown) {
