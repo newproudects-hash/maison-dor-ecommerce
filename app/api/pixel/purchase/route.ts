@@ -30,8 +30,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ skipped: true, reason: 'Pixel ID or access token not configured' });
     }
 
-    // Map event name (respects admin dashboard conversionEvent setting)
-    const eventName = config.conversionEvent || 'Purchase';
+    // Send standard Purchase event to Meta CAPI
+    const eventName = 'Purchase';
 
     // Build CAPI payload
     const eventTime = Math.floor(Date.now() / 1000);

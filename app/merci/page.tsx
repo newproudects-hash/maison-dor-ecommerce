@@ -41,7 +41,7 @@ function MerciContent() {
           if (typeof fbq !== 'function') return;
 
           const config = (window as any).STORE_PIXEL_CONFIG || {};
-          const eventName = config.conversionEvent || 'Purchase';
+          const eventName = 'Purchase';
           
           const data = {
             value: payload.total,

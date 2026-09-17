@@ -85,11 +85,8 @@ export const trackEvent = (eventName: string, data: any = {}, options?: { eventI
   const config = (window as any).STORE_PIXEL_CONFIG || {};
   if (config.enabled === false) return;
 
-  // Map Purchase to configured event (e.g. Lead, Purchase_Confirmed)
-  let fbEventName = eventName;
-  if (eventName === 'Purchase' && config.conversionEvent) {
-    fbEventName = config.conversionEvent;
-  }
+  // Facebook Standard Event mapping
+  const fbEventName = eventName;
   
   // Facebook
   if ((window as any).fbq) {
