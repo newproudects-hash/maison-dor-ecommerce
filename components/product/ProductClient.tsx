@@ -86,14 +86,16 @@ export default function ProductClient({ product, onVariantSelect }: ProductClien
     });
     setAdded(true);
     
-    // Trigger Ads Pixel for AddToCart
-    trackEvent('AddToCart', {
-      content_ids: [product.id],
-      content_name: product.name,
-      content_type: 'product',
-      value: product.price * qty,
-      currency: 'DZD',
-    });
+    // Trigger Facebook Pixel for AddToCart
+    if (typeof window !== 'undefined' && (window as any).fbq) {
+      (window as any).fbq('track', 'AddToCart', {
+        content_ids: [product.id],
+        content_name: product.name,
+        content_type: 'product',
+        value: product.price * qty,
+        currency: 'DZD',
+      });
+    }
 
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(() => setAdded(false), 2000);
