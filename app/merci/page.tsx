@@ -20,13 +20,27 @@ function MerciContent() {
   }, [orderId, phone]);
 
   // Facebook Pixel — Purchase event (يُطلق مرة واحدة بعد الطلب)
+  // FIX: نستخدم polling لأن الـ Pixel يتحمل بـ afterInteractive
+  // وقد لا يكون fbq جاهزاً عند mount الصفحة مباشرة
   useEffect(() => {
     if (!orderId) return;
+
+    const raw = sessionStorage.getItem('pending_purchase');
+    if (!raw) return;
+
+    let data: any;
     try {
-      const raw = sessionStorage.getItem('pending_purchase');
-      if (!raw) return;
-      const data = JSON.parse(raw);
-      if (typeof window !== 'undefined' && (window as any).fbq) {
+      data = JSON.parse(raw);
+    } catch {
+      sessionStorage.removeItem('pending_purchase');
+      return;
+    }
+
+    let attempts = 0;
+    const MAX_ATTEMPTS = 50; // 5 ثواني (50 × 100ms)
+
+    const firePurchase = () => {
+      if (typeof window !== 'undefined' && typeof (window as any).fbq === 'function') {
         (window as any).fbq('track', 'Purchase', {
           content_ids: data.contentIds || [],
           content_type: 'product',
@@ -34,12 +48,29 @@ function MerciContent() {
           currency: data.currency || 'DZD',
           num_items: data.numItems || 1,
         });
+        // امسح بعد نجاح الإطلاق
+        sessionStorage.removeItem('pending_purchase');
+        return true;
       }
-      // امسح البيانات بعد ما نطلق الحدث لمنع التكرار
-      sessionStorage.removeItem('pending_purchase');
-    } catch {
-      // fail silently
-    }
+      return false;
+    };
+
+    // حاول مباشرة أولاً
+    if (firePurchase()) return;
+
+    // إذا لم ينجح، ابدأ polling كل 100ms
+    const interval = setInterval(() => {
+      attempts++;
+      if (firePurchase() || attempts >= MAX_ATTEMPTS) {
+        clearInterval(interval);
+        // لو انتهى الوقت بدون إطلاق، امسح البيانات لمنع التكرار
+        if (attempts >= MAX_ATTEMPTS) {
+          sessionStorage.removeItem('pending_purchase');
+        }
+      }
+    }, 100);
+
+    return () => clearInterval(interval);
   }, [orderId]);
 
 
