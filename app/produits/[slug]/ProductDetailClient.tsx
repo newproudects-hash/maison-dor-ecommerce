@@ -27,16 +27,36 @@ export default function ProductDetailClient({ product, related }: Props) {
   );
 
   useEffect(() => {
-    // Facebook Pixel tracking for ViewContent
-    if (typeof window !== 'undefined' && (window as any).fbq) {
-      (window as any).fbq('track', 'ViewContent', {
-        content_ids: [product.id],
-        content_name: product.name,
-        content_type: 'product',
-        value: product.price,
-        currency: 'DZD'
-      });
-    }
+    // Facebook Pixel — ViewContent
+    // FIX: نستخدم polling لأن الـ Pixel يتحمل بـ afterInteractive
+    let attempts = 0;
+    const MAX_ATTEMPTS = 50; // 5 ثواني
+
+    const fireViewContent = () => {
+      if (typeof window !== 'undefined' && typeof (window as any).fbq === 'function') {
+        (window as any).fbq('track', 'ViewContent', {
+          content_ids: [product.id],
+          content_name: product.name,
+          content_type: 'product',
+          contents: [{ id: product.id, quantity: 1 }], // مطلوب لـ Advantage+ catalog ads
+          value: product.price,
+          currency: 'DZD',
+        });
+        return true;
+      }
+      return false;
+    };
+
+    if (fireViewContent()) return;
+
+    const interval = setInterval(() => {
+      attempts++;
+      if (fireViewContent() || attempts >= MAX_ATTEMPTS) {
+        clearInterval(interval);
+      }
+    }, 100);
+
+    return () => clearInterval(interval);
   }, [product]);
   const [added, setAdded] = useState(false);
   const [wishlisted, setWishlisted] = useState(false);

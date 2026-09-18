@@ -1,13 +1,33 @@
 'use client';
 
 import Script from 'next/script';
+import { useEffect, Suspense } from 'react';
+import { usePathname, useSearchParams } from 'next/navigation';
 
-const PIXEL_ID = '4407767339511765';
+// ─── Pixel ID من المتغيرات البيئية (أفضل ممارسة من ميتا) ───────────────────
+const PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID || '4407767339511765';
 
+// ─── مكوّن داخلي: يتتبع تغييرات الصفحة في Next.js SPA ─────────────────────
+// السبب: في Next.js لا تحدث إعادة تحميل كاملة للصفحة عند التنقل،
+// لذا يجب إطلاق PageView يدوياً عند كل تغيير في المسار.
+function FacebookPixelPageViewTracker() {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && typeof (window as any).fbq === 'function') {
+      (window as any).fbq('track', 'PageView');
+    }
+  }, [pathname, searchParams]);
+
+  return null;
+}
+
+// ─── المكوّن الرئيسي ─────────────────────────────────────────────────────────
 export default function FacebookPixel() {
   return (
     <>
-      {/* Facebook Pixel Base Code */}
+      {/* Facebook Pixel Base Code — يُحمَّل مرة واحدة بعد التفاعل */}
       <Script
         id="facebook-pixel"
         strategy="afterInteractive"
@@ -26,7 +46,8 @@ export default function FacebookPixel() {
           `,
         }}
       />
-      {/* NoScript fallback */}
+
+      {/* NoScript fallback للمتصفحات التي تعطّل JavaScript */}
       <noscript>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -37,6 +58,14 @@ export default function FacebookPixel() {
           alt=""
         />
       </noscript>
+
+      {/* 
+        متتبع تغيير الصفحات — ضروري في Next.js App Router
+        Suspense مطلوب بسبب useSearchParams() حسب توثيق Next.js 
+      */}
+      <Suspense fallback={null}>
+        <FacebookPixelPageViewTracker />
+      </Suspense>
     </>
   );
 }

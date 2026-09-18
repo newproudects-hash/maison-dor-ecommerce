@@ -87,13 +87,15 @@ export default function ProductClient({ product, onVariantSelect }: ProductClien
     setAdded(true);
     
     // Trigger Facebook Pixel for AddToCart
-    if (typeof window !== 'undefined' && (window as any).fbq) {
+    if (typeof window !== 'undefined' && typeof (window as any).fbq === 'function') {
       (window as any).fbq('track', 'AddToCart', {
         content_ids: [product.id],
         content_name: product.name,
         content_type: 'product',
+        contents: [{ id: product.id, quantity: qty }], // مطلوب لـ Advantage+ catalog ads
         value: product.price * qty,
         currency: 'DZD',
+        num_items: qty,
       });
     }
 

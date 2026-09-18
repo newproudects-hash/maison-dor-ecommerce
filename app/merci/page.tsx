@@ -44,6 +44,7 @@ function MerciContent() {
         (window as any).fbq('track', 'Purchase', {
           content_ids: data.contentIds || [],
           content_type: 'product',
+          contents: (data.contentIds || []).map((id: string) => ({ id, quantity: 1 })), // مطلوب لـ Advantage+
           value: data.total || 0,
           currency: data.currency || 'DZD',
           num_items: data.numItems || 1,
