@@ -3,6 +3,7 @@ import { Playfair_Display, Plus_Jakarta_Sans } from 'next/font/google';
 import Footer from '@/components/layout/Footer';
 import BackToTop from '@/components/layout/BackToTop';
 import StickyHeader from '@/components/layout/StickyHeader';
+import FacebookPixel from '@/components/analytics/FacebookPixel';
 import { getHomePageSettings } from '@/lib/sanity/queries';
 import './globals.css';
 
@@ -53,6 +54,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="ar" dir="rtl">
       <body className={`${playfair.variable} ${jakarta.variable} font-sans antialiased flex flex-col min-h-screen`}>
+        {/* Facebook Pixel — يتتبع كل الصفحات تلقائياً */}
+        <FacebookPixel />
         {/* Sticky header (announcement bar + navbar) on ALL pages */}
         <StickyHeader
           announcementEnabled={announcement?.enabled}

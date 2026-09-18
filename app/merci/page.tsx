@@ -19,6 +19,29 @@ function MerciContent() {
     if (!orderId || !phone) return;
   }, [orderId, phone]);
 
+  // Facebook Pixel — Purchase event (يُطلق مرة واحدة بعد الطلب)
+  useEffect(() => {
+    if (!orderId) return;
+    try {
+      const raw = sessionStorage.getItem('pending_purchase');
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      if (typeof window !== 'undefined' && (window as any).fbq) {
+        (window as any).fbq('track', 'Purchase', {
+          content_ids: data.contentIds || [],
+          content_type: 'product',
+          value: data.total || 0,
+          currency: data.currency || 'DZD',
+          num_items: data.numItems || 1,
+        });
+      }
+      // امسح البيانات بعد ما نطلق الحدث لمنع التكرار
+      sessionStorage.removeItem('pending_purchase');
+    } catch {
+      // fail silently
+    }
+  }, [orderId]);
+
 
 
   // FIX #51: Sound effect (must handle DOMException cleanly if autoplay is blocked)
