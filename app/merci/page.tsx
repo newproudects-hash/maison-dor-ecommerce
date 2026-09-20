@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ShoppingBag, CheckCircle, Loader2 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
-import { trackEvent } from '@/components/analytics/Pixels';
+import { event } from '@/lib/fpixel';
 
 function MerciContent() {
   const searchParams = useSearchParams();
@@ -37,25 +37,18 @@ function MerciContent() {
       }).catch(() => {}); // non-blocking
 
       // ── 2. Client-Side (Browser) ──
-      if (typeof window !== 'undefined' && (window as any).fbq) {
-        const config = (window as any).STORE_PIXEL_CONFIG || {};
-        
-        const data = {
-          value: payload.total,
-          currency: payload.currency || 'DZD',
-          content_ids: payload.contentIds || [],
-          content_type: 'product',
-          num_items: payload.numItems || 1,
-        };
-        
-        const options: any = { eventID: payload.orderId };
-        // FIX: NEVER manually set test_event_code for client-side fbq.
-        // It overrides the automatic browser session detection. If the stored code is stale, it hides the event!
-        
-        (window as any).fbq('track', 'Purchase', data, options);
-        console.log('[Pixel] Purchase Client Fired', data, options);
-      }
+      const data = {
+        value: payload.total,
+        currency: payload.currency || 'DZD',
+        content_ids: payload.contentIds || [],
+        content_type: 'product',
+        num_items: payload.numItems || 1,
+      };
       
+      const options: any = { eventID: payload.orderId };
+      
+      event('Purchase', data, options);
+      console.log('[Pixel] Purchase Client Fired', data, options);
       if (typeof window !== 'undefined' && (window as any).ttq) {
         (window as any).ttq.track('Purchase', {
           value: payload.total,

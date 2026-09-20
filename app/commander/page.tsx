@@ -10,6 +10,7 @@ import { WILAYAS, wilayaLabel, parseWilayaCode, LIVRAISON_DOMICILE, LIVRAISON_BU
 import { getCommunesByWilaya } from '@/lib/data/communes';
 import { useRouter } from 'next/navigation';
 import { generateOrderNumber } from '@/lib/utils/orderNumber';
+import { event } from '@/lib/fpixel';
 
 type DeliveryType = 'domicile' | 'bureau';
 
@@ -26,15 +27,13 @@ export default function CommanderPage() {
     }
     
     // Facebook Pixel tracking for InitiateCheckout
-    if (typeof window !== 'undefined' && (window as any).fbq) {
-      (window as any).fbq('track', 'InitiateCheckout', {
-        content_ids: cart.map(item => item.productId),
-        content_type: 'product',
-        value: getCartTotal(cart),
-        currency: 'DZD',
-        num_items: cart.length
-      });
-    }
+    event('InitiateCheckout', {
+      content_ids: cart.map(item => item.productId),
+      content_type: 'product',
+      value: getCartTotal(cart),
+      currency: 'DZD',
+      num_items: cart.length
+    });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

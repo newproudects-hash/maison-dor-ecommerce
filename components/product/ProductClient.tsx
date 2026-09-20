@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { Plus, Minus, ShoppingBag, Heart, Check } from 'lucide-react';
 import { addToCart } from '@/lib/store/cartStore';
-import { trackEvent } from '@/components/analytics/Pixels';
+import { event } from '@/lib/fpixel';
 import type { Product, ColorVariant } from '@/types';
 
 const MAX_QTY = 20;
@@ -88,7 +88,7 @@ export default function ProductClient({ product, onVariantSelect }: ProductClien
     setAdded(true);
     
     // Trigger Ads Pixel for AddToCart
-    trackEvent('AddToCart', {
+    event('AddToCart', {
       content_ids: [product.id],
       content_name: product.name,
       content_type: 'product',

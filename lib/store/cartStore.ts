@@ -1,3 +1,5 @@
+import { event } from '@/lib/fpixel';
+
 export interface CartItem {
   id: string; // variant key (productId + size + color)
   productId: string;
@@ -54,15 +56,13 @@ export function addToCart(item: Omit<CartItem, 'id' | 'quantity'> & { quantity?:
   window.dispatchEvent(new Event('cart-updated'));
 
   // Facebook Pixel tracking
-  if (typeof window !== 'undefined' && (window as any).fbq) {
-    (window as any).fbq('track', 'AddToCart', {
-      content_ids: [item.productId],
-      content_name: item.name,
-      content_type: 'product',
-      value: item.price,
-      currency: 'DZD'
-    });
-  }
+  event('AddToCart', {
+    content_ids: [item.productId],
+    content_name: item.name,
+    content_type: 'product',
+    value: item.price,
+    currency: 'DZD'
+  });
 }
 
 export const removeFromCart = (id: string) => {

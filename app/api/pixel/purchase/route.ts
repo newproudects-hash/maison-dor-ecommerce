@@ -1,15 +1,10 @@
 import { NextResponse } from 'next/server';
-import { getPixelConfig } from '@/lib/cache/pixel';
+import { FB_PIXEL_ID } from '@/lib/fpixel';
 import crypto from 'crypto';
 
 // ─── Meta Conversions API (CAPI) — Server-Side Purchase Event ────────────────
 // Fires Purchase from the SERVER directly to Meta Graph API.
 // This is NOT affected by AdBlockers, iOS ITP, or fbq load timing issues.
-// Required fields per Meta docs:
-// - event_name, event_time, action_source
-// - event_source_url (required for website events)
-// - client_user_agent (required for website events)
-// - client_ip_address (optional but highly recommended)
 
 function hashValue(value: string): string {
   return crypto.createHash('sha256').update(value.trim().toLowerCase()).digest('hex');
@@ -24,24 +19,18 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing required fields: orderId, phone, value' }, { status: 400 });
     }
 
-    // Load pixel config from Redis (same source as admin dashboard)
-    const config = await getPixelConfig();
+    const accessToken = process.env.META_ACCESS_TOKEN;
 
-    if (!config?.enabled) {
-      return NextResponse.json({ skipped: true, reason: 'Pixel tracking disabled' });
-    }
-
-    if (!config.pixelId || !config.accessToken) {
-      return NextResponse.json({ skipped: true, reason: 'Pixel ID or access token not configured' });
+    if (!accessToken) {
+      return NextResponse.json({ skipped: true, reason: 'META_ACCESS_TOKEN not configured in environment' });
     }
 
     // Get client IP from request headers (Vercel/Next.js forwarded headers)
     const forwarded = req.headers.get('x-forwarded-for');
     const clientIp = forwarded ? forwarded.split(',')[0].trim() : '127.0.0.1';
     const clientUserAgent = userAgent || req.headers.get('user-agent') || '';
-    const eventSourceUrl = sourceUrl || 'https://lamaisondor.online/merci';
+    const eventSourceUrl = sourceUrl || process.env.NEXT_PUBLIC_APP_URL || 'https://www.maisondor.dz';
 
-    // Build CAPI payload with ALL required fields
     const eventTime = Math.floor(Date.now() / 1000);
     const cleanPhone = phone.replace(/\D/g, '');
 
@@ -50,7 +39,7 @@ export async function POST(req: Request) {
       event_time: eventTime,
       event_id: orderId,          // for deduplication with client-side fbq
       action_source: 'website',
-      event_source_url: eventSourceUrl,
+      event_source_url: `${eventSourceUrl}/merci`,
       user_data: {
         ph: [hashValue(cleanPhone)],
         client_ip_address: clientIp,
@@ -70,13 +59,14 @@ export async function POST(req: Request) {
       data: [eventData],
     };
 
-    // Add test_event_code ONLY when testMode is on — placed at top level of payload
-    if (config.testMode && config.testEventCode) {
-      payload.test_event_code = config.testEventCode;
+    // Add test_event_code only if set via environment variable
+    const testEventCode = process.env.META_TEST_EVENT_CODE;
+    if (testEventCode) {
+      payload.test_event_code = testEventCode;
     }
 
     // Send to Meta Graph API
-    const capiUrl = `https://graph.facebook.com/v19.0/${config.pixelId}/events?access_token=${config.accessToken}`;
+    const capiUrl = `https://graph.facebook.com/v19.0/${FB_PIXEL_ID}/events?access_token=${accessToken}`;
 
     const capiRes = await fetch(capiUrl, {
       method: 'POST',

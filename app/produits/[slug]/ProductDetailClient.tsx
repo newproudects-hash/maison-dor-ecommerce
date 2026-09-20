@@ -11,6 +11,7 @@ import {
 import type { Product } from '@/types';
 import { addToCart } from '@/lib/store/cartStore';
 import ProductCard from '@/components/ui/ProductCard';
+import { event } from '@/lib/fpixel';
 
 interface Props {
   product: Product;
@@ -28,15 +29,13 @@ export default function ProductDetailClient({ product, related }: Props) {
 
   useEffect(() => {
     // Facebook Pixel tracking for ViewContent
-    if (typeof window !== 'undefined' && (window as any).fbq) {
-      (window as any).fbq('track', 'ViewContent', {
-        content_ids: [product.id],
-        content_name: product.name,
-        content_type: 'product',
-        value: product.price,
-        currency: 'DZD'
-      });
-    }
+    event('ViewContent', {
+      content_ids: [product.id],
+      content_name: product.name,
+      content_type: 'product',
+      value: product.price,
+      currency: 'DZD'
+    });
   }, [product]);
   const [added, setAdded] = useState(false);
   const [wishlisted, setWishlisted] = useState(false);
