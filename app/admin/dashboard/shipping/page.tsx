@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { LogOut, Settings, ShoppingBag, Truck, Save, BarChart2 } from 'lucide-react';
+import { LogOut, Settings, ShoppingBag, Truck, Save, BarChart2, Zap } from 'lucide-react';
 
 interface DeliveryPrice {
   id: string;
@@ -95,8 +95,9 @@ export default function ShippingDashboard() {
 
         <nav className="flex-1 px-3 py-6 space-y-1">
           {[
-            { icon: Truck,           label: 'أسعار التوصيل', href: `/${adminPath}/dashboard/shipping`, active: true },
-            { icon: Settings,        label: 'إدارة المحتوى (Sanity)', href: `/${studioPath}`, active: false },
+            { icon: Truck,    label: 'أسعار التوصيل',       href: `/${adminPath}/dashboard/shipping`, active: true },
+            { icon: Zap,      label: 'إعدادات البيكسل',      href: `/${adminPath}/dashboard/pixel`,    active: false },
+            { icon: Settings, label: 'إدارة المحتوى (Sanity)', href: `/${studioPath}`,                active: false },
 
           ].map(({ icon: Icon, label, href, active }) => (
             <button
