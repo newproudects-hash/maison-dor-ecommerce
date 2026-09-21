@@ -16,11 +16,10 @@ export default function FacebookPixel() {
 
   return (
     <>
+      {/* ① تهيئة fbq أولاً (inline — بدون src) */}
       <Script
-        id="fb-pixel"
-        src="https://connect.facebook.net/en_US/fbevents.js"
+        id="fb-pixel-init"
         strategy="afterInteractive"
-        onLoad={() => setLoaded(true)}
         dangerouslySetInnerHTML={{
           __html: `
             !function(f,b,e,v,n,t,s)
@@ -32,8 +31,16 @@ export default function FacebookPixel() {
             s.parentNode.insertBefore(t,s)}(window, document,'script',
             'https://connect.facebook.net/en_US/fbevents.js');
             fbq('init', '${fpixel.FB_PIXEL_ID}');
+            fbq('track', 'PageView');
           `,
         }}
+      />
+      {/* ② تحميل مكتبة fbevents.js من CDN (src منفصل) */}
+      <Script
+        id="fb-pixel-sdk"
+        src="https://connect.facebook.net/en_US/fbevents.js"
+        strategy="afterInteractive"
+        onLoad={() => setLoaded(true)}
       />
     </>
   );
