@@ -3,39 +3,21 @@
 import { usePathname } from 'next/navigation';
 import Script from 'next/script';
 import { useEffect, useState } from 'react';
-import * as fpixel from '@/lib/fpixel';
+import * as metaPixel from '@/lib/metaPixel';
 
-export default function FacebookPixel() {
+export default function MetaPixel() {
   const [loaded, setLoaded] = useState(false);
-  const [pixelId, setPixelId] = useState<string>('');
   const pathname = usePathname();
-
-  // جلب الـ Pixel ID من الإعدادات (Supabase أو .env fallback)
-  useEffect(() => {
-    fetch('/api/admin/pixel-settings')
-      .then(r => r.json())
-      .then(d => {
-        if (d.pixelId) setPixelId(d.pixelId);
-      })
-      .catch(() => {
-        // fallback: استخدم القيمة من .env مباشرةً
-        if (fpixel.FB_PIXEL_ID) setPixelId(fpixel.FB_PIXEL_ID);
-      });
-  }, []);
 
   useEffect(() => {
     if (!loaded) return;
-    fpixel.pageview();
+    metaPixel.pageview();
   }, [pathname, loaded]);
-
-  // لا تحمّل الـ Pixel إذا ما في ID
-  if (!pixelId) return null;
 
   return (
     <>
-      {/* ① تهيئة fbq أولاً (inline — بدون src) */}
       <Script
-        id="fb-pixel-init"
+        id="meta-pixel-init"
         strategy="afterInteractive"
         dangerouslySetInnerHTML={{
           __html: `
@@ -47,14 +29,13 @@ export default function FacebookPixel() {
             t.src=v;s=b.getElementsByTagName(e)[0];
             s.parentNode.insertBefore(t,s)}(window, document,'script',
             'https://connect.facebook.net/en_US/fbevents.js');
-            fbq('init', '${pixelId}');
+            fbq('init', '${metaPixel.META_PIXEL_ID}');
             fbq('track', 'PageView');
           `,
         }}
       />
-      {/* ② تحميل مكتبة fbevents.js من CDN (src منفصل) */}
       <Script
-        id="fb-pixel-sdk"
+        id="meta-pixel-sdk"
         src="https://connect.facebook.net/en_US/fbevents.js"
         strategy="afterInteractive"
         onLoad={() => setLoaded(true)}

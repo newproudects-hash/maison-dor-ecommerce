@@ -1,4 +1,4 @@
-import { event } from '@/lib/fpixel';
+import { event } from '@/lib/metaPixel';
 
 export interface CartItem {
   id: string; // variant key (productId + size + color)
@@ -55,7 +55,7 @@ export function addToCart(item: Omit<CartItem, 'id' | 'quantity'> & { quantity?:
   saveCart(cart);
   window.dispatchEvent(new Event('cart-updated'));
 
-  // Facebook Pixel tracking
+  // Meta Pixel tracking
   event('AddToCart', {
     content_ids: [item.productId],
     content_name: item.name,

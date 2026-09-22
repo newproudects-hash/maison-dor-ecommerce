@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { Plus, Minus, ShoppingBag, Heart, Check } from 'lucide-react';
 import { addToCart } from '@/lib/store/cartStore';
-import { event } from '@/lib/fpixel';
+import { event } from '@/lib/metaPixel';
 import type { Product, ColorVariant } from '@/types';
 
 const MAX_QTY = 20;

@@ -11,7 +11,7 @@ import {
 import type { Product } from '@/types';
 import { addToCart } from '@/lib/store/cartStore';
 import ProductCard from '@/components/ui/ProductCard';
-import { event } from '@/lib/fpixel';
+import { event } from '@/lib/metaPixel';
 
 interface Props {
   product: Product;
@@ -28,7 +28,7 @@ export default function ProductDetailClient({ product, related }: Props) {
   );
 
   useEffect(() => {
-    // Facebook Pixel tracking for ViewContent
+    // Meta Pixel tracking for ViewContent
     event('ViewContent', {
       content_ids: [product.id],
       content_name: product.name,

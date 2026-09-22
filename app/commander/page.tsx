@@ -10,7 +10,7 @@ import { WILAYAS, wilayaLabel, parseWilayaCode, LIVRAISON_DOMICILE, LIVRAISON_BU
 import { getCommunesByWilaya } from '@/lib/data/communes';
 import { useRouter } from 'next/navigation';
 import { generateOrderNumber } from '@/lib/utils/orderNumber';
-import { event } from '@/lib/fpixel';
+import { event } from '@/lib/metaPixel';
 
 type DeliveryType = 'domicile' | 'bureau';
 
@@ -26,7 +26,7 @@ export default function CommanderPage() {
       return;
     }
     
-    // Facebook Pixel tracking for InitiateCheckout
+    // Meta Pixel tracking for InitiateCheckout
     event('InitiateCheckout', {
       content_ids: cart.map(item => item.productId),
       content_type: 'product',

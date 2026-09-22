@@ -5,38 +5,19 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ShoppingBag, CheckCircle, Loader2 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
-import { event } from '@/lib/fpixel';
+import { event } from '@/lib/metaPixel';
 
 function MerciContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get('orderId');
   const phone = searchParams.get('phone');
-  const [scriptPayload, setScriptPayload] = useState<any>(null);
-
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Purchase Pixel & Order Fetch
+  // Purchase Meta Pixel tracking
   useEffect(() => {
     if (!orderId || !phone) return;
 
     function firePixels(payload: any) {
-      // ── 1. CAPI (Server-Side) ──
-      fetch('/api/pixel/purchase', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          orderId: payload.orderId,
-          phone: payload.phone,
-          value: payload.total,
-          currency: payload.currency,
-          contentIds: payload.contentIds,
-          numItems: payload.numItems,
-          userAgent: navigator.userAgent,
-          sourceUrl: window.location.href,
-        }),
-      }).catch(() => {}); // non-blocking
-
-      // ── 2. Client-Side (Browser) ──
       const data = {
         value: payload.total,
         currency: payload.currency || 'DZD',
@@ -45,61 +26,21 @@ function MerciContent() {
         num_items: payload.numItems || 1,
       };
       
-      const options: any = { eventID: payload.orderId };
-      
-      event('Purchase', data, options);
-      console.log('[Pixel] Purchase Client Fired', data, options);
-      if (typeof window !== 'undefined' && (window as any).ttq) {
-        (window as any).ttq.track('Purchase', {
-          value: payload.total,
-          currency: payload.currency || 'DZD',
-          content_ids: payload.contentIds || [],
-          content_type: 'product',
-          num_items: payload.numItems || 1,
-        });
-      }
+      event('Purchase', data);
+      console.log('[Meta Pixel] Purchase Client Fired', data);
     }
 
-    // Try to get order details from sessionStorage for instant pixel firing
+    // Get order details from sessionStorage for instant pixel firing
     const storedPurchase = sessionStorage.getItem('pending_purchase');
     
     if (storedPurchase) {
       try {
         const orderData = JSON.parse(storedPurchase);
-        
-        setScriptPayload(orderData);
-        // Fire pixels immediately (CAPI)
         firePixels(orderData);
-        
-        // Clear it so it doesn't fire again on refresh
         sessionStorage.removeItem('pending_purchase');
       } catch(e) {
         console.error("Error parsing stored purchase", e);
       }
-    } else {
-      // Fallback: try fetching from DB if sessionStorage is missing
-      fetch(`/api/orders/track?orderId=${encodeURIComponent(orderId)}&phone=${encodeURIComponent(phone)}`)
-        .then(res => res.json())
-        .then(data => {
-          if (!data.success || !data.order) return;
-          
-          const order = data.order;
-          const contentIds = (order.items || []).map((item: any) => item.productId).filter(Boolean);
-          const numItems = (order.items || []).reduce((sum: number, item: any) => sum + (item.quantity || 1), 0);
-          
-          const payloadData = {
-            orderId,
-            phone,
-            total: order.total,
-            currency: 'DZD',
-            contentIds,
-            numItems
-          };
-          
-          setScriptPayload(payloadData);
-          firePixels(payloadData);
-        })
-        .catch(() => {});
     }
   }, [orderId, phone]);
 
