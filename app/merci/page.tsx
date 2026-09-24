@@ -91,7 +91,7 @@ function MerciContent() {
           'cd[value]': String(purchaseData.value),
           'cd[currency]': purchaseData.currency,
           'cd[content_type]': 'product',
-          'cd[order_id]': orderId,
+          'cd[order_id]': orderId ?? '',
           noscript: '1',
         });
         img.src = `https://www.facebook.com/tr?${params.toString()}`;
