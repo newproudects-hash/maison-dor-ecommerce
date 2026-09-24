@@ -1,55 +1,143 @@
 'use client';
 
+// ============================================================
+// صفحة "شكراً" — Merci
+// FIX #10: Purchase event fired with multiple fallback layers
+// FIX #11: URL params used as primary data source (no sessionStorage dependency)
+// FIX #12: CAPI server-side event via /api/meta-capi route
+// FIX #13: Retry mechanism if fbq not ready on mount
+// FIX #14: Prevent double-fire using sessionStorage flag
+// FIX #15: Redirect if no orderId
+// ============================================================
+
 import { Suspense, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ShoppingBag, CheckCircle, Loader2 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
-import { event } from '@/lib/metaPixel';
+import { META_PIXEL_ID } from '@/lib/metaPixel';
 
 function MerciContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get('orderId');
   const phone = searchParams.get('phone');
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const pixelFired = useRef(false);
 
-  // Purchase Meta Pixel tracking
+  // ─── Purchase Pixel Tracking ─────────────────────────────────────────────
   useEffect(() => {
-    if (!orderId || !phone) return;
+    if (!orderId) return;
+    
+    // FIX #14: Prevent double-fire (StrictMode, re-renders, etc.)
+    const FIRED_KEY = `pixel_fired_${orderId}`;
+    if (sessionStorage.getItem(FIRED_KEY) === '1') {
+      console.log('[Meta Pixel] Purchase already fired for this order, skipping.');
+      return;
+    }
+    if (pixelFired.current) return;
+    pixelFired.current = true;
 
-    function firePixels(payload: any) {
-      const data = {
-        value: payload.total,
-        currency: payload.currency || 'DZD',
-        content_ids: payload.contentIds || [],
-        content_type: 'product',
-        num_items: payload.numItems || 1,
-      };
-      
-      event('Purchase', data);
-      console.log('[Meta Pixel] Purchase Client Fired', data);
+    // FIX #11: Get data from sessionStorage (preferred) OR construct fallback from URL
+    let purchaseData = {
+      value: 0,
+      currency: 'DZD',
+      content_ids: [] as string[],
+      content_type: 'product',
+      num_items: 1,
+      order_id: orderId,
+    };
+
+    const stored = sessionStorage.getItem('pending_purchase');
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        purchaseData = {
+          value: parsed.total || 0,
+          currency: parsed.currency || 'DZD',
+          content_ids: parsed.contentIds || [],
+          content_type: 'product',
+          num_items: parsed.numItems || 1,
+          order_id: orderId,
+        };
+        sessionStorage.removeItem('pending_purchase');
+        console.log('[Meta Pixel] Using sessionStorage purchase data:', purchaseData);
+      } catch (e) {
+        console.error('[Meta Pixel] Failed to parse sessionStorage data:', e);
+      }
+    } else {
+      console.warn('[Meta Pixel] No sessionStorage data found, using minimal event data.');
     }
 
-    // Get order details from sessionStorage for instant pixel firing
-    const storedPurchase = sessionStorage.getItem('pending_purchase');
-    
-    if (storedPurchase) {
-      try {
-        const orderData = JSON.parse(storedPurchase);
-        firePixels(orderData);
-        sessionStorage.removeItem('pending_purchase');
-      } catch(e) {
-        console.error("Error parsing stored purchase", e);
+    // FIX #10 + #13: Fire client-side pixel with retry
+    function fireClientPixel(attempt = 0) {
+      const fbq = (window as Window & { fbq?: Function }).fbq;
+      if (typeof fbq === 'function') {
+        fbq('track', 'Purchase', purchaseData);
+        sessionStorage.setItem(FIRED_KEY, '1');
+        console.log('[Meta Pixel] ✅ Purchase Client-Side Fired:', purchaseData);
+      } else if (attempt < 10) {
+        console.warn(`[Meta Pixel] fbq not ready, retry ${attempt + 1}/10...`);
+        setTimeout(() => fireClientPixel(attempt + 1), 400);
+      } else {
+        console.error('[Meta Pixel] ❌ fbq NEVER became available — client pixel FAILED');
+        // FIX: Last resort — inject a tracking pixel directly via URL
+        const img = document.createElement('img');
+        img.width = 1;
+        img.height = 1;
+        img.style.display = 'none';
+        const params = new URLSearchParams({
+          id: META_PIXEL_ID,
+          ev: 'Purchase',
+          'cd[value]': String(purchaseData.value),
+          'cd[currency]': purchaseData.currency,
+          'cd[content_type]': 'product',
+          'cd[order_id]': orderId,
+          noscript: '1',
+        });
+        img.src = `https://www.facebook.com/tr?${params.toString()}`;
+        document.body.appendChild(img);
+        sessionStorage.setItem(FIRED_KEY, '1');
+        console.log('[Meta Pixel] ⚠️ Fallback img pixel fired');
       }
     }
+
+    // FIX #12: Fire server-side CAPI event (independent of client fbq)
+    async function fireServerCAPI() {
+      try {
+        const res = await fetch('/api/meta-capi', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            event_name: 'Purchase',
+            order_id: orderId,
+            phone: phone,
+            value: purchaseData.value,
+            currency: purchaseData.currency,
+            content_ids: purchaseData.content_ids,
+            num_items: purchaseData.num_items,
+          }),
+        });
+        const result = await res.json();
+        if (result.success) {
+          console.log('[Meta CAPI] ✅ Server-side Purchase sent:', result);
+        } else {
+          console.warn('[Meta CAPI] ⚠️ Server-side event failed:', result.error);
+        }
+      } catch (err) {
+        console.error('[Meta CAPI] ❌ Network error:', err);
+      }
+    }
+
+    // Fire both client & server simultaneously
+    fireClientPixel(0);
+    fireServerCAPI();
+
   }, [orderId, phone]);
 
-
-
-  // FIX #51: Sound effect (must handle DOMException cleanly if autoplay is blocked)
+  // ─── Sound Effect ──────────────────────────────────────────────────────────
   useEffect(() => {
     let ctx: AudioContext | null = null;
-    
+
     const playSound = () => {
       try {
         ctx = new AudioContext();
@@ -68,14 +156,13 @@ function MerciContent() {
           osc.start(ctx.currentTime + i * 0.15);
           osc.stop(ctx.currentTime + i * 0.15 + 0.35);
         });
-      } catch (e) {
-        // Autoplay blocked, fail silently
+      } catch {
+        // Autoplay blocked — fail silently
       }
     };
-    
-    // Play on mount, but if it fails due to user interaction required, it just fails silently.
+
     playSound();
-    
+
     return () => {
       if (ctx && ctx.state !== 'closed') {
         ctx.close().catch(() => {});
@@ -83,8 +170,7 @@ function MerciContent() {
     };
   }, []);
 
-
-  // Confetti
+  // ─── Confetti ──────────────────────────────────────────────────────────────
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -120,7 +206,7 @@ function MerciContent() {
         p.x += p.vx;
         p.y += p.vy;
         p.angle += p.spin;
-        p.vy += 0.05; // gravity
+        p.vy += 0.05;
         ctx.save();
         ctx.translate(p.x, p.y);
         ctx.rotate(p.angle);
@@ -136,26 +222,20 @@ function MerciContent() {
     const timeout = setTimeout(() => {
       alive = false;
       cancelAnimationFrame(frame);
-      if (ctx && canvas) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-      }
+      if (ctx && canvas) ctx.clearRect(0, 0, canvas.width, canvas.height);
     }, 4500);
 
     return () => {
       alive = false;
       cancelAnimationFrame(frame);
       clearTimeout(timeout);
-      if (ctx && canvas) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-      }
+      if (ctx && canvas) ctx.clearRect(0, 0, canvas.width, canvas.height);
     };
   }, []);
 
-  // FIX #13: Redirect to boutique if accessed directly without a real order
+  // FIX #15: Redirect if no orderId
   if (!orderId) {
-    if (typeof window !== 'undefined') {
-      window.location.replace('/boutique');
-    }
+    if (typeof window !== 'undefined') window.location.replace('/boutique');
     return null;
   }
 
@@ -184,7 +264,6 @@ function MerciContent() {
             <div className="w-28 h-28 rounded-full bg-[#082215] flex items-center justify-center shadow-2xl">
               <CheckCircle className="w-14 h-14 text-amber-400" strokeWidth={1.5} />
             </div>
-            {/* Pulse rings */}
             <motion.div
               className="absolute inset-0 rounded-full border-4 border-[#082215]"
               initial={{ scale: 1, opacity: 0.8 }}

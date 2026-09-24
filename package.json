@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "clean": "next clean"
+    "clean": "next clean",
+    "deploy": "git add . && git commit -m \"fix: Meta Pixel Purchase event + CAPI server-side\" && git push origin main"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
