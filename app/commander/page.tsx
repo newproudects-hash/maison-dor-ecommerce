@@ -26,8 +26,8 @@ export default function CommanderPage() {
       return;
     }
     
-    // Meta Pixel tracking for InitiateCheckout
-    event('InitiateCheckout', {
+    // Meta Pixel tracking for Purchase
+    event('Purchase', {
       content_ids: cart.map(item => item.productId),
       content_type: 'product',
       value: getCartTotal(cart),
