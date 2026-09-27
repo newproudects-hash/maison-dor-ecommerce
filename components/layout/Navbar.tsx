@@ -113,7 +113,7 @@ export default function Navbar() {
         {/* Center: Logo */}
         <Link href="/" className="absolute left-1/2 -translate-x-1/2">
           <h1 className="text-[13px] md:text-base font-serif font-black tracking-[0.2em] uppercase text-white select-none">
-            MAISON D&apos;OR
+            WOMEN BAG
           </h1>
         </Link>
 
