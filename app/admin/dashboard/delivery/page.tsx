@@ -29,6 +29,8 @@ async function updatePrice(formData: FormData) {
     .eq('id', id);
   const adminPath = process.env.NEXT_PUBLIC_ADMIN_PATH || 'admin';
   revalidatePath(`/${adminPath}/dashboard/delivery`);
+  revalidatePath('/api/delivery-prices');
+  revalidatePath('/commander');
 }
 
 export default async function AdminDeliveryPage() {

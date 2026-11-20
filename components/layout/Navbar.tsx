@@ -112,8 +112,10 @@ export default function Navbar() {
 
         {/* Center: Logo */}
         <Link href="/" className="absolute left-1/2 -translate-x-1/2">
-          <h1 className="text-[13px] md:text-base font-serif font-black tracking-[0.2em] uppercase text-white select-none">
-            WOMEN BAG
+          <h1 className="text-[12px] md:text-base font-serif font-black tracking-[0.15em] uppercase text-white select-none flex items-center justify-center gap-1.5 whitespace-nowrap">
+            <span>👑</span>
+            <span>LA MAISON DOR</span>
+            <span>🏅</span>
           </h1>
         </Link>
 

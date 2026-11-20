@@ -51,15 +51,17 @@ export default function Footer() {
   return (
     <footer className="bg-black text-white py-10 md:py-16 px-4 md:px-8 mt-auto">
       <div className="max-w-4xl mx-auto flex flex-col items-center text-center">
-        <h2 className="text-2xl md:text-4xl font-serif font-black tracking-widest uppercase mb-8">
-          WOMEN BAG
+        <h2 className="text-2xl md:text-4xl font-serif font-black tracking-widest uppercase mb-8 flex items-center justify-center gap-2">
+          <span>👑</span>
+          <span>LA MAISON DOR</span>
+          <span>🏅</span>
         </h2>
         
         <div className="flex items-center justify-center gap-6 md:gap-8 mb-8 flex-wrap">
-          <a href="https://www.instagram.com/women_bag._?stkn=MTBuaDVudWNqd3Vo&utm_source=qr" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="flex items-center justify-center transition-all hover:scale-110">
+          <a href="https://www.instagram.com/la_maison_dor01?jplx=MTl4aTNkaTE1Z2p0bw%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="flex items-center justify-center transition-all hover:scale-110">
             <InstagramIcon />
           </a>
-          <a href="https://www.facebook.com/share/1CNft7fZs6/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="flex items-center justify-center transition-all hover:scale-110">
+          <a href="https://www.facebook.com/share/1Cq4C1VSxx/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="flex items-center justify-center transition-all hover:scale-110">
             <FacebookIcon />
           </a>
           <a href="https://chat.whatsapp.com/LoMHVJuVw3Y2lvsvC7Kg9l?s=hd&p=i&mlu=4&amv=0" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp" className="flex items-center justify-center transition-all hover:scale-110 drop-shadow-md">
@@ -82,7 +84,7 @@ export default function Footer() {
         </div>
         
         <div className="w-full max-w-md border-t border-white/20 pt-8 text-[10px] md:text-xs text-neutral-400 font-medium">
-          © {new Date().getFullYear()} WOMEN BAG. جميع الحقوق محفوظة.
+          © {new Date().getFullYear()} 👑 LA MAISON DOR 🏅. جميع الحقوق محفوظة.
         </div>
       </div>
     </footer>

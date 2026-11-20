@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, ChevronLeft, Check, Home, Building2, ShoppingBag } from 'lucide-react';
 import { getCart, clearCart, getCartTotal, CartItem } from '@/lib/store/cartStore';
-import { WILAYAS, wilayaLabel, parseWilayaCode, LIVRAISON_DOMICILE, LIVRAISON_BUREAU } from '@/lib/data/wilayas';
+import { WILAYAS, wilayaLabel, parseWilayaCode, LIVRAISON_DOMICILE, LIVRAISON_BUREAU, DEFAULT_DELIVERY_PRICES } from '@/lib/data/wilayas';
 import { getCommunesByWilaya } from '@/lib/data/communes';
 import { useRouter } from 'next/navigation';
 import { generateOrderNumber } from '@/lib/utils/orderNumber';
@@ -47,12 +47,16 @@ export default function CommanderPage() {
   const [phoneError, setPhoneError] = useState<string | null>(null);
   // FIX #64: Replace alert() with inline error
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [deliveryPrices, setDeliveryPrices] = useState<any[]>([]);
+  const [deliveryPrices, setDeliveryPrices] = useState<any[]>(DEFAULT_DELIVERY_PRICES);
 
   useEffect(() => {
-    fetch('/api/delivery-prices')
+    fetch('/api/delivery-prices', { cache: 'no-store' })
       .then(res => res.json())
-      .then(data => setDeliveryPrices(data))
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setDeliveryPrices(data);
+        }
+      })
       .catch(console.error);
   }, []);
 
@@ -299,7 +303,7 @@ export default function CommanderPage() {
                     <p className="font-bold text-sm">توصيل للمنزل</p>
                     <p className="text-neutral-400 text-xs mt-0.5">التوصيل مباشرة إلى باب منزلك في 2–5 أيام</p>
                   </div>
-                  <span className="font-black text-sm text-[#082215]">+{LIVRAISON_DOMICILE} DA</span>
+                  <span className="font-black text-sm text-[#082215]">+{dynamicHome} DA</span>
                 </label>
 
                 <label className={`flex items-center gap-4 p-4 rounded-2xl border-2 cursor-pointer transition-all ${delivery === 'bureau' ? 'border-[#082215] bg-[#082215]/5' : 'border-neutral-200 hover:border-neutral-300'}`}>
@@ -312,7 +316,7 @@ export default function CommanderPage() {
                     <p className="font-bold text-sm">استلام من المكتب (Stop Desk)</p>
                     <p className="text-neutral-400 text-xs mt-0.5">استلام الطرد من أقرب مكتب توصيل في ولايتك</p>
                   </div>
-                  <span className="font-black text-sm text-[#082215]">+{LIVRAISON_BUREAU} DA</span>
+                  <span className="font-black text-sm text-[#082215]">+{dynamicOffice} DA</span>
                 </label>
               </div>
 

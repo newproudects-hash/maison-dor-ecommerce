@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { JWT } from 'google-auth-library';
 import { z } from 'zod';
-import { WILAYAS, LIVRAISON_DOMICILE, LIVRAISON_BUREAU } from '@/lib/data/wilayas';
+import { WILAYAS, LIVRAISON_DOMICILE, LIVRAISON_BUREAU, getDefaultDeliveryPrice } from '@/lib/data/wilayas';
 import { getFromCache, setCache } from '@/lib/cache/redis';
 import { sanityClient } from '@/lib/sanity/client';
 
@@ -154,15 +154,22 @@ export async function POST(req: Request) {
 
     // ✅ SECURITY FIX (VULN-001): Server calculates delivery price — client value IGNORED
     // Skill: testing-for-business-logic-vulnerabilities
-    let serverDeliveryPrice = deliveryType === 'domicile' ? LIVRAISON_DOMICILE : LIVRAISON_BUREAU;
+    const numericWilayaCode = parseInt(wilayaCode.toString()) || 0;
+    const defaultRates = getDefaultDeliveryPrice(numericWilayaCode);
+    let serverDeliveryPrice = deliveryType === 'domicile' ? defaultRates.home_price : defaultRates.office_price;
+
     if (supabase) {
-      const { data: priceData } = await supabase
-        .from('delivery_prices')
-        .select('home_price, office_price')
-        .eq('wilaya_code', parseInt(wilayaCode.toString()))
-        .single();
-      if (priceData) {
-        serverDeliveryPrice = deliveryType === 'domicile' ? priceData.home_price : priceData.office_price;
+      try {
+        const { data: priceData } = await supabase
+          .from('delivery_prices')
+          .select('home_price, office_price')
+          .eq('wilaya_code', numericWilayaCode)
+          .single();
+        if (priceData && priceData.home_price !== undefined) {
+          serverDeliveryPrice = deliveryType === 'domicile' ? Number(priceData.home_price) : Number(priceData.office_price);
+        }
+      } catch (err) {
+        console.warn('[Orders] Could not fetch custom price from Supabase, used NOEST default:', err);
       }
     }
     // ✅ SECURITY FIX (VULN-002): Verify stock + fetch real prices from Sanity
