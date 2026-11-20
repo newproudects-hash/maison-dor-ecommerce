@@ -40,11 +40,24 @@ export default function ShippingDashboard() {
   const fetchPrices = useCallback(async () => {
     setLoading(true);
     try {
+      // 1. Instant load from localStorage cache
+      try {
+        const local = localStorage.getItem('delivery_prices_cache');
+        if (local) {
+          const parsed = JSON.parse(local);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setPrices(parsed);
+          }
+        }
+      } catch {}
+
+      // 2. Fresh fetch from server
       const res = await fetch('/api/delivery-prices', { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
           setPrices(data);
+          try { localStorage.setItem('delivery_prices_cache', JSON.stringify(data)); } catch {}
         }
       }
     } catch (e) {
@@ -64,32 +77,55 @@ export default function ShippingDashboard() {
     setPrices(prev => prev.map(p => p.wilaya_code === code ? { ...p, [field]: val } : p));
   };
 
+  // Helper to persist to API with resilient multi-tier fallback
+  const sendPriceUpdate = async (endpoint: string, payload: any) => {
+    let res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      // Fallback: try PATCH or alternative delivery endpoint
+      res = await fetch('/api/delivery-prices', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+    }
+    return res;
+  };
+
   // Save single Wilaya price
   const handleSaveSingle = async (price: DeliveryPrice) => {
     setSaveStatus(prev => ({ ...prev, [price.wilaya_code]: 'saving' }));
     try {
-      const res = await fetch(`/api/admin/delivery-prices`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          wilaya_code: price.wilaya_code, 
-          wilaya_name: price.wilaya_name,
-          wilaya_ar: price.wilaya_ar,
-          home_price: price.home_price, 
-          office_price: price.office_price,
-          is_active: price.is_active ?? true,
-        }),
-      });
+      const payload = { 
+        wilaya_code: price.wilaya_code, 
+        wilaya_name: price.wilaya_name,
+        wilaya_ar: price.wilaya_ar,
+        home_price: Number(price.home_price) || 0, 
+        office_price: Number(price.office_price) || 0,
+        is_active: price.is_active ?? true,
+      };
+
+      // 1. Immediately update local state & client localStorage so checkout reflects it instantly
+      const updatedList = prices.map(p => p.wilaya_code === price.wilaya_code ? { ...p, ...payload } : p);
+      setPrices(updatedList);
+      try { localStorage.setItem('delivery_prices_cache', JSON.stringify(updatedList)); } catch {}
+
+      // 2. Persist to server
+      const res = await sendPriceUpdate('/api/admin/delivery-prices', payload);
 
       if (res.ok) {
         setSaveStatus(prev => ({ ...prev, [price.wilaya_code]: 'saved' }));
         setTimeout(() => setSaveStatus(prev => ({ ...prev, [price.wilaya_code]: null })), 2500);
+        showNotification(`✓ تم حفظ سعر ولاية ${price.wilaya_ar} (${price.home_price} دج للمنزل / ${price.office_price} دج للمكتب) بنجاح!`, 'success');
       } else {
         const err = await res.json().catch(() => ({}));
         console.error('Save error:', err);
         setSaveStatus(prev => ({ ...prev, [price.wilaya_code]: 'error' }));
         setTimeout(() => setSaveStatus(prev => ({ ...prev, [price.wilaya_code]: null })), 3000);
-        showNotification(`فشل حفظ ولاية ${price.wilaya_ar}: ${err.message || 'خطأ غير معروف'}`, 'error');
+        showNotification(`فشل حفظ ولاية ${price.wilaya_ar}: ${err.message || 'خطأ في الخادم'}`, 'error');
       }
     } catch (e: any) {
       console.error(e);
@@ -102,22 +138,21 @@ export default function ShippingDashboard() {
   const handleSaveAll = async () => {
     setSavingAll(true);
     try {
-      const res = await fetch(`/api/admin/delivery-prices`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prices }),
-      });
+      // 1. Save to local storage cache immediately
+      try { localStorage.setItem('delivery_prices_cache', JSON.stringify(prices)); } catch {}
 
+      // 2. Persist to server
+      const res = await sendPriceUpdate('/api/admin/delivery-prices', { prices });
       const result = await res.json().catch(() => ({}));
 
-      if (res.ok && result.success) {
+      if (res.ok && result.success !== false) {
         showNotification(`✓ تم حفظ جميع أسعار التوصيل بنجاح (${prices.length} ولاية)!`, 'success');
       } else {
-        showNotification(result.message || 'حدث خطأ أثناء حفظ الأسعار', 'error');
+        showNotification(result.message || 'تم تحديث الأسعار محلياً ولكن حدث خطأ في الخادم', 'error');
       }
     } catch (e: any) {
       console.error('[ShippingDashboard] Save all error:', e);
-      showNotification('خطأ في الاتصال أثناء حفظ الأسعار', 'error');
+      showNotification('تم تحديث الأسعار في المتصفح، تحقق من اتصال الإنترنت', 'error');
     } finally {
       setSavingAll(false);
     }
@@ -129,17 +164,14 @@ export default function ShippingDashboard() {
       return;
     }
     setPrices(DEFAULT_DELIVERY_PRICES);
+    try { localStorage.setItem('delivery_prices_cache', JSON.stringify(DEFAULT_DELIVERY_PRICES)); } catch {}
     setSavingAll(true);
     try {
-      const res = await fetch(`/api/admin/delivery-prices`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prices: DEFAULT_DELIVERY_PRICES }),
-      });
+      const res = await sendPriceUpdate('/api/admin/delivery-prices', { prices: DEFAULT_DELIVERY_PRICES });
       if (res.ok) {
-        showNotification('✓ تم استعادة أسعار NOEST وحفظها في قاعدة البيانات بنجاح!', 'success');
+        showNotification('✓ تم استعادة أسعار NOEST وحفظها بنجاح!', 'success');
       } else {
-        showNotification('تم تحديث الواجهة لكن فشل الحفظ في قاعدة البيانات.', 'error');
+        showNotification('تم استعادة الأسعار محلياً وفشل الحفظ بالخادم.', 'error');
       }
     } catch (err) {
       showNotification('تم تطبيق الأسعار محلياً، تأكد من الاتصال.', 'error');

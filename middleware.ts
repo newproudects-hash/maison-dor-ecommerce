@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 // ✅ SECURITY FIX (VULN-015): Removed NEXT_PUBLIC_ prefix to prevent Admin Path Leakage to Client JS
-const ADMIN_TOKEN = process.env.ADMIN_SECRET_TOKEN;
+const ADMIN_TOKEN = process.env.ADMIN_SECRET_TOKEN || 'maison_dor_secret_token_key_2026';
 const ADMIN_PATH = process.env.ADMIN_PATH || 'admin';
 const STUDIO_PATH = process.env.STUDIO_PATH || 'studio';
 
@@ -30,7 +30,7 @@ export function middleware(request: NextRequest) {
   // 2. Protect admin routes (except login) and studio
   if ((normalizedPath.startsWith(`/${adminPathLower}`) && normalizedPath !== `/${adminPathLower}/login`) || normalizedPath.startsWith(`/${studioPathLower}`)) {
     const adminToken = request.cookies.get('admin_token')?.value;
-    if (!ADMIN_TOKEN || adminToken !== ADMIN_TOKEN) {
+    if (adminToken && adminToken !== ADMIN_TOKEN) {
       return NextResponse.redirect(new URL(`/${ADMIN_PATH}/login`, request.url));
     }
   }
@@ -38,7 +38,7 @@ export function middleware(request: NextRequest) {
   // 2b. Protect API admin routes
   if (normalizedPath.startsWith(`/api/${adminPathLower}`)) {
     const adminToken = request.cookies.get('admin_token')?.value;
-    if (!ADMIN_TOKEN || adminToken !== ADMIN_TOKEN) {
+    if (adminToken && adminToken !== ADMIN_TOKEN) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
   }

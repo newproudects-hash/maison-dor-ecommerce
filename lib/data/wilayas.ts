@@ -185,12 +185,13 @@ export const DEFAULT_DELIVERY_PRICES: DeliveryPriceItem[] = [
   { wilaya_code: 69, wilaya_name: 'El Abiodh Sidi Cheikh',wilaya_ar: 'الأبيض سيدي الشيخ', home_price: 1000, office_price: 600,  is_active: true },
 ];
 
-export function getDefaultDeliveryPrice(code: number): { home_price: number; office_price: number } {
-  const found = DEFAULT_DELIVERY_PRICES.find(p => p.wilaya_code === code);
+export function getDefaultDeliveryPrice(code: number | string): { home_price: number; office_price: number } {
+  const num = Number(code) || 0;
+  const found = DEFAULT_DELIVERY_PRICES.find(p => Number(p.wilaya_code) === num);
   if (found) {
-    return { home_price: found.home_price, office_price: found.office_price };
+    return { home_price: Number(found.home_price), office_price: Number(found.office_price) };
   }
-  return { home_price: 800, office_price: 500 };
+  return { home_price: 600, office_price: 400 };
 }
 
 // Delivery fallback defaults (overridden by dynamic prices)

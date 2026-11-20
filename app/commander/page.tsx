@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, ChevronLeft, Check, Home, Building2, ShoppingBag } from 'lucide-react';
 import { getCart, clearCart, getCartTotal, CartItem } from '@/lib/store/cartStore';
-import { WILAYAS, wilayaLabel, parseWilayaCode, LIVRAISON_DOMICILE, LIVRAISON_BUREAU, DEFAULT_DELIVERY_PRICES } from '@/lib/data/wilayas';
+import { WILAYAS, wilayaLabel, parseWilayaCode, getDefaultDeliveryPrice, LIVRAISON_DOMICILE, LIVRAISON_BUREAU, DEFAULT_DELIVERY_PRICES } from '@/lib/data/wilayas';
 import { getCommunesByWilaya } from '@/lib/data/communes';
 import { useRouter } from 'next/navigation';
 import { generateOrderNumber } from '@/lib/utils/orderNumber';
@@ -50,11 +50,26 @@ export default function CommanderPage() {
   const [deliveryPrices, setDeliveryPrices] = useState<any[]>(DEFAULT_DELIVERY_PRICES);
 
   useEffect(() => {
+    // 1. Instant load from localStorage cache
+    try {
+      const local = localStorage.getItem('delivery_prices_cache');
+      if (local) {
+        const parsed = JSON.parse(local);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setDeliveryPrices(parsed);
+        }
+      }
+    } catch {}
+
+    // 2. Fresh fetch from server
     fetch('/api/delivery-prices', { cache: 'no-store' })
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data) && data.length > 0) {
           setDeliveryPrices(data);
+          try {
+            localStorage.setItem('delivery_prices_cache', JSON.stringify(data));
+          } catch {}
         }
       })
       .catch(console.error);
@@ -62,11 +77,19 @@ export default function CommanderPage() {
 
   const subtotal = getCartTotal(cart);
   
-  // Calculate dynamic shipping
+  // Calculate dynamic shipping with robust type coercion and NOEST defaults fallback
   const selectedWilayaCode = form.wilaya ? parseWilayaCode(form.wilaya) : null;
-  const currentPriceInfo = deliveryPrices.find(p => p.wilaya_code === selectedWilayaCode);
-  const dynamicHome = currentPriceInfo?.home_price ?? LIVRAISON_DOMICILE;
-  const dynamicOffice = currentPriceInfo?.office_price ?? LIVRAISON_BUREAU;
+  const defaultRates = selectedWilayaCode ? getDefaultDeliveryPrice(selectedWilayaCode) : { home_price: 600, office_price: 400 };
+  const currentPriceInfo = selectedWilayaCode 
+    ? deliveryPrices.find(p => Number(p.wilaya_code) === Number(selectedWilayaCode))
+    : null;
+  
+  const dynamicHome = (currentPriceInfo && currentPriceInfo.home_price !== undefined) 
+    ? Number(currentPriceInfo.home_price) 
+    : defaultRates.home_price;
+  const dynamicOffice = (currentPriceInfo && currentPriceInfo.office_price !== undefined) 
+    ? Number(currentPriceInfo.office_price) 
+    : defaultRates.office_price;
   
   const shipping = delivery === 'domicile' ? dynamicHome : dynamicOffice;
   const total = subtotal + shipping;

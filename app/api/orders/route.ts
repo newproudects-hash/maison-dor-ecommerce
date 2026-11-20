@@ -101,7 +101,7 @@ const orderSchema = z.object({
   commune: z.string().optional(),
   wilayaCode: z.string().or(z.number()),
   deliveryType: z.enum(['domicile', 'bureau']),
-  // ❌ deliveryPrice: REMOVED — server calculates from LIVRAISON_DOMICILE/BUREAU constants
+  deliveryPrice: z.number().optional(),
   address: z.string().max(200).optional().nullable(),
   items: z.array(z.object({
     productId: z.string().min(1),
@@ -158,6 +158,18 @@ export async function POST(req: Request) {
     const defaultRates = getDefaultDeliveryPrice(numericWilayaCode);
     let serverDeliveryPrice = deliveryType === 'domicile' ? defaultRates.home_price : defaultRates.office_price;
 
+    // 1. Try Redis cache for dynamic admin-set prices
+    try {
+      const cached = await getFromCache<any[]>('settings:delivery_prices');
+      if (Array.isArray(cached) && cached.length > 0) {
+        const custom = cached.find((p: any) => Number(p.wilaya_code) === numericWilayaCode);
+        if (custom) {
+          serverDeliveryPrice = deliveryType === 'domicile' ? Number(custom.home_price) : Number(custom.office_price);
+        }
+      }
+    } catch {}
+
+    // 2. Try Supabase if available
     if (supabase) {
       try {
         const { data: priceData } = await supabase
@@ -169,7 +181,7 @@ export async function POST(req: Request) {
           serverDeliveryPrice = deliveryType === 'domicile' ? Number(priceData.home_price) : Number(priceData.office_price);
         }
       } catch (err) {
-        console.warn('[Orders] Could not fetch custom price from Supabase, used NOEST default:', err);
+        console.warn('[Orders] Could not fetch custom price from Supabase, used Redis/NOEST default:', err);
       }
     }
     // ✅ SECURITY FIX (VULN-002): Verify stock + fetch real prices from Sanity
