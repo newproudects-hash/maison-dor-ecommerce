@@ -1,5 +1,4 @@
-import { NextResponse } from 'next/server';
-import { handleSavePrices } from '@/app/api/delivery-prices/route';
+import { handleSavePrices } from '@/lib/services/deliveryPrices';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
